@@ -22,7 +22,11 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
   signInWithEmailAndPassword(authInstance, email, password);
 }
 
-/** Initiate sign-out (non-blocking). */
+/** Initiate sign-out. */
 export async function initiateSignOut(authInstance: Auth): Promise<void> {
-  return signOut(authInstance);
+  try {
+    await signOut(authInstance);
+  } catch (error) {
+    console.error("Sign out error:", error);
+  }
 }

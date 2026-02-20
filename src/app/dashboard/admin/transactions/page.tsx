@@ -46,7 +46,6 @@ export default function AdminTransactionsAuditPage() {
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
   
-  // Guard queries until privileges are stable
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   const transactionsRef = useMemoFirebase(() => {
@@ -221,7 +220,7 @@ export default function AdminTransactionsAuditPage() {
               <Label>Merchant / Description</Label>
               <Input 
                 value={editingTransaction?.description ?? ""} 
-                onChange={(e) => setEditingTransaction({...editingAccount, description: e.target.value})}
+                onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
               />
             </div>
             <div className="space-y-2">

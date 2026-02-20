@@ -68,11 +68,14 @@ export function useCollection<T = any>(
       } else {
         pathString = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query?.path?.canonicalString() || '';
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Failed to resolve query path", e);
+    }
 
     // If the path is empty, just a slash, or contains "undefined", it's a malformed path listing attempt.
     // This is the CRITICAL fix for the root listing error.
     if (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined')) {
+      console.warn("Blocking potential root listing attempt for path:", pathString);
       setData(null);
       setIsLoading(false);
       return;
