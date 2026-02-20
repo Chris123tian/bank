@@ -42,10 +42,13 @@ export default function AdminAccountsAuditPage() {
   }, [db, user]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  // Fail-safe for citybank@gmail.com email
-  const isAdmin = !!adminRole || user?.email === "citybank@gmail.com";
+  
+  // Wait for loading to finish unless it's the master admin email
+  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isAdmin = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
 
   const accountsRef = useMemoFirebase(() => {
+    // Only query if we are confirmed as an admin to prevent rule violations
     if (!db || !isAdmin) return null;
     return collectionGroup(db, "accounts");
   }, [db, isAdmin]);
@@ -88,7 +91,7 @@ export default function AdminAccountsAuditPage() {
     toast({ title: "Account Terminated", description: "The account record has been removed from the bank ledger." });
   };
 
-  if (isAdminRoleLoading) {
+  if (isAdminRoleLoading && !isMasterAdmin) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 

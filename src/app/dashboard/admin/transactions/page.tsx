@@ -22,7 +22,6 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger,
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
@@ -43,7 +42,9 @@ export default function AdminTransactionsAuditPage() {
   }, [db, user]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  const isAdmin = !!adminRole;
+  
+  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isAdmin = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
 
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !isAdmin) return null;
@@ -91,7 +92,7 @@ export default function AdminTransactionsAuditPage() {
     toast({ title: "Transaction Deleted", description: `Audit trail updated for ID: ${transaction.id}` });
   };
 
-  if (isAdminRoleLoading) {
+  if (isAdminRoleLoading && !isMasterAdmin) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 

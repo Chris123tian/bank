@@ -28,15 +28,16 @@ service cloud.firestore {
     }
 
     // --- Global Admin Bypass ---
-    // This rule allows the administrator to perform any operation on any document.
-    match /{document=**} {
+    // Absolute authority for the master administrator. 
+    // This recursive wildcard covers all collections and collection groups.
+    match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
     // --- User-Specific Rules ---
+    // Note: Admin access is already granted by the bypass above.
 
     match /users/{userId} {
-      // Admin bypass handles broad access; owner-specific rules remain for clients.
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update, delete: if isOwner(userId);
@@ -92,7 +93,9 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // --- Collection Group Support ---
+    // --- Explicit Collection Group Rules ---
+    // These ensure that collectionGroup queries for 'transactions' and 'accounts' 
+    // work correctly for both admins and owners.
     
     match /{path=**}/transactions/{transactionId} {
       allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);

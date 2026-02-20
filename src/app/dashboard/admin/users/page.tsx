@@ -29,8 +29,9 @@ export default function AdminUsersPage() {
   }, [db, currentUser]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  // Fail-safe for citybank@gmail.com
-  const isAdmin = !!adminRole || currentUser?.email === "citybank@gmail.com";
+  
+  const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
+  const isAdmin = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -89,7 +90,7 @@ export default function AdminUsersPage() {
     `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (isAdminRoleLoading) {
+  if (isAdminRoleLoading && !isMasterAdmin) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
@@ -212,7 +213,7 @@ export default function AdminUsersPage() {
               ))}
               {!isUsersLoading && (!filteredUsers || filteredUsers.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">
+                  <TableCell colSpan={6} className="text-center py-24 text-muted-foreground italic">
                     No user profiles found.
                   </TableCell>
                 </TableRow>
