@@ -53,6 +53,7 @@ export function useCollection<T = any>(
 
   useEffect(() => {
     // CRITICAL GUARD: Stop execution immediately if no query reference is provided.
+    // This prevents accidental root listing during initial render.
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
@@ -78,12 +79,10 @@ export function useCollection<T = any>(
         // Extract path for contextual error reporting
         let path = '/';
         try {
-          // If it's a collection, path is straightforward
           if ('path' in memoizedTargetRefOrQuery) {
             path = (memoizedTargetRefOrQuery as CollectionReference).path;
           } else {
-            // For queries and collectionGroups, attempt to get canonical string
-            path = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString();
+            path = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString() || 'collection-group';
           }
         } catch (e) {
           path = 'unknown/query';

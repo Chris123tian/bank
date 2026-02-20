@@ -5,14 +5,10 @@ service cloud.firestore {
     /**
      * ADMINISTRATIVE OVERRIDE
      * Explicitly grant the master administrator account full access.
-     * We check the email first to short-circuit the rule evaluation.
+     * This is placed first to ensure administrative bypass for all operations.
      */
     match /{allPaths=**} {
-      allow read, write: if request.auth != null && (
-        request.auth.token.email == 'citybank@gmail.com' || 
-        (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/roles_admin/$(request.auth.uid)).data.role == 'super_admin')
-      );
+      allow read, write: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
     }
 
     /** @description Checks if the request is from an authenticated user. */
@@ -28,16 +24,6 @@ service cloud.firestore {
     /** @description Combines ownership check with existence check for updates and deletes. */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
-    }
-
-    // --- Collection Group Rules (Required for Administrative Audits) ---
-    
-    match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || isOwner(resource.data.customerId));
-    }
-
-    match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || isOwner(resource.data.customerId));
     }
 
     // --- Collection Rules ---
@@ -56,8 +42,8 @@ service cloud.firestore {
 
         match /transactions/{transactionId} {
           allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId) && request.resource.data.customerId == userId && request.resource.data.accountId == accountId;
-          allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId && request.resource.data.accountId == resource.data.accountId;
+          allow create: if isOwner(userId) && request.resource.data.customerId == userId;
+          allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
           allow delete: if isExistingOwner(userId);
         }
       }
@@ -91,10 +77,10 @@ service cloud.firestore {
       }
     }
 
-    // Role-based access control
+    // Role-based access control metadata
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if false; 
+      allow write: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com'; 
     }
   }
 }
