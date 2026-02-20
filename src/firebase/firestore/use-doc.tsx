@@ -37,11 +37,19 @@ export function useDoc<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // CRITICAL GUARD: Stop execution immediately if no document reference is provided.
+    // CRITICAL GUARD: Stop execution if no document reference is provided.
     if (!memoizedDocRef) {
       setData(null);
       setIsLoading(false);
       setError(null);
+      return;
+    }
+
+    // NUCLEAR GUARD: Prevent root document access.
+    if (!memoizedDocRef.path || memoizedDocRef.path === '/') {
+      console.warn('useDoc: Invalid document path blocked.');
+      setData(null);
+      setIsLoading(false);
       return;
     }
 

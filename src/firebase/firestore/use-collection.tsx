@@ -52,12 +52,29 @@ export function useCollection<T = any>(
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // CRITICAL GUARD: Stop execution immediately if no query reference is provided.
-    // This prevents accidental root listing during initial render.
+    // CRITICAL GUARD: Stop execution if no query reference is provided.
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
       setError(null);
+      return;
+    }
+
+    // NUCLEAR GUARD: Prevent root listing which triggers the security errors.
+    let pathString = '';
+    try {
+      if ('path' in memoizedTargetRefOrQuery) {
+        pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
+      } else {
+        pathString = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query?.path?.canonicalString() || '';
+      }
+    } catch (e) {}
+
+    // If the path is empty or just a slash, it's a root listing attempt.
+    if (!pathString || pathString === '/' || pathString === '//') {
+      console.warn('useCollection: Root listing attempt blocked to prevent security denial.');
+      setData(null);
+      setIsLoading(false);
       return;
     }
 
@@ -76,22 +93,9 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (firestoreError: FirestoreError) => {
-        // Extract path for contextual error reporting
-        let path = '/';
-        try {
-          if ('path' in memoizedTargetRefOrQuery) {
-            path = (memoizedTargetRefOrQuery as CollectionReference).path;
-          } else {
-            // Using canonicalString for query paths
-            path = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query?.path?.canonicalString() || 'collection-group';
-          }
-        } catch (e) {
-          path = 'unknown/query';
-        }
-
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: path || '/',
+          path: pathString || 'unknown/query',
         });
 
         setError(contextualError);
