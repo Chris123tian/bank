@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -16,31 +17,37 @@ import {
   Search, 
   Filter, 
   Download, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
   MoreHorizontal,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Loader2,
+  History
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-
-const transactions = [
-  { id: "TX-9901", date: "2023-10-24", merchant: "Apple Store", category: "Technology", amount: -1299.00, status: "Completed", currency: "USD" },
-  { id: "TX-9902", date: "2023-10-22", merchant: "Monthly Salary", category: "Income", amount: 5500.00, status: "Completed", currency: "USD" },
-  { id: "TX-9903", date: "2023-10-21", merchant: "Starbucks Coffee", category: "Food & Drink", amount: -6.45, status: "Completed", currency: "USD" },
-  { id: "TX-9904", date: "2023-10-20", merchant: "Netflix", category: "Entertainment", amount: -15.99, status: "Processing", currency: "USD" },
-  { id: "TX-9905", date: "2023-10-18", merchant: "Zelle Transfer - Mom", category: "Income", amount: 200.00, status: "Completed", currency: "USD" },
-  { id: "TX-9906", date: "2023-10-15", merchant: "Shell Gas Station", category: "Transport", amount: -55.20, status: "Completed", currency: "USD" },
-  { id: "TX-9907", date: "2023-10-12", merchant: "Whole Foods Market", category: "Groceries", amount: -142.12, status: "Completed", currency: "USD" },
-  { id: "TX-9908", date: "2023-10-10", merchant: "Rent Payment", category: "Housing", amount: -2100.00, status: "Completed", currency: "USD" },
-];
+import { useFirestore, useUser, useCollection } from "@/firebase";
+import { useMemoFirebase } from "@/firebase/provider";
+import { collectionGroup, query, where, orderBy } from "firebase/firestore";
 
 export default function TransactionsPage() {
+  const { user } = useUser();
+  const db = useFirestore();
   const [date, setDate] = useState<Date>();
   const [search, setSearch] = useState("");
+
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    // Query all transactions across all accounts for this user
+    return query(
+      collectionGroup(db, "transactions"),
+      where("userId", "==", user.uid),
+      orderBy("transactionDate", "desc")
+    );
+  }, [db, user]);
+
+  const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
@@ -53,8 +60,8 @@ export default function TransactionsPage() {
     }
   };
 
-  const filteredTransactions = transactions.filter(t => 
-    t.merchant.toLowerCase().includes(search.toLowerCase()) || 
+  const filteredTransactions = transactions?.filter(t => 
+    t.description?.toLowerCase().includes(search.toLowerCase()) || 
     t.id.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -75,7 +82,7 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader className="pb-0 pt-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="relative flex-1">
@@ -94,9 +101,9 @@ export default function TransactionsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="tech">Technology</SelectItem>
+                  <SelectItem value="transfer">Transfers</SelectItem>
+                  <SelectItem value="bill_payment">Bills</SelectItem>
                   <SelectItem value="income">Income</SelectItem>
-                  <SelectItem value="food">Food & Drink</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -132,34 +139,56 @@ export default function TransactionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((tx) => (
-                  <TableRow key={tx.id} className="group cursor-pointer hover:bg-slate-50 transition-colors">
-                    <TableCell className="font-medium text-slate-500">{tx.date}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-primary">{tx.merchant}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">{tx.id}</span>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-20">
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <span className="text-sm text-muted-foreground">Loading transactions...</span>
                       </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge variant="outline" className="font-normal">{tx.category}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="flex items-center gap-2">
-                        <div className={`h-2 w-2 rounded-full ${tx.status === 'Completed' ? 'bg-green-500' : 'bg-orange-400 animate-pulse'}`} />
-                        <span className="text-xs">{tx.status}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className={`text-right font-black ${tx.amount > 0 ? 'text-green-600' : 'text-slate-900'}`}>
-                      {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredTransactions && filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((tx) => (
+                    <TableRow key={tx.id} className="group cursor-pointer hover:bg-slate-50 transition-colors">
+                      <TableCell className="font-medium text-slate-500">
+                        {tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy") : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-primary">{tx.description}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">{tx.id}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline" className="font-normal capitalize">{tx.transactionType || "Other"}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-2 w-2 rounded-full ${tx.status === 'completed' ? 'bg-green-500' : 'bg-orange-400 animate-pulse'}`} />
+                          <span className="text-xs capitalize">{tx.status}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className={`text-right font-black ${tx.amount > 0 ? 'text-green-600' : 'text-slate-900'}`}>
+                        {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-24">
+                      <div className="flex flex-col items-center gap-2 opacity-40">
+                        <History className="h-12 w-12" />
+                        <p className="text-sm font-bold uppercase tracking-widest">No transactions found</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
