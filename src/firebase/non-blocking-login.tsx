@@ -23,6 +23,6 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 }
 
 /** Initiate sign-out (non-blocking). */
-export function initiateSignOut(authInstance: Auth): Promise<void> {
+export async function initiateSignOut(authInstance: Auth): Promise<void> {
   return signOut(authInstance);
 }

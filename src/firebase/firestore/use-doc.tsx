@@ -45,9 +45,9 @@ export function useDoc<T = any>(
       return;
     }
 
-    // NUCLEAR GUARD: Prevent root document access.
-    if (!memoizedDocRef.path || memoizedDocRef.path === '/' || memoizedDocRef.path === '//') {
-      console.warn('useDoc: Invalid root document path blocked.');
+    // NUCLEAR GUARD: Prevent root document access or invalid path listing.
+    const path = memoizedDocRef.path;
+    if (!path || path === '/' || path === '//' || path.includes('undefined')) {
       setData(null);
       setIsLoading(false);
       return;

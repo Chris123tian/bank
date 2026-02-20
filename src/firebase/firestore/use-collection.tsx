@@ -71,6 +71,7 @@ export function useCollection<T = any>(
     } catch (e) {}
 
     // If the path is empty, just a slash, or contains "undefined", it's a malformed path listing attempt.
+    // This is the CRITICAL fix for the root listing error.
     if (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined')) {
       setData(null);
       setIsLoading(false);
