@@ -82,5 +82,13 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com'; 
     }
+
+    // Support for collectionGroup queries used in administrative audits
+    match /{path=**}/accounts/{accountId} {
+      allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
+    }
+    match /{path=**}/transactions/{transactionId} {
+      allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
+    }
   }
 }

@@ -52,7 +52,8 @@ export function useCollection<T = any>(
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // CRITICAL GUARD: Stop execution if no query reference is provided.
+    // NUCLEAR GUARD: Prevent any execution if no query reference is provided.
+    // This stops "Missing or insufficient permissions" on path: "/databases/(default)/documents/"
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
@@ -60,7 +61,6 @@ export function useCollection<T = any>(
       return;
     }
 
-    // NUCLEAR GUARD: Prevent root listing which triggers the security errors.
     let pathString = '';
     try {
       if ('path' in memoizedTargetRefOrQuery) {
@@ -70,8 +70,8 @@ export function useCollection<T = any>(
       }
     } catch (e) {}
 
-    // If the path is empty or just a slash, it's a root listing attempt.
-    if (!pathString || pathString === '/' || pathString === '//') {
+    // If the path is empty, just a slash, or contains "undefined", it's a malformed path listing attempt.
+    if (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined')) {
       setData(null);
       setIsLoading(false);
       return;

@@ -14,9 +14,8 @@ import {
   MapPin,
   Zap,
   ShieldCheck,
-  Headphones,
-  LayoutDashboard,
-  Shield
+  Shield,
+  LayoutDashboard
 } from "lucide-react";
 import LinkNext from "next/link";
 import Image from "next/image";
@@ -33,7 +32,7 @@ export default function LandingPage() {
       {/* Premium Navbar */}
       <nav className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 group">
+          <div className="flex items-center gap-2 group cursor-pointer">
             <div className="bg-primary p-2 rounded-xl transition-transform group-hover:scale-110">
               <Building2 className="text-white h-6 w-6" />
             </div>
@@ -119,7 +118,7 @@ export default function LandingPage() {
                   />
                 </div>
                 {/* Floating Stats Card */}
-                <div className="absolute -bottom-8 -left-8 bg-white p-8 rounded-[2rem] shadow-2xl z-20 border border-slate-100 animate-bounce-slow">
+                <div className="absolute -bottom-8 -left-8 bg-white p-8 rounded-[2rem] shadow-2xl z-20 border border-slate-100 animate-bounce">
                   <div className="flex items-center gap-4">
                     <div className="bg-green-500 p-3 rounded-2xl text-white shadow-lg shadow-green-200">
                       <TrendingUp className="h-6 w-6" />
@@ -174,7 +173,7 @@ export default function LandingPage() {
 
         {/* App Promo Section */}
         <section className="py-24 bg-primary text-white overflow-hidden relative">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+          <div className="absolute inset-0 bg-white/5 opacity-10" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               <div className="order-2 lg:order-1 relative">

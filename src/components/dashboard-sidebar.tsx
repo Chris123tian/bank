@@ -61,9 +61,9 @@ export function DashboardSidebar() {
   const { data: adminRole } = useDoc(adminRoleRef);
   const isAdmin = !!adminRole;
 
-  const handleLogout = () => {
-    initiateSignOut(auth);
-    router.push("/");
+  const handleLogout = async () => {
+    await initiateSignOut(auth);
+    router.replace("/");
   };
 
   return (
