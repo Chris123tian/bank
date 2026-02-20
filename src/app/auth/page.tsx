@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Building2, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -29,21 +29,15 @@ export default function AuthPage() {
   useEffect(() => {
     if (user && !isUserLoading) {
       setLoading(true);
-      // Auto-Admin Logic for the prototype
+      // Ensure administrative privileges are active for the prototype admin
       if (user.email === "citybank@gmail.com") {
         const adminRef = doc(db, "roles_admin", user.uid);
-        getDoc(adminRef).then((snapshot) => {
-          if (!snapshot.exists()) {
-            setDoc(adminRef, { 
-              email: user.email, 
-              assignedAt: serverTimestamp(),
-              role: "super_admin"
-            }, { merge: true }).then(() => {
-              router.push("/dashboard");
-            });
-          } else {
-            router.push("/dashboard");
-          }
+        setDoc(adminRef, { 
+          email: user.email, 
+          assignedAt: serverTimestamp(),
+          role: "super_admin"
+        }, { merge: true }).then(() => {
+          router.push("/dashboard");
         }).catch(() => {
           router.push("/dashboard");
         });

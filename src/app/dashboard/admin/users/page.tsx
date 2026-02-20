@@ -32,7 +32,9 @@ export default function AdminUsersPage() {
   
   const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
-  const isAdminReady = !isAdminRoleLoading && isAdminConfirmed;
+  
+  // Guard query until privileges are stable
+  const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -43,7 +45,6 @@ export default function AdminUsersPage() {
     userRole: "client",
   });
 
-  // Only query users if confirmed as admin and authentication is stable
   const usersRef = useMemoFirebase(() => {
     if (!db || !isAdminReady) return null;
     return collection(db, "users");
