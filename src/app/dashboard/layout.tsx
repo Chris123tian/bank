@@ -18,8 +18,9 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // If auth state is determined and user is null, redirect to home.
     if (!isUserLoading && !user) {
-      router.push("/auth");
+      router.replace("/");
     }
   }, [user, isUserLoading, router]);
 
@@ -31,6 +32,7 @@ export default function DashboardLayout({
     );
   }
 
+  // Handle flash of unauthenticated content
   if (!user) return null;
 
   return (
@@ -42,7 +44,7 @@ export default function DashboardLayout({
             <SidebarTrigger />
             <div className="ml-auto flex items-center gap-4">
               <div className="text-sm font-medium hidden sm:block">
-                Welcome back, {user.displayName || user.email?.split('@')[0]}
+                Welcome, {user.displayName || user.email?.split('@')[0]}
               </div>
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20">
                 {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase()}

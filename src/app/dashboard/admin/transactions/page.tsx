@@ -69,7 +69,7 @@ export default function AdminTransactionsAuditPage() {
   const handleUpdateTransaction = () => {
     if (!editingTransaction || !db) return;
 
-    const path = `users/${editingTransaction.userId}/accounts/${editingTransaction.accountId}/transactions/${editingTransaction.id}`;
+    const path = `users/${editingTransaction.customerId || editingTransaction.userId}/accounts/${editingTransaction.accountId}/transactions/${editingTransaction.id}`;
     const docRef = doc(db, path);
 
     updateDocumentNonBlocking(docRef, {
@@ -81,17 +81,17 @@ export default function AdminTransactionsAuditPage() {
       currency: editingTransaction.currency ?? "USD",
     });
 
-    toast({ title: "Transaction Updated", description: `Record for ID ${editingTransaction.id} has been modified.` });
+    toast({ title: "Transaction Updated", description: "Audit trail record has been modified." });
     setEditingTransaction(null);
     setIsDialogOpen(false);
   };
 
   const handleDelete = (transaction: any) => {
     if (!db) return;
-    const path = `users/${transaction.userId}/accounts/${transaction.accountId}/transactions/${transaction.id}`;
+    const path = `users/${transaction.customerId || transaction.userId}/accounts/${transaction.accountId}/transactions/${transaction.id}`;
     const docRef = doc(db, path);
     deleteDocumentNonBlocking(docRef);
-    toast({ title: "Transaction Deleted", description: `Audit trail updated for ID: ${transaction.id}` });
+    toast({ title: "Transaction Deleted", description: "Audit trail updated." });
   };
 
   if (isAdminRoleLoading && !isMasterAdmin) {
@@ -121,7 +121,7 @@ export default function AdminTransactionsAuditPage() {
         </div>
         <div>
           <h1 className="text-3xl font-headline font-bold text-primary">Transaction Audit</h1>
-          <p className="text-muted-foreground">Global administrative access to modify or remove transaction records.</p>
+          <p className="text-muted-foreground">Global administrative access to modify or remove records.</p>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export default function AdminTransactionsAuditPage() {
               ) : transactions?.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell className="text-xs font-mono">{tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString() : 'N/A'}</TableCell>
-                  <TableCell className="text-xs font-mono">{tx.userId}</TableCell>
+                  <TableCell className="text-xs font-mono">{tx.customerId || tx.userId}</TableCell>
                   <TableCell className="font-medium">{tx.description}</TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="capitalize">{tx.transactionType || "Other"}</Badge>
@@ -205,7 +205,7 @@ export default function AdminTransactionsAuditPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Modify Transaction Record</DialogTitle>
-            <DialogDescription>ID: {editingTransaction?.id}</DialogDescription>
+            <DialogDescription>Record ID: {editingTransaction?.id}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

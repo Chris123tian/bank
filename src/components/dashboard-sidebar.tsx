@@ -54,16 +54,22 @@ export function DashboardSidebar() {
   const db = useFirestore();
 
   const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: adminRole } = useDoc(adminRoleRef);
   const isAdmin = !!adminRole;
 
   const handleLogout = async () => {
-    await initiateSignOut(auth);
-    router.replace("/");
+    try {
+      await initiateSignOut(auth);
+      // Immediately replace history to landing page
+      router.replace("/");
+    } catch (e) {
+      console.error("Logout failed", e);
+      router.replace("/");
+    }
   };
 
   return (

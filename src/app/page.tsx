@@ -11,10 +11,8 @@ import {
   CircleDollarSign,
   Briefcase,
   ArrowRightLeft,
-  MapPin,
   Zap,
   ShieldCheck,
-  Shield,
   LayoutDashboard,
   Lock,
   ArrowRight
@@ -30,9 +28,9 @@ export default function LandingPage() {
   const mobileAppImage = PlaceHolderImages.find(img => img.id === "mobile-app");
 
   return (
-    <div className="min-h-screen flex flex-col font-body bg-white text-foreground selection:bg-accent/30">
-      {/* Premium Sticky Navbar */}
-      <nav className="border-b bg-white/80 backdrop-blur-xl sticky top-0 z-50 transition-all duration-300">
+    <div className="min-h-screen flex flex-col font-body bg-white text-foreground selection:bg-accent/30 overflow-x-hidden">
+      {/* Premium Glass Navbar */}
+      <nav className="border-b bg-white/70 backdrop-blur-xl sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer">
             <div className="bg-primary p-2.5 rounded-2xl transition-all duration-500 group-hover:rotate-[360deg] group-hover:shadow-2xl group-hover:shadow-primary/40">
@@ -44,8 +42,8 @@ export default function LandingPage() {
             </div>
           </div>
           
-          <div className="hidden lg:flex items-center gap-12 text-sm font-bold text-primary/60">
-            <LinkNext href="#services" className="hover:text-primary hover:scale-105 transition-all">Global Services</LinkNext>
+          <div className="hidden lg:flex items-center gap-12 text-[11px] uppercase tracking-widest font-black text-primary/60">
+            <LinkNext href="#services" className="hover:text-primary hover:scale-105 transition-all">Services</LinkNext>
             <LinkNext href="#global" className="hover:text-primary hover:scale-105 transition-all">Treasury</LinkNext>
             <LinkNext href="/auth" className="hover:text-primary hover:scale-105 transition-all">Commercial</LinkNext>
             <LinkNext href="/auth" className="hover:text-primary hover:scale-105 transition-all">Wealth</LinkNext>
@@ -56,7 +54,7 @@ export default function LandingPage() {
               <Button className="bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/20 rounded-full px-7 h-12 text-sm font-bold" asChild>
                 <LinkNext href="/dashboard">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
+                  Go to Dashboard
                 </LinkNext>
               </Button>
             ) : (
@@ -81,19 +79,19 @@ export default function LandingPage() {
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
-              <div className="space-y-10 text-center lg:text-left animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-accent/10 text-accent text-[11px] font-black tracking-[0.15em] uppercase border border-accent/20 shadow-sm">
+              <div className="space-y-10 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-accent/10 text-accent text-[11px] font-black tracking-[0.15em] uppercase border border-accent/20 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700">
                   <ShieldCheck className="h-4 w-4" />
                   Institutional Grade Infrastructure
                 </div>
-                <h1 className="text-7xl md:text-9xl font-headline font-black leading-[0.85] tracking-tighter text-primary">
+                <h1 className="text-7xl md:text-9xl font-headline font-black leading-[0.85] tracking-tighter text-primary animate-in fade-in slide-in-from-left-10 duration-1000">
                   Redefining <br />
                   <span className="text-accent italic drop-shadow-sm underline decoration-primary/5">Wealth.</span>
                 </h1>
-                <p className="text-xl text-muted-foreground/80 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+                <p className="text-xl text-muted-foreground/80 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-200">
                   The world's most sophisticated digital banking platform. High-yield assets, multi-currency liquidity, and automated wealth management for the global elite.
                 </p>
-                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-6 pt-6">
+                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-6 pt-6 animate-in fade-in zoom-in-95 duration-1000 delay-500">
                   <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-12 h-20 rounded-3xl shadow-3xl shadow-primary/30 transition-all hover:-translate-y-2 group" asChild>
                     <LinkNext href={user ? "/dashboard" : "/auth?mode=signup"}>
                       Initialize Account <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-2 transition-transform" />
@@ -104,10 +102,10 @@ export default function LandingPage() {
                   </Button>
                 </div>
                 
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-10 pt-12 border-t border-slate-200/60 mt-12">
-                  <div className="flex items-center gap-3 font-black text-[11px] uppercase tracking-wider text-primary/40"><Zap className="h-5 w-5 text-accent fill-accent" /> Real-Time Settlement</div>
-                  <div className="flex items-center gap-3 font-black text-[11px] uppercase tracking-wider text-primary/40"><Lock className="h-5 w-5 text-accent" /> AES-256 Vault</div>
-                  <div className="flex items-center gap-3 font-black text-[11px] uppercase tracking-wider text-primary/40"><Globe className="h-5 w-5 text-accent" /> 180+ Jurisdictions</div>
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-10 pt-12 border-t border-slate-200/60 mt-12 opacity-60">
+                  <div className="flex items-center gap-3 font-black text-[11px] uppercase tracking-wider text-primary"><Zap className="h-5 w-5 text-accent fill-accent" /> Real-Time Settlement</div>
+                  <div className="flex items-center gap-3 font-black text-[11px] uppercase tracking-wider text-primary"><Lock className="h-5 w-5 text-accent" /> AES-256 Vault</div>
+                  <div className="flex items-center gap-3 font-black text-[11px] uppercase tracking-wider text-primary"><Globe className="h-5 w-5 text-accent" /> 180+ Jurisdictions</div>
                 </div>
               </div>
 
@@ -122,8 +120,7 @@ export default function LandingPage() {
                   />
                 </div>
                 
-                {/* Dynamic Floating Asset Card */}
-                <div className="absolute -bottom-12 -left-12 bg-white/90 backdrop-blur-2xl p-10 rounded-[2.5rem] shadow-2xl z-20 border border-white/50 animate-bounce transition-all">
+                <div className="absolute -bottom-12 -left-12 bg-white/90 backdrop-blur-2xl p-10 rounded-[2.5rem] shadow-2xl z-20 border border-white/50 animate-bounce-slow">
                   <div className="flex items-center gap-5">
                     <div className="bg-gradient-to-br from-green-400 to-green-600 p-4 rounded-3xl text-white shadow-xl shadow-green-200">
                       <TrendingUp className="h-8 w-8" />
@@ -135,7 +132,6 @@ export default function LandingPage() {
                   </div>
                 </div>
                 
-                {/* Ambient Glows */}
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-accent/20 rounded-full blur-[100px] animate-pulse" />
                 <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse" />
               </div>
@@ -158,10 +154,10 @@ export default function LandingPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
               {[
-                { title: "Global Private Banking", desc: "Borderless accounts with zero maintenance fees and maximum privacy.", icon: Landmark },
+                { title: "Private Banking", desc: "Borderless accounts with zero maintenance fees and maximum privacy.", icon: Landmark },
                 { title: "Algorithmic Wealth", desc: "AI-driven market insights and human expertise for aggressive growth.", icon: CircleDollarSign },
                 { title: "Enterprise Capital", desc: "Scale multinational operations with multi-currency payroll and credit.", icon: Briefcase },
-                { title: "NexaNetwork Ledger", desc: "Instant cross-border transfers with zero settlement latency or fees.", icon: ArrowRightLeft },
+                { title: "NexaNetwork", desc: "Instant cross-border transfers with zero settlement latency or fees.", icon: ArrowRightLeft },
               ].map((service, idx) => (
                 <div key={idx} className="group p-12 rounded-[3rem] border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-accent/10 hover:shadow-3xl transition-all duration-700 space-y-8 cursor-default">
                   <div className="h-20 w-20 rounded-[2rem] bg-white flex items-center justify-center group-hover:bg-primary transition-all duration-500 shadow-sm group-hover:shadow-2xl group-hover:shadow-primary/30 group-hover:-rotate-12">
@@ -183,7 +179,6 @@ export default function LandingPage() {
         {/* High-Impact App Promo */}
         <section className="py-32 bg-primary text-white overflow-hidden relative">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/0 via-white/5 to-primary/0" />
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-32 items-center">
@@ -204,7 +199,7 @@ export default function LandingPage() {
               <div className="order-1 lg:order-2 space-y-10">
                 <h3 className="text-6xl md:text-7xl font-headline font-black leading-tight tracking-tighter">Your bank, <br /><span className="text-accent italic">elevated.</span></h3>
                 <p className="text-2xl text-primary-foreground/60 font-medium leading-relaxed">
-                  Total dominance over your assets, anywhere in the multiverse. Our award-winning terminal gives you sovereign control over your global liquidity.
+                  Total dominance over your assets, anywhere in the world. Our award-winning terminal gives you sovereign control over your global liquidity.
                 </p>
                 <div className="grid grid-cols-2 gap-10">
                   <div className="space-y-3">
@@ -232,7 +227,6 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* Ultra-Modern Footer */}
       <footer className="bg-slate-950 text-white pt-48 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-24 mb-40">
