@@ -9,7 +9,8 @@ import {
   TrendingUp,
   Landmark,
   ShieldCheck,
-  History
+  History,
+  AlertTriangle
 } from "lucide-react";
 import { 
   Bar, 
@@ -102,7 +103,7 @@ export default function DashboardPage() {
             </Button>
           </Card>
         ) : accounts.map((acc) => (
-          <Card key={acc.id} className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 border-l-primary">
+          <Card key={acc.id} className={`relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 ${acc.status === 'Suspended' ? 'border-l-red-500' : 'border-l-primary'}`}>
             <CardHeader className="pb-2">
               <CardDescription className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
                 {acc.accountType}
@@ -113,10 +114,17 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2 text-xs text-green-600 font-bold bg-green-50 w-fit px-2 py-1 rounded-full">
-                <TrendingUp className="h-3 w-3" />
-                Active Account
-              </div>
+              {acc.status === 'Suspended' ? (
+                <div className="flex items-center gap-2 text-xs text-red-600 font-bold bg-red-50 w-fit px-2 py-1 rounded-full">
+                  <AlertTriangle className="h-3 w-3" />
+                  Suspended
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-green-600 font-bold bg-green-50 w-fit px-2 py-1 rounded-full">
+                  <TrendingUp className="h-3 w-3" />
+                  {acc.status || "Active Account"}
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

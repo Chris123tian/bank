@@ -35,6 +35,12 @@ service cloud.firestore {
       allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
+    // Required for Admin Account management
+    match /{path=**}/accounts/{accountId} {
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
     // --- Collection Rules ---
 
     match /users/{userId} {

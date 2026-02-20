@@ -10,7 +10,8 @@ import {
   LogOut,
   Building2,
   ShieldAlert,
-  Users
+  Users,
+  Landmark
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -40,6 +41,7 @@ const navItems = [
 
 const adminItems = [
   { name: "User Management", href: "/dashboard/admin/users", icon: Users },
+  { name: "Audit Accounts", href: "/dashboard/admin/accounts", icon: Landmark },
   { name: "Audit Transactions", href: "/dashboard/admin/transactions", icon: ShieldAlert },
 ];
 
