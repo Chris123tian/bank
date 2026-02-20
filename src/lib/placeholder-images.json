@@ -2,26 +2,26 @@
   "placeholderImages": [
     {
       "id": "hero-banking",
-      "description": "Modern digital banking interface",
-      "imageUrl": "https://images.unsplash.com/photo-1556742521-9713bf272865?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkaWdpdGFsJTIwYmFua2luZ3xlbnwwfHx8fDE3NzE1Nzk1NDN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "digital banking"
+      "description": "Modern skyscraper reflecting a digital banking interface",
+      "imageUrl": "https://images.unsplash.com/photo-1697335713414-42693f1a455f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBiYW5raW5nfGVufDB8fHx8MTc3MTYwMjY3NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "modern banking"
     },
     {
       "id": "secure-vault",
-      "description": "Bank vault representing security",
-      "imageUrl": "https://images.unsplash.com/photo-1764983255241-3768b4df0c57?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxiYW5rJTIwc2VjdXJpdHl8ZW58MHx8fHwxNzcxNTc5NTQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Close up of a high-tech biometric bank vault",
+      "imageUrl": "https://images.unsplash.com/photo-1570044389283-6713c3b1c48b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxiYW5rJTIwc2VjdXJpdHl8ZW58MHx8fHwxNzcxNTc5NTQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "bank security"
     },
     {
       "id": "customer-service",
-      "description": "Friendly support representative",
-      "imageUrl": "https://images.unsplash.com/photo-1553775282-20af80779df7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjdXN0b21lciUyMHN1cHBvcnR8ZW58MHx8fHwxNzcxNTA3NzI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "customer support"
+      "description": "Professional banker providing personalized wealth management",
+      "imageUrl": "https://images.unsplash.com/photo-1557597774-9d273605dfa9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwcml2YXRlJTIwYmFua2luZ3xlbnwwfHx8fDE3NzE2MDI2NzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "private banking"
     },
     {
       "id": "mobile-app",
-      "description": "Nexa mobile app in use",
-      "imageUrl": "https://images.unsplash.com/photo-1571867424488-4565932edb41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtb2JpbGUlMjBiYW5raW5nfGVufDB8fHx8MTc3MTU3OTU0M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "description": "Smartphone displaying a sophisticated wealth management dashboard",
+      "imageUrl": "https://images.unsplash.com/photo-1681826291722-70bd7e9e6fc3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtb2JpbGUlMjBiYW5raW5nfGVufDB8fHx8MTc3MTU3OTU0M3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "mobile banking"
     }
   ]
