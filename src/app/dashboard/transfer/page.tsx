@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -27,9 +26,9 @@ export default function TransferPage() {
   const [note, setNote] = useState("");
 
   const accountsRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return collection(db, "users", user.uid, "accounts");
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
 
@@ -61,13 +60,13 @@ export default function TransferPage() {
     const transactionsRef = collection(db, "users", user.uid, "accounts", fromAccountId, "transactions");
     const transactionData = {
       accountId: fromAccountId,
+      customerId: user.uid, // Required for authorization rules
       transactionType: "transfer",
-      amount: -Number(amount), // Negative for transfer out
+      amount: -Number(amount), 
       currency: selectedAccount.currency || "USD",
       transactionDate: new Date().toISOString(),
       description: note || `Transfer to ${toAccountLabel || 'External Account'}`,
       status: "completed",
-      userId: user.uid,
       createdAt: serverTimestamp(),
     };
 

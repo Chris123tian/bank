@@ -46,7 +46,7 @@ export default function AdminAccountsAuditPage() {
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
   
-  // Guard queries until privileges are stable
+  // CRITICAL: Guard queries until privileges are confirmed to prevent permission denied errors.
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   const accountsRef = useMemoFirebase(() => {
@@ -70,7 +70,7 @@ export default function AdminAccountsAuditPage() {
   const handleUpdateAccount = () => {
     if (!editingAccount || !db) return;
     
-    const docRef = doc(db, "users", editingAccount.userId, "accounts", editingAccount.id);
+    const docRef = doc(db, "users", editingAccount.customerId || editingAccount.userId, "accounts", editingAccount.id);
     
     updateDocumentNonBlocking(docRef, {
       accountType: editingAccount.accountType,
@@ -87,7 +87,7 @@ export default function AdminAccountsAuditPage() {
 
   const handleDeleteAccount = (acc: any) => {
     if (!db) return;
-    const docRef = doc(db, "users", acc.userId, "accounts", acc.id);
+    const docRef = doc(db, "users", acc.customerId || acc.userId, "accounts", acc.id);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Account Terminated", description: "The account record has been removed from the bank ledger." });
   };
@@ -133,7 +133,7 @@ export default function AdminAccountsAuditPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Account #</TableHead>
-                <TableHead>User ID</TableHead>
+                <TableHead>Owner ID</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Balance</TableHead>
                 <TableHead>Currency</TableHead>
@@ -147,7 +147,7 @@ export default function AdminAccountsAuditPage() {
               ) : accounts?.map((acc) => (
                 <TableRow key={acc.id}>
                   <TableCell className="font-mono text-xs">{acc.accountNumber}</TableCell>
-                  <TableCell className="text-xs">{acc.userId}</TableCell>
+                  <TableCell className="text-xs">{acc.customerId || acc.userId}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{acc.accountType}</Badge>
                   </TableCell>

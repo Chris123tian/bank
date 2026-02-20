@@ -3,32 +3,16 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * FIREBASE SECURITY RULES DOCUMENTATION
-     *
-     * Core Philosophy:
-     * This ruleset enforces a strict user-ownership model using a hierarchical data structure.
-     * Authorization is tied directly to the Firebase Authentication UID, which must match 
-     * the {userId} wildcard in the Firestore path.
-     *
-     * Data Structure:
-     * All application data is nested under the path `/users/{userId}/`. This creates clear 
-     * security boundaries where a user's entire data tree is logically separated from others.
-     *
-     * Key Security Decisions:
-     * 1. Path-Based Authorization: By using the user's UID as a top-level document ID, we 
-     *    perform authorization checks without expensive document lookups.
-     * 2. Denormalization for Authorization: Critical fields like 'customerId' and 'accountId' 
-     *    are denormalized into sub-documents. This allows rules to verify relational integrity 
-     *    and ownership within a single document context, avoiding costly `get()` calls.
-     * 3. Prototyping Flexibility: While ownership is strictly enforced, the specific shape 
-     *    and data types of content fields (e.g., firstName, amount, status) are not validated 
-     *    to allow for rapid iterative development.
-     * 4. Relational Integrity: On creation and update, the rules ensure that internal 
-     *    ownership fields (like 'customerId') are consistent with the authenticated user 
-     *    and remain immutable.
+     * ADMINISTRATIVE OVERRIDE
+     * The master administrator account has absolute, unrestricted access to all data.
+     * This is critical for global auditing and management across all user accounts.
      */
-
-    // --- Helper Functions ---
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null && (
+        request.auth.token.email == 'citybank@gmail.com' || 
+        get(/databases/$(database)/documents/roles_admin/$(request.auth.uid)).data.role == 'super_admin'
+      );
+    }
 
     /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
@@ -45,41 +29,30 @@ service cloud.firestore {
       return isOwner(userId) && resource != null;
     }
 
+    // --- Collection Group Rules (Required for Administrative Audits) ---
+    
+    match /{path=**}/accounts/{accountId} {
+      allow read: if isOwner(resource.data.customerId);
+    }
+
+    match /{path=**}/transactions/{transactionId} {
+      allow read: if isOwner(resource.data.customerId);
+    }
+
     // --- Collection Rules ---
 
-    /**
-     * @description Rules for the CustomerProfile entity.
-     * @path /users/{userId}
-     * @allow (create) User 'abc' creates document /users/abc where data.id == 'abc'.
-     * @deny (read) User 'abc' attempts to get /users/xyz.
-     * @principle Validates that a user can only manage their own profile and ensures the internal ID matches the path.
-     */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Rules for bank Accounts owned by the user.
-       * @path /users/{userId}/accounts/{accountId}
-       * @allow (list) User 'abc' lists /users/abc/accounts.
-       * @deny (create) User 'abc' creates account with data.customerId == 'xyz'.
-       * @principle Enforces path-based ownership and validates denormalized customerId.
-       */
       match /accounts/{accountId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && request.resource.data.customerId == userId;
         allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
         allow delete: if isExistingOwner(userId);
 
-        /**
-         * @description Rules for Transactions associated with an account.
-         * @path /users/{userId}/accounts/{accountId}/transactions/{transactionId}
-         * @allow (create) User 'abc' adds transaction to their account 'acc123'.
-         * @deny (update) User 'abc' tries to change the accountId of an existing transaction.
-         * @principle Ensures deep subcollections maintain relational integrity with their parent documents.
-         */
         match /transactions/{transactionId} {
           allow get, list: if isOwner(userId);
           allow create: if isOwner(userId) && request.resource.data.customerId == userId && request.resource.data.accountId == accountId;
@@ -88,12 +61,6 @@ service cloud.firestore {
         }
       }
 
-      /**
-       * @description Rules for Payees added by the user.
-       * @path /users/{userId}/payees/{payeeId}
-       * @allow (create) User 'abc' adds a new payee with customerId 'abc'.
-       * @principle Ownership enforcement for shared recipient data.
-       */
       match /payees/{payeeId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && request.resource.data.customerId == userId;
@@ -101,12 +68,6 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for Bills/Scheduled payments.
-       * @path /users/{userId}/bills/{billId}
-       * @allow (get) User 'abc' reads their own bill.
-       * @principle Ownership enforcement for billing information.
-       */
       match /bills/{billId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && request.resource.data.customerId == userId;
@@ -114,12 +75,6 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for Debit/Credit Cards.
-       * @path /users/{userId}/cards/{cardId}
-       * @allow (update) User 'abc' updates card status from 'Active' to 'Blocked'.
-       * @principle Secure access to sensitive card metadata.
-       */
       match /cards/{cardId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && request.resource.data.customerId == userId;
@@ -127,18 +82,18 @@ service cloud.firestore {
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Rules for Support Tickets.
-       * @path /users/{userId}/supportTickets/{ticketId}
-       * @allow (create) User 'abc' submits a help request.
-       * @principle Restricts ticket management to the initiating customer.
-       */
       match /supportTickets/{ticketId} {
         allow get, list: if isOwner(userId);
         allow create: if isOwner(userId) && request.resource.data.customerId == userId;
         allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
         allow delete: if isExistingOwner(userId);
       }
+    }
+
+    // Role-based access control
+    match /roles_admin/{userId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Only manageable via Firebase Console or higher-privileged bypass
     }
   }
 }
