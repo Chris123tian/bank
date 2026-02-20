@@ -37,9 +37,9 @@ export default function AdminTransactionsAuditPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   
@@ -47,10 +47,10 @@ export default function AdminTransactionsAuditPage() {
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
 
   const transactionsRef = useMemoFirebase(() => {
-    // Only query if confirmed admin AND user is stable
-    if (!db || !user || !isAdminConfirmed) return null;
+    // Only query if status is strictly confirmed to avoid root listing.
+    if (!db || !user?.uid || !isAdminConfirmed) return null;
     return collectionGroup(db, "transactions");
-  }, [db, user, isAdminConfirmed]);
+  }, [db, user?.uid, isAdminConfirmed]);
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
 
@@ -243,7 +243,7 @@ export default function AdminTransactionsAuditPage() {
               <Input 
                 type="number" 
                 step="0.01"
-                value={editingTransaction?.amount ?? 0} 
+                value={editingTransaction?.amount ?? ""} 
                 onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
               />
             </div>

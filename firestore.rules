@@ -27,46 +27,46 @@ service cloud.firestore {
     }
 
     // --- Global Admin Bypass ---
-    // Absolute authority for the master administrator at the root level.
+    // Absolute authority for the master administrator across ALL paths and root.
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
     // --- User-Specific Rules ---
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
+      allow get: if isOwner(userId);
       allow list: if isAdmin();
-      allow create: if isOwner(userId) || isAdmin();
-      allow update, delete: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
 
       match /accounts/{accountId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if (isOwner(userId) && request.resource.data.userId == userId) || isAdmin();
-        allow update, delete: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update, delete: if isOwner(userId);
 
         match /transactions/{transactionId} {
-          allow get, list: if isOwner(userId) || isAdmin();
-          allow create: if (isOwner(userId) && request.resource.data.userId == userId) || isAdmin();
-          allow update, delete: if isOwner(userId) || isAdmin();
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.userId == userId;
+          allow update, delete: if isOwner(userId);
         }
       }
 
       match /cards/{cardId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) || isAdmin();
-        allow update, delete: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
       }
 
       match /payees/{payeeId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) || isAdmin();
-        allow update, delete: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
       }
 
       match /scheduledPayments/{scheduledPaymentId} {
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) || isAdmin();
-        allow update, delete: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if isOwner(userId);
       }
     }
 
@@ -90,7 +90,7 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // --- Explicit Collection Group Rules for Global Auditing ---
+    // --- Explicit Collection Group Rules for Global Auditing and Safe Queries ---
     match /{path=**}/transactions/{transactionId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow write: if isAdmin();

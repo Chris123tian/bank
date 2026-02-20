@@ -37,21 +37,20 @@ export default function AdminAccountsAuditPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   
-  // Confirmed Admin logic
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
 
   const accountsRef = useMemoFirebase(() => {
-    // Strictly guard against querying until admin status is confirmed and user is stable
-    if (!db || !user || !isAdminConfirmed) return null;
+    // Strictly guard against root listing. Only query if status is explicitly confirmed.
+    if (!db || !user?.uid || !isAdminConfirmed) return null;
     return collectionGroup(db, "accounts");
-  }, [db, user, isAdminConfirmed]);
+  }, [db, user?.uid, isAdminConfirmed]);
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
 
@@ -208,7 +207,7 @@ export default function AdminAccountsAuditPage() {
               <Input 
                 type="number" 
                 step="0.01"
-                value={editingAccount?.balance ?? 0} 
+                value={editingAccount?.balance ?? ""} 
                 onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
               />
             </div>
