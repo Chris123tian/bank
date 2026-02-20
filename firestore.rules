@@ -28,7 +28,7 @@ service cloud.firestore {
 
     // --- Global Admin Bypass ---
     // Absolute authority for the master administrator across ALL paths and root.
-    // This is the primary rule to prevent root listing errors for admins.
+    // This allows root listing and collection group queries for the admin.
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
@@ -91,7 +91,8 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // --- Explicit Collection Group Rules for Global Auditing and Safe Queries ---
+    // --- Explicit Collection Group Rules for Global Auditing ---
+    // These allow collectionGroup queries to function for admins and owners.
     match /{path=**}/transactions/{transactionId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow write: if isAdmin();
