@@ -35,6 +35,7 @@ export default function AdminTransactionsAuditPage() {
   const db = useFirestore();
   const { user } = useUser();
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -51,8 +52,19 @@ export default function AdminTransactionsAuditPage() {
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
 
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(Math.abs(amount));
+    } catch (e) {
+      return `$${Math.abs(amount).toLocaleString()}`;
+    }
+  };
+
   const handleUpdateTransaction = () => {
-    if (!editingTransaction) return;
+    if (!editingTransaction || !db) return;
 
     const path = `users/${editingTransaction.userId}/accounts/${editingTransaction.accountId}/transactions/${editingTransaction.id}`;
     const docRef = doc(db, path);
@@ -68,9 +80,11 @@ export default function AdminTransactionsAuditPage() {
 
     toast({ title: "Transaction Updated", description: `Record for ID ${editingTransaction.id} has been modified.` });
     setEditingTransaction(null);
+    setIsDialogOpen(false);
   };
 
   const handleDelete = (transaction: any) => {
+    if (!db) return;
     const path = `users/${transaction.userId}/accounts/${transaction.accountId}/transactions/${transaction.id}`;
     const docRef = doc(db, path);
     deleteDocumentNonBlocking(docRef);
@@ -136,82 +150,26 @@ export default function AdminTransactionsAuditPage() {
                     <Badge variant="outline">{tx.status}</Badge>
                   </TableCell>
                   <TableCell className={`font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {tx.currency || "$"}{Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-2">
-                    <Dialog onOpenChange={(open) => !open && setEditingTransaction(null)}>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => setEditingTransaction(tx)}>
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Modify Transaction Record</DialogTitle>
-                          <DialogDescription>ID: {tx.id}</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Transaction Date</Label>
-                            <Input 
-                              type="datetime-local" 
-                              value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} 
-                              onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Merchant / Description</Label>
-                            <Input 
-                              value={editingTransaction?.description ?? ""} 
-                              onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Category (Type)</Label>
-                            <Select 
-                              value={editingTransaction?.transactionType ?? ""} 
-                              onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="deposit">Deposit</SelectItem>
-                                <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                                <SelectItem value="transfer">Transfer</SelectItem>
-                                <SelectItem value="bill_payment">Bill Payment</SelectItem>
-                                <SelectItem value="card_payment">Card Payment</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Amount</Label>
-                            <Input 
-                              type="number" 
-                              step="0.01"
-                              value={editingTransaction?.amount ?? ""} 
-                              onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Status</Label>
-                            <Select 
-                              value={editingTransaction?.status ?? "pending"} 
-                              onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="failed">Failed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button onClick={handleUpdateTransaction}>Apply Changes</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-slate-400" 
+                      onClick={() => {
+                        setEditingTransaction({
+                          ...tx,
+                          amount: tx.amount ?? 0,
+                          currency: tx.currency ?? "USD",
+                          status: tx.status ?? "pending",
+                          transactionType: tx.transactionType ?? "withdrawal"
+                        });
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -234,6 +192,90 @@ export default function AdminTransactionsAuditPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modify Transaction Record</DialogTitle>
+            <DialogDescription>ID: {editingTransaction?.id}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Transaction Date</Label>
+              <Input 
+                type="datetime-local" 
+                value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} 
+                onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Merchant / Description</Label>
+              <Input 
+                value={editingTransaction?.description ?? ""} 
+                onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Category (Type)</Label>
+              <Select 
+                value={editingTransaction?.transactionType ?? ""} 
+                onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deposit">Deposit</SelectItem>
+                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                  <SelectItem value="transfer">Transfer</SelectItem>
+                  <SelectItem value="bill_payment">Bill Payment</SelectItem>
+                  <SelectItem value="card_payment">Card Payment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount</Label>
+              <Input 
+                type="number" 
+                step="0.01"
+                value={editingTransaction?.amount ?? ""} 
+                onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <Select 
+                value={editingTransaction?.currency ?? "USD"} 
+                onValueChange={(v) => setEditingTransaction({...editingTransaction, currency: v})}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="AUD">AUD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select 
+                value={editingTransaction?.status ?? "pending"} 
+                onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleUpdateTransaction}>Apply Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

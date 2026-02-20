@@ -52,8 +52,19 @@ export default function AdminAccountsAuditPage() {
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
 
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    } catch (e) {
+      return `$${amount.toLocaleString()}`;
+    }
+  };
+
   const handleUpdateAccount = () => {
-    if (!editingAccount) return;
+    if (!editingAccount || !db) return;
     
     const docRef = doc(db, "users", editingAccount.userId, "accounts", editingAccount.id);
     
@@ -71,6 +82,7 @@ export default function AdminAccountsAuditPage() {
   };
 
   const handleDeleteAccount = (acc: any) => {
+    if (!db) return;
     const docRef = doc(db, "users", acc.userId, "accounts", acc.id);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Account Terminated", description: "The account record has been removed from the bank ledger." });
@@ -131,7 +143,7 @@ export default function AdminAccountsAuditPage() {
                     <Badge variant="outline">{acc.accountType}</Badge>
                   </TableCell>
                   <TableCell className="font-bold text-primary">
-                    {(acc.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="font-mono">{acc.currency || "USD"}</Badge>
@@ -142,82 +154,22 @@ export default function AdminAccountsAuditPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-2">
-                    <Dialog open={isDialogOpen && editingAccount?.id === acc.id} onOpenChange={(open) => {
-                      setIsDialogOpen(open);
-                      if (!open) setEditingAccount(null);
-                    }}>
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={() => {
-                          setEditingAccount(acc);
-                          setIsDialogOpen(true);
-                        }}>
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Modify Account: {acc.accountNumber}</DialogTitle>
-                          <DialogDescription>Adjust financial parameters and status.</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Account Balance</Label>
-                            <Input 
-                              type="number" 
-                              step="0.01"
-                              value={editingAccount?.balance ?? ""} 
-                              onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Currency</Label>
-                            <Select 
-                              value={editingAccount?.currency ?? "USD"} 
-                              onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="USD">USD - US Dollar</SelectItem>
-                                <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                                <SelectItem value="EUR">EUR - Euro</SelectItem>
-                                <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Account Type</Label>
-                            <Select 
-                              value={editingAccount?.accountType ?? ""} 
-                              onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
-                            >
-                              <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Checking">Checking</SelectItem>
-                                <SelectItem value="Savings">Savings</SelectItem>
-                                <SelectItem value="Investment">Investment</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Operational Status</Label>
-                            <Select 
-                              value={editingAccount?.status ?? "Active"} 
-                              onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Active">Active</SelectItem>
-                                <SelectItem value="Suspended">Suspended</SelectItem>
-                                <SelectItem value="Review Required">Review Required</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button onClick={handleUpdateAccount}>Apply Ledger Update</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => {
+                        setEditingAccount({
+                          ...acc,
+                          balance: acc.balance ?? 0,
+                          currency: acc.currency ?? "USD",
+                          accountType: acc.accountType ?? "Checking",
+                          status: acc.status ?? "Active"
+                        });
+                        setIsDialogOpen(true);
+                      }}
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="text-red-400" onClick={() => handleDeleteAccount(acc)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -228,6 +180,72 @@ export default function AdminAccountsAuditPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modify Account: {editingAccount?.accountNumber}</DialogTitle>
+            <DialogDescription>Adjust financial parameters and status.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Account Balance</Label>
+              <Input 
+                type="number" 
+                step="0.01"
+                value={editingAccount?.balance ?? ""} 
+                onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <Select 
+                value={editingAccount?.currency ?? "USD"} 
+                onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD - US Dollar</SelectItem>
+                  <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                  <SelectItem value="EUR">EUR - Euro</SelectItem>
+                  <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Account Type</Label>
+              <Select 
+                value={editingAccount?.accountType ?? ""} 
+                onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
+              >
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Checking">Checking</SelectItem>
+                  <SelectItem value="Savings">Savings</SelectItem>
+                  <SelectItem value="Investment">Investment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Operational Status</Label>
+              <Select 
+                value={editingAccount?.status ?? "Active"} 
+                onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Suspended">Suspended</SelectItem>
+                  <SelectItem value="Review Required">Review Required</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleUpdateAccount}>Apply Ledger Update</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

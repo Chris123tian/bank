@@ -8,6 +8,11 @@ import {
   PlusCircle, 
   TrendingUp,
   Landmark,
+  CircleDollarSign,
+  Briefcase,
+  ArrowRightLeft,
+  MapPin,
+  Zap,
   ShieldCheck,
   History,
   AlertTriangle
@@ -58,6 +63,17 @@ export default function DashboardPage() {
   }, [db, user, accounts]);
 
   const { data: recentTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
+
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    } catch (e) {
+      return `$${amount.toLocaleString()}`;
+    }
+  };
 
   if (isUserLoading) {
     return (
@@ -110,7 +126,7 @@ export default function DashboardPage() {
                 <span className="font-mono opacity-60">{acc.accountNumber}</span>
               </CardDescription>
               <CardTitle className="text-3xl font-bold font-headline mt-1">
-                ${(acc.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -169,7 +185,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className={`text-sm font-black ${t.amount > 0 ? 'text-green-600' : 'text-foreground'}`}>
-                    {t.amount > 0 ? `+$${t.amount.toLocaleString()}` : `-$${Math.abs(t.amount).toLocaleString()}`}
+                    {t.amount > 0 ? `+${formatCurrency(t.amount, t.currency || 'USD')}` : `-${formatCurrency(Math.abs(t.amount), t.currency || 'USD')}`}
                   </div>
                 </div>
               )) : (

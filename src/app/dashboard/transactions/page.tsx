@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -29,19 +28,30 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
 const transactions = [
-  { id: "TX-9901", date: "2023-10-24", merchant: "Apple Store", category: "Technology", amount: -1299.00, status: "Completed" },
-  { id: "TX-9902", date: "2023-10-22", merchant: "Monthly Salary", category: "Income", amount: 5500.00, status: "Completed" },
-  { id: "TX-9903", date: "2023-10-21", merchant: "Starbucks Coffee", category: "Food & Drink", amount: -6.45, status: "Completed" },
-  { id: "TX-9904", date: "2023-10-20", merchant: "Netflix", category: "Entertainment", amount: -15.99, status: "Processing" },
-  { id: "TX-9905", date: "2023-10-18", merchant: "Zelle Transfer - Mom", category: "Income", amount: 200.00, status: "Completed" },
-  { id: "TX-9906", date: "2023-10-15", merchant: "Shell Gas Station", category: "Transport", amount: -55.20, status: "Completed" },
-  { id: "TX-9907", date: "2023-10-12", merchant: "Whole Foods Market", category: "Groceries", amount: -142.12, status: "Completed" },
-  { id: "TX-9908", date: "2023-10-10", merchant: "Rent Payment", category: "Housing", amount: -2100.00, status: "Completed" },
+  { id: "TX-9901", date: "2023-10-24", merchant: "Apple Store", category: "Technology", amount: -1299.00, status: "Completed", currency: "USD" },
+  { id: "TX-9902", date: "2023-10-22", merchant: "Monthly Salary", category: "Income", amount: 5500.00, status: "Completed", currency: "USD" },
+  { id: "TX-9903", date: "2023-10-21", merchant: "Starbucks Coffee", category: "Food & Drink", amount: -6.45, status: "Completed", currency: "USD" },
+  { id: "TX-9904", date: "2023-10-20", merchant: "Netflix", category: "Entertainment", amount: -15.99, status: "Processing", currency: "USD" },
+  { id: "TX-9905", date: "2023-10-18", merchant: "Zelle Transfer - Mom", category: "Income", amount: 200.00, status: "Completed", currency: "USD" },
+  { id: "TX-9906", date: "2023-10-15", merchant: "Shell Gas Station", category: "Transport", amount: -55.20, status: "Completed", currency: "USD" },
+  { id: "TX-9907", date: "2023-10-12", merchant: "Whole Foods Market", category: "Groceries", amount: -142.12, status: "Completed", currency: "USD" },
+  { id: "TX-9908", date: "2023-10-10", merchant: "Rent Payment", category: "Housing", amount: -2100.00, status: "Completed", currency: "USD" },
 ];
 
 export default function TransactionsPage() {
   const [date, setDate] = useState<Date>();
   const [search, setSearch] = useState("");
+
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(Math.abs(amount));
+    } catch (e) {
+      return `$${Math.abs(amount).toLocaleString()}`;
+    }
+  };
 
   const filteredTransactions = transactions.filter(t => 
     t.merchant.toLowerCase().includes(search.toLowerCase()) || 
@@ -141,7 +151,7 @@ export default function TransactionsPage() {
                       </div>
                     </TableCell>
                     <TableCell className={`text-right font-black ${tx.amount > 0 ? 'text-green-600' : 'text-slate-900'}`}>
-                      {tx.amount > 0 ? `+$${tx.amount.toFixed(2)}` : `-$${Math.abs(tx.amount).toFixed(2)}`}
+                      {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
