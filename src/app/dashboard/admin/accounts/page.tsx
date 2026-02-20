@@ -59,6 +59,7 @@ export default function AdminAccountsAuditPage() {
     updateDocumentNonBlocking(docRef, {
       accountType: editingAccount.accountType,
       balance: Number(editingAccount.balance),
+      currency: editingAccount.currency || "USD",
       status: editingAccount.status || "Active",
       updatedAt: serverTimestamp(),
     });
@@ -112,13 +113,14 @@ export default function AdminAccountsAuditPage() {
                 <TableHead>User ID</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Balance</TableHead>
+                <TableHead>Currency</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isAccountsLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-10">Syncing ledger...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-10">Syncing ledger...</TableCell></TableRow>
               ) : accounts?.map((acc) => (
                 <TableRow key={acc.id}>
                   <TableCell className="font-mono text-xs">{acc.accountNumber}</TableCell>
@@ -127,7 +129,10 @@ export default function AdminAccountsAuditPage() {
                     <Badge variant="outline">{acc.accountType}</Badge>
                   </TableCell>
                   <TableCell className="font-bold text-primary">
-                    ${(acc.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {(acc.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-mono">{acc.currency || "USD"}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge className={acc.status === 'Suspended' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
@@ -148,12 +153,28 @@ export default function AdminAccountsAuditPage() {
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                           <div className="space-y-2">
-                            <Label>Account Balance ($)</Label>
+                            <Label>Account Balance</Label>
                             <Input 
                               type="number" 
+                              step="0.01"
                               value={editingAccount?.balance ?? ""} 
                               onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
                             />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Currency</Label>
+                            <Select 
+                              value={editingAccount?.currency ?? "USD"} 
+                              onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="USD">USD - US Dollar</SelectItem>
+                                <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                                <SelectItem value="EUR">EUR - Euro</SelectItem>
+                                <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="space-y-2">
                             <Label>Account Type</Label>

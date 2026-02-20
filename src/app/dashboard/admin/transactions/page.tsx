@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { collectionGroup, doc } from "firebase/firestore";
@@ -7,14 +8,33 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Trash2, Edit3, ShieldAlert, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminTransactionsAuditPage() {
   const { toast } = useToast();
   const db = useFirestore();
   const { user } = useUser();
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -24,14 +44,31 @@ export default function AdminTransactionsAuditPage() {
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   const isAdmin = !!adminRole;
 
-  // collectionGroup('transactions') allows admin to see all transactions across all users
   const transactionsRef = useMemoFirebase(() => {
-    // Only query if we know the user is an admin to avoid permission errors
     if (!db || !isAdmin) return null;
     return collectionGroup(db, "transactions");
   }, [db, isAdmin]);
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
+
+  const handleUpdateTransaction = () => {
+    if (!editingTransaction) return;
+
+    const path = `users/${editingTransaction.userId}/accounts/${editingTransaction.accountId}/transactions/${editingTransaction.id}`;
+    const docRef = doc(db, path);
+
+    updateDocumentNonBlocking(docRef, {
+      description: editingTransaction.description ?? "",
+      amount: Number(editingTransaction.amount) || 0,
+      status: editingTransaction.status ?? "pending",
+      transactionDate: editingTransaction.transactionDate ?? new Date().toISOString(),
+      transactionType: editingTransaction.transactionType ?? "withdrawal",
+      currency: editingTransaction.currency ?? "USD",
+    });
+
+    toast({ title: "Transaction Updated", description: `Record for ID ${editingTransaction.id} has been modified.` });
+    setEditingTransaction(null);
+  };
 
   const handleDelete = (transaction: any) => {
     const path = `users/${transaction.userId}/accounts/${transaction.accountId}/transactions/${transaction.id}`;
@@ -41,19 +78,15 @@ export default function AdminTransactionsAuditPage() {
   };
 
   if (isAdminRoleLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  if (!isAdmin && !isAdminRoleLoading) {
+  if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
         <ShieldAlert className="h-12 w-12 text-red-500" />
         <h2 className="text-2xl font-bold">Access Denied</h2>
-        <p className="text-muted-foreground">You do not have administrative privileges to view this page.</p>
+        <p className="text-muted-foreground">Admin privileges required.</p>
       </div>
     );
   }
@@ -81,7 +114,8 @@ export default function AdminTransactionsAuditPage() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>User ID</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>Merchant / Description</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -89,22 +123,95 @@ export default function AdminTransactionsAuditPage() {
             </TableHeader>
             <TableBody>
               {isTransactionsLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-10">Auditing records...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-10">Auditing records...</TableCell></TableRow>
               ) : transactions?.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell className="text-xs font-mono">{tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell className="text-xs font-mono">{tx.userId}</TableCell>
                   <TableCell className="font-medium">{tx.description}</TableCell>
                   <TableCell>
+                    <Badge variant="secondary" className="capitalize">{tx.transactionType || "Other"}</Badge>
+                  </TableCell>
+                  <TableCell>
                     <Badge variant="outline">{tx.status}</Badge>
                   </TableCell>
                   <TableCell className={`font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    ${Math.abs(tx.amount).toLocaleString()}
+                    {tx.currency || "$"}{Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => toast({ title: "Edit Mode", description: "Edit functionality coming soon."})}>
-                      <Edit3 className="h-4 w-4" />
-                    </Button>
+                    <Dialog onOpenChange={(open) => !open && setEditingTransaction(null)}>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => setEditingTransaction(tx)}>
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Modify Transaction Record</DialogTitle>
+                          <DialogDescription>ID: {tx.id}</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label>Transaction Date</Label>
+                            <Input 
+                              type="datetime-local" 
+                              value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} 
+                              onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Merchant / Description</Label>
+                            <Input 
+                              value={editingTransaction?.description ?? ""} 
+                              onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Category (Type)</Label>
+                            <Select 
+                              value={editingTransaction?.transactionType ?? ""} 
+                              onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="deposit">Deposit</SelectItem>
+                                <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                                <SelectItem value="transfer">Transfer</SelectItem>
+                                <SelectItem value="bill_payment">Bill Payment</SelectItem>
+                                <SelectItem value="card_payment">Card Payment</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Amount</Label>
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              value={editingTransaction?.amount ?? ""} 
+                              onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Select 
+                              value={editingTransaction?.status ?? "pending"} 
+                              onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                                <SelectItem value="failed">Failed</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button onClick={handleUpdateTransaction}>Apply Changes</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -118,7 +225,7 @@ export default function AdminTransactionsAuditPage() {
               ))}
               {!isTransactionsLoading && (!transactions || transactions.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">
+                  <TableCell colSpan={7} className="text-center py-20 text-muted-foreground italic">
                     No transactions found in the global ledger.
                   </TableCell>
                 </TableRow>
