@@ -1,0 +1,663 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a customer or administrator of City International Bank, holding personal information and references to their accounts. User authentication is handled by an external system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's contact phone number."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "The user's date of birth.",
+          "format": "date"
+        },
+        "addressId": {
+          "type": "string",
+          "description": "Reference to the User's primary Address. (Relationship: Address 1:N User)"
+        },
+        "userRole": {
+          "type": "string",
+          "description": "The role of the user within the application (e.g., 'client', 'admin')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "phoneNumber",
+        "dateOfBirth",
+        "addressId",
+        "userRole",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Address": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Address",
+      "type": "object",
+      "description": "Stores detailed physical address information for users and bank branches.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Address entity."
+        },
+        "street": {
+          "type": "string",
+          "description": "The street address including building number and street name."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city of the address."
+        },
+        "state": {
+          "type": "string",
+          "description": "The state, province, or region of the address."
+        },
+        "postalCode": {
+          "type": "string",
+          "description": "The postal or ZIP code of the address."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country of the address."
+        }
+      },
+      "required": [
+        "id",
+        "street",
+        "city",
+        "state",
+        "postalCode",
+        "country"
+      ]
+    },
+    "Account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Account",
+      "type": "object",
+      "description": "Represents a specific bank account held by a user, such as checking or savings.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Account entity."
+        },
+        "accountNumber": {
+          "type": "string",
+          "description": "The unique bank account number."
+        },
+        "accountType": {
+          "type": "string",
+          "description": "The type of account (e.g., 'checking', 'savings', 'loan')."
+        },
+        "balance": {
+          "type": "number",
+          "description": "The current monetary balance of the account."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency code for the account balance (e.g., 'USD', 'GBP', 'AUD')."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this account. (Relationship: User 1:N Account)"
+        },
+        "branchId": {
+          "type": "string",
+          "description": "Reference to the Branch where this account is primarily managed. (Relationship: Branch 1:N Account)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "accountNumber",
+        "accountType",
+        "balance",
+        "currency",
+        "userId",
+        "branchId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Records all financial movements associated with an account, including deposits, withdrawals, transfers, and bill payments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Transaction entity."
+        },
+        "accountId": {
+          "type": "string",
+          "description": "Reference to the primary Account involved in this transaction (e.g., the source account for a withdrawal, or the destination for a deposit). (Relationship: Account 1:N Transaction)"
+        },
+        "transactionType": {
+          "type": "string",
+          "description": "The classification of the transaction (e.g., 'deposit', 'withdrawal', 'transfer', 'bill_payment', 'card_payment')."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary value of the transaction."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency code for the transaction amount."
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "The date and time when the transaction occurred.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or memo for the transaction."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the transaction (e.g., 'pending', 'completed', 'failed', 'cancelled')."
+        },
+        "recipientAccountId": {
+          "type": "string",
+          "description": "Reference to the destination Account for transfers (nullable). (Relationship: Account 0:1 Transaction)"
+        },
+        "payeeId": {
+          "type": "string",
+          "description": "Reference to the Payee for bill payments or external transfers (nullable). (Relationship: Payee 0:1 Transaction)"
+        },
+        "scheduledPaymentId": {
+          "type": "string",
+          "description": "Reference to the ScheduledPayment if this transaction originated from a recurring payment (nullable). (Relationship: ScheduledPayment 0:1 Transaction)"
+        }
+      },
+      "required": [
+        "id",
+        "accountId",
+        "transactionType",
+        "amount",
+        "currency",
+        "transactionDate",
+        "description",
+        "status"
+      ]
+    },
+    "Card": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Card",
+      "type": "object",
+      "description": "Manages information for debit and credit cards associated with user accounts. Sensitive card details like full numbers and CVV are assumed to be handled by an external, secure vault or tokenization service.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Card entity."
+        },
+        "cardNumberLastFour": {
+          "type": "string",
+          "description": "The last four digits of the card number, used for display and identification without storing the full number."
+        },
+        "cardType": {
+          "type": "string",
+          "description": "The type of card (e.g., 'debit', 'credit')."
+        },
+        "network": {
+          "type": "string",
+          "description": "The card network (e.g., 'Visa', 'Mastercard', 'American Express')."
+        },
+        "expiryDate": {
+          "type": "string",
+          "description": "The card expiration date, typically in MM/YY format."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the card (e.g., 'active', 'blocked', 'reported_lost', 'pending_activation')."
+        },
+        "accountId": {
+          "type": "string",
+          "description": "Reference to the Account that the card is linked to. (Relationship: Account 1:N Card)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this card. (Relationship: User 1:N Card)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the card record was created or issued.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the card record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "cardNumberLastFour",
+        "cardType",
+        "network",
+        "expiryDate",
+        "status",
+        "accountId",
+        "userId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Payee": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payee",
+      "type": "object",
+      "description": "Stores details for external recipients or billers for funds transfers and bill payments, specific to a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Payee entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the payee or biller."
+        },
+        "accountIdentifier": {
+          "type": "string",
+          "description": "The account number or unique identifier for the payee at their financial institution."
+        },
+        "bankName": {
+          "type": "string",
+          "description": "The name of the payee's bank (if applicable)."
+        },
+        "routingNumber": {
+          "type": "string",
+          "description": "The routing number, SWIFT/BIC code, or other bank identification for the payee's bank (if applicable)."
+        },
+        "payeeType": {
+          "type": "string",
+          "description": "The type of payee (e.g., 'person', 'utility_company', 'service_provider')."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who registered this payee. (Relationship: User 1:N Payee)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the payee record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the payee record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "accountIdentifier",
+        "payeeType",
+        "userId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ScheduledPayment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ScheduledPayment",
+      "type": "object",
+      "description": "Manages details for recurring or future-dated transfers and bill payments set up by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ScheduledPayment entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who set up this scheduled payment. (Relationship: User 1:N ScheduledPayment)"
+        },
+        "sourceAccountId": {
+          "type": "string",
+          "description": "Reference to the Account from which funds will be drawn for this payment. (Relationship: Account 1:N ScheduledPayment)"
+        },
+        "destinationAccountId": {
+          "type": "string",
+          "description": "Reference to the internal destination Account for transfers within the bank (nullable). (Relationship: Account 0:1 ScheduledPayment)"
+        },
+        "payeeId": {
+          "type": "string",
+          "description": "Reference to the Payee for external transfers or bill payments (nullable). (Relationship: Payee 0:1 ScheduledPayment)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary value of each individual payment in this schedule."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency code for the payment amount."
+        },
+        "frequency": {
+          "type": "string",
+          "description": "How often the payment occurs (e.g., 'daily', 'weekly', 'bi-weekly', 'monthly', 'quarterly', 'annually')."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The date when the scheduled payments begin.",
+          "format": "date"
+        },
+        "nextPaymentDate": {
+          "type": "string",
+          "description": "The date of the next scheduled payment.",
+          "format": "date"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Optional date when scheduled payments cease, if applicable.",
+          "format": "date"
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description or purpose of the scheduled payment."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the payment schedule (e.g., 'active', 'paused', 'completed', 'cancelled')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the scheduled payment was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the scheduled payment was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "sourceAccountId",
+        "amount",
+        "currency",
+        "frequency",
+        "startDate",
+        "nextPaymentDate",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Branch": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Branch",
+      "type": "object",
+      "description": "Represents a physical location of City International Bank.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Branch entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the bank branch (e.g., 'Head Office', 'London Branch')."
+        },
+        "addressId": {
+          "type": "string",
+          "description": "Reference to the Address for the branch's physical location. (Relationship: Address 1:N Branch)"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The contact phone number for the branch."
+        },
+        "email": {
+          "type": "string",
+          "description": "The contact email address for the branch.",
+          "format": "email"
+        },
+        "region": {
+          "type": "string",
+          "description": "The geographic region where the branch is located (e.g., 'USA', 'UK', 'Australia')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the branch record was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the branch record was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "addressId",
+        "phoneNumber",
+        "email",
+        "region",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Top-level collection for all user profiles, including clients and administrators. The 'userId' in the path corresponds to the authenticated user's ID (request.auth.uid). This collection holds core user information. The 'userRole' field is present for display/client-side logic, but admin authorization is handled by the '/roles_admin' collection for security rule efficiency.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user, matching request.auth.uid."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{adminId}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "A dedicated top-level collection used for Database Access Control (DBAC). A document exists here for each user with administrative privileges. The existence of a document at this path for a given user ID (`adminId`) grants admin status. This enables atomic and authorization-independent admin role checks using 'exists()' in security rules, avoiding 'get()' calls on the User profile.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier of the administrator, matching request.auth.uid."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/addresses/{addressId}",
+        "definition": {
+          "entityName": "Address",
+          "schema": {
+            "$ref": "#/backend/entities/Address"
+          },
+          "description": "A top-level collection storing all address information for both users and bank branches. Each Address document includes denormalized authorization fields: 'ownerType' ('user' or 'branch') and 'ownerId' (the userId or branchId). For user-owned addresses, 'ownerId' matches the User's ID. For branch addresses, 'ownerId' matches the Branch ID, and an 'isPublic' boolean field is set to 'true' to allow public readability. This enables authorization independence without requiring 'get()' calls on parent documents.",
+          "params": [
+            {
+              "name": "addressId",
+              "description": "The unique identifier for the address."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/branches/{branchId}",
+        "definition": {
+          "entityName": "Branch",
+          "schema": {
+            "$ref": "#/backend/entities/Branch"
+          },
+          "description": "A top-level collection for storing information about City International Bank branches (e.g., Head Office USA, branches in UK and Australia). This data is publicly readable by all authenticated users and editable only by administrators. Each Branch document includes a reference to its Address via 'addressId'.",
+          "params": [
+            {
+              "name": "branchId",
+              "description": "The unique identifier for the bank branch."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/accounts/{accountId}",
+        "definition": {
+          "entityName": "Account",
+          "schema": {
+            "$ref": "#/backend/entities/Account"
+          },
+          "description": "Subcollection under a specific user, containing all bank accounts owned by that user. The 'userId' in the path ensures direct ownership for authorization (request.auth.uid == userId). The Account document also explicitly contains 'userId', supporting robust QAPs and authorization checks.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the account."
+            },
+            {
+              "name": "accountId",
+              "description": "The unique identifier for the bank account."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/accounts/{accountId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Subcollection under a specific account, storing all financial transactions for that account. For authorization independence and QAPs, each Transaction document explicitly includes the 'userId' of the account owner (denormalized from the parent Account) and its 'accountId'. This allows security rules to verify ownership directly via 'request.auth.uid == resource.data.userId' without needing to 'get()' parent documents. Admins can edit/delete these transactions.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the account."
+            },
+            {
+              "name": "accountId",
+              "description": "The unique identifier for the bank account associated with the transaction."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/cards/{cardId}",
+        "definition": {
+          "entityName": "Card",
+          "schema": {
+            "$ref": "#/backend/entities/Card"
+          },
+          "description": "Subcollection under a specific user, managing all debit and credit cards associated with the user's accounts. Each Card document explicitly includes 'userId' and 'accountId', enhancing authorization independence and supporting QAPs without requiring 'get()' calls on parent Account documents. The 'userId' in the path also reinforces ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns the card."
+            },
+            {
+              "name": "cardId",
+              "description": "The unique identifier for the card."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/payees/{payeeId}",
+        "definition": {
+          "entityName": "Payee",
+          "schema": {
+            "$ref": "#/backend/entities/Payee"
+          },
+          "description": "Subcollection under a specific user, storing details of external recipients or billers registered by the user. The 'userId' in the path and within the document ensures direct ownership for secure access and QAPs.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who registered the payee."
+            },
+            {
+              "name": "payeeId",
+              "description": "The unique identifier for the payee."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/scheduledPayments/{scheduledPaymentId}",
+        "definition": {
+          "entityName": "ScheduledPayment",
+          "schema": {
+            "$ref": "#/backend/entities/ScheduledPayment"
+          },
+          "description": "Subcollection under a specific user, managing recurring or future-dated transfers and bill payments set up by the user. The 'userId' in the path and within the document ensures direct ownership for secure access and QAPs.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who set up the scheduled payment."
+            },
+            {
+              "name": "scheduledPaymentId",
+              "description": "The unique identifier for the scheduled payment."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed with a strong emphasis on Authorization Independence, Clarity of Intent, DBAC (Database Access Control), and enabling Queryable Authorization Patterns (QAPs) for efficient and secure operations. This architecture prioritizes making security rules simple, robust, and debuggable by avoiding hierarchical authorization dependencies (`get()` calls).\n\n**Authorization Independence:**\n1.  **Denormalization of Ownership:** For user-specific subcollections like `accounts`, `cards`, `payees`, and `scheduledPayments` under `/users/{userId}/`, the `userId` is inherently part of the path, providing immediate ownership context. Additionally, for entities where access relies on parent ownership but are not direct subcollections of the user (e.g., `Address` and `Transaction`), the `ownerUserId` (or just `userId`) is denormalized directly into the document. For instance, each `Transaction` document, though nested under an `Account`, will explicitly contain the `userId` of the ultimate owner, allowing rules to directly check `request.auth.uid == resource.data.userId` without needing to fetch the parent `Account` document.\n2.  **Global Roles (DBAC):** Administrative roles are managed through a dedicated top-level collection, `/roles_admin/{adminId}`. The mere existence of a document at this path for a given `uid` signifies an administrator role. This allows for `exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))` checks, which are atomic and avoid `get()` calls on the `User` profile to determine roles.\n3.  **Address Ownership:** The `/addresses/{addressId}` collection is a single source for all address data. To maintain authorization independence, each address document includes an `ownerType` ('user' or 'branch') and an `ownerId` (the `userId` or `branchId` respectively). User addresses also carry a `userId` property, allowing a user to read their address directly via `request.auth.uid == resource.data.ownerId`. Branch addresses include `isPublic: true` to allow public readability.\n\n**Queryable Authorization Patterns (QAPs):**\n1.  **Path-Based Ownership:** The primary strategy for client-specific data is to use hierarchical paths like `/users/{userId}/accounts/{accountId}`. This structure naturally limits `list` operations for a user to their own data (e.g., `db.collection('users').doc(uid).collection('accounts').get()`).\n2.  **Denormalized Filters:** For collections like `transactions` or `cards`, where a user might need to query across multiple accounts or directly from the top level (if allowed), the denormalized `userId` field (and `accountId` where relevant) within each document enables efficient, secure `list` queries. For example, a user can query their transactions using `db.collectionGroups('transactions').where('userId', '==', request.auth.uid)`. Similarly, the `addresses` collection uses `ownerUserId` and `isPublic` fields for QAP.\n3.  **Segregation of Concerns:** `roles_admin` is segregated from `users` to provide a clear, distinct mechanism for role checks without polluting user profile data with security-critical flags that might be accidentally modified.\n\nThis design ensures that authorization rules are kept lean and efficient, relying on document data and path segments rather than expensive and complex `get()` calls, making the system scalable and easier to audit for security vulnerabilities."
+  }
+}
