@@ -72,7 +72,6 @@ export function useCollection<T = any>(
 
     // If the path is empty or just a slash, it's a root listing attempt.
     if (!pathString || pathString === '/' || pathString === '//') {
-      console.warn('useCollection: Root listing attempt blocked to prevent security denial.');
       setData(null);
       setIsLoading(false);
       return;
