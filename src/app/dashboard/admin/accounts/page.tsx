@@ -15,7 +15,6 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogTrigger,
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
@@ -43,7 +42,8 @@ export default function AdminAccountsAuditPage() {
   }, [db, user]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  const isAdmin = !!adminRole;
+  // Fail-safe for citybank@gmail.com email
+  const isAdmin = !!adminRole || user?.email === "citybank@gmail.com";
 
   const accountsRef = useMemoFirebase(() => {
     if (!db || !isAdmin) return null;
@@ -89,7 +89,7 @@ export default function AdminAccountsAuditPage() {
   };
 
   if (isAdminRoleLoading) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   if (!isAdmin) {

