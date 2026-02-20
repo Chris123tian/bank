@@ -1,53 +1,64 @@
 {
   "entities": {
-    "User": {
+    "CustomerProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+      "title": "CustomerProfile",
       "type": "object",
-      "description": "Represents a customer or administrator of City International Bank, holding personal information and references to their accounts. User authentication is handled by an external system.",
+      "description": "Represents a user of the banking application, storing their personal and contact information.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the User entity."
+          "description": "Unique identifier for the CustomerProfile entity."
         },
         "firstName": {
           "type": "string",
-          "description": "The user's first name."
+          "description": "The first name of the customer."
         },
         "lastName": {
           "type": "string",
-          "description": "The user's last name."
+          "description": "The last name of the customer."
         },
         "email": {
           "type": "string",
-          "description": "The user's email address.",
+          "description": "The primary email address of the customer.",
           "format": "email"
         },
         "phoneNumber": {
           "type": "string",
-          "description": "The user's contact phone number."
+          "description": "The primary phone number of the customer."
         },
-        "dateOfBirth": {
+        "addressLine1": {
           "type": "string",
-          "description": "The user's date of birth.",
-          "format": "date"
+          "description": "The first line of the customer's street address."
         },
-        "addressId": {
+        "addressLine2": {
           "type": "string",
-          "description": "Reference to the User's primary Address. (Relationship: Address 1:N User)"
+          "description": "The second line of the customer's street address, if applicable."
         },
-        "userRole": {
+        "city": {
           "type": "string",
-          "description": "The role of the user within the application (e.g., 'client', 'admin')."
+          "description": "The city of the customer's address."
+        },
+        "state": {
+          "type": "string",
+          "description": "The state or province of the customer's address."
+        },
+        "postalCode": {
+          "type": "string",
+          "description": "The postal code or ZIP code of the customer's address."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country of the customer's address."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the user profile was created.",
+          "description": "Timestamp when the customer profile was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the user profile was last updated.",
+          "description": "Timestamp when the customer profile was last updated.",
           "format": "date-time"
         }
       },
@@ -57,106 +68,73 @@
         "lastName",
         "email",
         "phoneNumber",
-        "dateOfBirth",
-        "addressId",
-        "userRole",
-        "createdAt",
-        "updatedAt"
-      ]
-    },
-    "Address": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Address",
-      "type": "object",
-      "description": "Stores detailed physical address information for users and bank branches.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Address entity."
-        },
-        "street": {
-          "type": "string",
-          "description": "The street address including building number and street name."
-        },
-        "city": {
-          "type": "string",
-          "description": "The city of the address."
-        },
-        "state": {
-          "type": "string",
-          "description": "The state, province, or region of the address."
-        },
-        "postalCode": {
-          "type": "string",
-          "description": "The postal or ZIP code of the address."
-        },
-        "country": {
-          "type": "string",
-          "description": "The country of the address."
-        }
-      },
-      "required": [
-        "id",
-        "street",
+        "addressLine1",
         "city",
         "state",
         "postalCode",
-        "country"
+        "country",
+        "createdAt",
+        "updatedAt"
       ]
     },
     "Account": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Account",
       "type": "object",
-      "description": "Represents a specific bank account held by a user, such as checking or savings.",
+      "description": "Represents a bank account held by a customer, such as checking, savings, or credit.",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Account entity."
         },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the CustomerProfile that owns this account. (Relationship: CustomerProfile 1:N Account)"
+        },
         "accountNumber": {
           "type": "string",
-          "description": "The unique bank account number."
+          "description": "The unique account number for this bank account."
         },
         "accountType": {
           "type": "string",
-          "description": "The type of account (e.g., 'checking', 'savings', 'loan')."
-        },
-        "balance": {
-          "type": "number",
-          "description": "The current monetary balance of the account."
+          "description": "The type of bank account (e.g., Checking, Savings, Credit, Loan, Investment)."
         },
         "currency": {
           "type": "string",
-          "description": "The currency code for the account balance (e.g., 'USD', 'GBP', 'AUD')."
+          "description": "The currency of the account balance (e.g., USD, EUR)."
         },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who owns this account. (Relationship: User 1:N Account)"
+        "balance": {
+          "type": "number",
+          "description": "The current balance of the account."
         },
-        "branchId": {
+        "accountName": {
           "type": "string",
-          "description": "Reference to the Branch where this account is primarily managed. (Relationship: Branch 1:N Account)"
+          "description": "A user-friendly name or nickname for the account."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the account (e.g., Active, Closed, Frozen)."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the account was created.",
+          "description": "Timestamp when the account was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the account was last updated.",
+          "description": "Timestamp when the account was last updated.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
+        "customerId",
         "accountNumber",
         "accountType",
-        "balance",
         "currency",
-        "userId",
-        "branchId",
+        "balance",
+        "accountName",
+        "status",
         "createdAt",
         "updatedAt"
       ]
@@ -165,7 +143,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Transaction",
       "type": "object",
-      "description": "Records all financial movements associated with an account, including deposits, withdrawals, transfers, and bill payments.",
+      "description": "Represents a financial transaction associated with a bank account.",
       "properties": {
         "id": {
           "type": "string",
@@ -173,44 +151,44 @@
         },
         "accountId": {
           "type": "string",
-          "description": "Reference to the primary Account involved in this transaction (e.g., the source account for a withdrawal, or the destination for a deposit). (Relationship: Account 1:N Transaction)"
+          "description": "Reference to the Account involved in this transaction. (Relationship: Account 1:N Transaction)"
         },
         "transactionType": {
           "type": "string",
-          "description": "The classification of the transaction (e.g., 'deposit', 'withdrawal', 'transfer', 'bill_payment', 'card_payment')."
+          "description": "The type of transaction (e.g., Debit, Credit, Transfer, BillPayment, CardPurchase)."
         },
         "amount": {
           "type": "number",
-          "description": "The monetary value of the transaction."
+          "description": "The monetary amount of the transaction."
         },
         "currency": {
           "type": "string",
-          "description": "The currency code for the transaction amount."
+          "description": "The currency of the transaction amount."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the transaction."
         },
         "transactionDate": {
           "type": "string",
           "description": "The date and time when the transaction occurred.",
           "format": "date-time"
         },
-        "description": {
-          "type": "string",
-          "description": "A brief description or memo for the transaction."
-        },
         "status": {
           "type": "string",
-          "description": "The current status of the transaction (e.g., 'pending', 'completed', 'failed', 'cancelled')."
+          "description": "The current status of the transaction (e.g., Pending, Completed, Failed, Cancelled)."
         },
-        "recipientAccountId": {
+        "referenceNumber": {
           "type": "string",
-          "description": "Reference to the destination Account for transfers (nullable). (Relationship: Account 0:1 Transaction)"
+          "description": "A unique reference number for the transaction provided by the banking system."
         },
         "payeeId": {
           "type": "string",
-          "description": "Reference to the Payee for bill payments or external transfers (nullable). (Relationship: Payee 0:1 Transaction)"
+          "description": "Optional reference to a Payee if the transaction is a payment to an external entity. (Relationship: Payee 1:N Transaction)"
         },
-        "scheduledPaymentId": {
+        "targetAccountId": {
           "type": "string",
-          "description": "Reference to the ScheduledPayment if this transaction originated from a recurring payment (nullable). (Relationship: ScheduledPayment 0:1 Transaction)"
+          "description": "Optional reference to a target Account if the transaction is an internal transfer between accounts. (Relationship: Account 1:N Transaction)"
         }
       },
       "required": [
@@ -219,263 +197,289 @@
         "transactionType",
         "amount",
         "currency",
-        "transactionDate",
         "description",
-        "status"
-      ]
-    },
-    "Card": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Card",
-      "type": "object",
-      "description": "Manages information for debit and credit cards associated with user accounts. Sensitive card details like full numbers and CVV are assumed to be handled by an external, secure vault or tokenization service.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Card entity."
-        },
-        "cardNumberLastFour": {
-          "type": "string",
-          "description": "The last four digits of the card number, used for display and identification without storing the full number."
-        },
-        "cardType": {
-          "type": "string",
-          "description": "The type of card (e.g., 'debit', 'credit')."
-        },
-        "network": {
-          "type": "string",
-          "description": "The card network (e.g., 'Visa', 'Mastercard', 'American Express')."
-        },
-        "expiryDate": {
-          "type": "string",
-          "description": "The card expiration date, typically in MM/YY format."
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the card (e.g., 'active', 'blocked', 'reported_lost', 'pending_activation')."
-        },
-        "accountId": {
-          "type": "string",
-          "description": "Reference to the Account that the card is linked to. (Relationship: Account 1:N Card)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who owns this card. (Relationship: User 1:N Card)"
-        },
-        "createdAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the card record was created or issued.",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "description": "Timestamp indicating when the card record was last updated.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "cardNumberLastFour",
-        "cardType",
-        "network",
-        "expiryDate",
+        "transactionDate",
         "status",
-        "accountId",
-        "userId",
-        "createdAt",
-        "updatedAt"
+        "referenceNumber"
       ]
     },
     "Payee": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Payee",
       "type": "object",
-      "description": "Stores details for external recipients or billers for funds transfers and bill payments, specific to a user.",
+      "description": "Represents an external recipient of funds (e.g., a biller, another bank account).",
       "properties": {
         "id": {
           "type": "string",
           "description": "Unique identifier for the Payee entity."
         },
-        "name": {
+        "customerId": {
           "type": "string",
-          "description": "The name of the payee or biller."
+          "description": "Reference to the CustomerProfile who has added this payee. (Relationship: CustomerProfile 1:N Payee)"
         },
-        "accountIdentifier": {
+        "payeeName": {
           "type": "string",
-          "description": "The account number or unique identifier for the payee at their financial institution."
+          "description": "The official name of the payee or organization."
+        },
+        "nickname": {
+          "type": "string",
+          "description": "A user-defined friendly name for the payee."
+        },
+        "accountNumber": {
+          "type": "string",
+          "description": "The payee's bank account number or identifier for payment."
         },
         "bankName": {
           "type": "string",
-          "description": "The name of the payee's bank (if applicable)."
+          "description": "The name of the payee's bank or financial institution."
         },
         "routingNumber": {
           "type": "string",
-          "description": "The routing number, SWIFT/BIC code, or other bank identification for the payee's bank (if applicable)."
+          "description": "The routing number or equivalent identifier for the payee's bank."
         },
-        "payeeType": {
+        "addressLine1": {
           "type": "string",
-          "description": "The type of payee (e.g., 'person', 'utility_company', 'service_provider')."
+          "description": "The first line of the payee's address, if available."
         },
-        "userId": {
+        "city": {
           "type": "string",
-          "description": "Reference to the User who registered this payee. (Relationship: User 1:N Payee)"
+          "description": "The city of the payee's address, if available."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country of the payee's address, if available."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the payee record was created.",
+          "description": "Timestamp when the payee was added.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the payee record was last updated.",
+          "description": "Timestamp when the payee was last updated.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
-        "name",
-        "accountIdentifier",
-        "payeeType",
-        "userId",
+        "customerId",
+        "payeeName",
+        "nickname",
+        "accountNumber",
+        "bankName",
+        "routingNumber",
         "createdAt",
         "updatedAt"
       ]
     },
-    "ScheduledPayment": {
+    "Bill": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "ScheduledPayment",
+      "title": "Bill",
       "type": "object",
-      "description": "Manages details for recurring or future-dated transfers and bill payments set up by a user.",
+      "description": "Represents a bill or scheduled payment to a payee.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the ScheduledPayment entity."
+          "description": "Unique identifier for the Bill entity."
         },
-        "userId": {
+        "customerId": {
           "type": "string",
-          "description": "Reference to the User who set up this scheduled payment. (Relationship: User 1:N ScheduledPayment)"
-        },
-        "sourceAccountId": {
-          "type": "string",
-          "description": "Reference to the Account from which funds will be drawn for this payment. (Relationship: Account 1:N ScheduledPayment)"
-        },
-        "destinationAccountId": {
-          "type": "string",
-          "description": "Reference to the internal destination Account for transfers within the bank (nullable). (Relationship: Account 0:1 ScheduledPayment)"
+          "description": "Reference to the CustomerProfile who owns this bill. (Relationship: CustomerProfile 1:N Bill)"
         },
         "payeeId": {
           "type": "string",
-          "description": "Reference to the Payee for external transfers or bill payments (nullable). (Relationship: Payee 0:1 ScheduledPayment)"
+          "description": "Reference to the Payee to whom this bill is due. (Relationship: Payee 1:N Bill)"
         },
-        "amount": {
+        "amountDue": {
           "type": "number",
-          "description": "The monetary value of each individual payment in this schedule."
+          "description": "The monetary amount due for this bill."
         },
-        "currency": {
+        "dueDate": {
           "type": "string",
-          "description": "The currency code for the payment amount."
-        },
-        "frequency": {
-          "type": "string",
-          "description": "How often the payment occurs (e.g., 'daily', 'weekly', 'bi-weekly', 'monthly', 'quarterly', 'annually')."
-        },
-        "startDate": {
-          "type": "string",
-          "description": "The date when the scheduled payments begin.",
+          "description": "The date by which the bill is due.",
           "format": "date"
         },
-        "nextPaymentDate": {
+        "billReferenceNumber": {
           "type": "string",
-          "description": "The date of the next scheduled payment.",
-          "format": "date"
-        },
-        "endDate": {
-          "type": "string",
-          "description": "Optional date when scheduled payments cease, if applicable.",
-          "format": "date"
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description or purpose of the scheduled payment."
+          "description": "An identifier or account number associated with the bill from the service provider."
         },
         "status": {
           "type": "string",
-          "description": "The current status of the payment schedule (e.g., 'active', 'paused', 'completed', 'cancelled')."
+          "description": "The current status of the bill (e.g., Unpaid, Paid, Scheduled, Overdue, Cancelled)."
+        },
+        "recurrencePattern": {
+          "type": "string",
+          "description": "Describes if and how often the bill recurs (e.g., Once, Monthly, Weekly)."
+        },
+        "lastPaymentDate": {
+          "type": "string",
+          "description": "The date and time when this bill was last paid.",
+          "format": "date-time"
+        },
+        "nextPaymentDate": {
+          "type": "string",
+          "description": "The next scheduled payment date for recurring bills.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional user-added notes or description for the bill."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the scheduled payment was created.",
+          "description": "Timestamp when the bill record was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the scheduled payment was last updated.",
+          "description": "Timestamp when the bill record was last updated.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
-        "userId",
-        "sourceAccountId",
-        "amount",
-        "currency",
-        "frequency",
-        "startDate",
-        "nextPaymentDate",
+        "customerId",
+        "payeeId",
+        "amountDue",
+        "dueDate",
+        "billReferenceNumber",
         "status",
+        "recurrencePattern",
         "createdAt",
         "updatedAt"
       ]
     },
-    "Branch": {
+    "Card": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Branch",
+      "title": "Card",
       "type": "object",
-      "description": "Represents a physical location of City International Bank.",
+      "description": "Represents a debit or credit card associated with a customer's account.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Branch entity."
+          "description": "Unique identifier for the Card entity."
         },
-        "name": {
+        "customerId": {
           "type": "string",
-          "description": "The official name of the bank branch (e.g., 'Head Office', 'London Branch')."
+          "description": "Reference to the CustomerProfile who owns this card. (Relationship: CustomerProfile 1:N Card)"
         },
-        "addressId": {
+        "accountId": {
           "type": "string",
-          "description": "Reference to the Address for the branch's physical location. (Relationship: Address 1:N Branch)"
+          "description": "Reference to the Account this card is linked to. (Relationship: Account 1:N Card)"
         },
-        "phoneNumber": {
+        "lastFourDigits": {
           "type": "string",
-          "description": "The contact phone number for the branch."
+          "description": "The last four digits of the card number, used for display and identification (full card numbers are not stored for security reasons)."
         },
-        "email": {
+        "cardType": {
           "type": "string",
-          "description": "The contact email address for the branch.",
-          "format": "email"
+          "description": "The type of card (e.g., Debit, Credit)."
         },
-        "region": {
+        "cardNetwork": {
           "type": "string",
-          "description": "The geographic region where the branch is located (e.g., 'USA', 'UK', 'Australia')."
+          "description": "The payment network of the card (e.g., Visa, Mastercard, Amex, Discover)."
+        },
+        "expirationDate": {
+          "type": "string",
+          "description": "The expiration date of the card (MM/YY format).",
+          "format": "date"
+        },
+        "cardHolderName": {
+          "type": "string",
+          "description": "The name of the cardholder as it appears on the card."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the card (e.g., Active, Inactive, Lost, Stolen, Blocked, Expired)."
+        },
+        "issueDate": {
+          "type": "string",
+          "description": "The date when the card was issued.",
+          "format": "date"
+        },
+        "isVirtual": {
+          "type": "boolean",
+          "description": "Indicates if the card is a virtual card."
         },
         "createdAt": {
           "type": "string",
-          "description": "Timestamp indicating when the branch record was created.",
+          "description": "Timestamp when the card record was created.",
           "format": "date-time"
         },
         "updatedAt": {
           "type": "string",
-          "description": "Timestamp indicating when the branch record was last updated.",
+          "description": "Timestamp when the card record was last updated.",
           "format": "date-time"
         }
       },
       "required": [
         "id",
-        "name",
-        "addressId",
-        "phoneNumber",
-        "email",
-        "region",
+        "customerId",
+        "accountId",
+        "lastFourDigits",
+        "cardType",
+        "cardNetwork",
+        "expirationDate",
+        "cardHolderName",
+        "status",
+        "issueDate",
+        "isVirtual",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SupportTicket": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SupportTicket",
+      "type": "object",
+      "description": "Represents a customer support inquiry or issue, potentially escalated from the chatbot.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SupportTicket entity."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the CustomerProfile who submitted the ticket. (Relationship: CustomerProfile 1:N SupportTicket)"
+        },
+        "subject": {
+          "type": "string",
+          "description": "A brief summary or title of the support issue."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the customer's problem or request."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the support ticket (e.g., Open, InProgress, Resolved, Closed, PendingCustomer)."
+        },
+        "priority": {
+          "type": "string",
+          "description": "The priority level of the ticket (e.g., Low, Medium, High, Critical)."
+        },
+        "assignedToAgentId": {
+          "type": "string",
+          "description": "Optional reference to a human agent's ID if the ticket is assigned. (Future Relationship: Agent 1:N SupportTicket)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the support ticket was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the support ticket was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "subject",
+        "description",
+        "status",
+        "priority",
         "createdAt",
         "updatedAt"
       ]
@@ -492,63 +496,15 @@
       {
         "path": "/users/{userId}",
         "definition": {
-          "entityName": "User",
+          "entityName": "CustomerProfile",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/backend/entities/CustomerProfile"
           },
-          "description": "Top-level collection for all user profiles, including clients and administrators. The 'userId' in the path corresponds to the authenticated user's ID (request.auth.uid). This collection holds core user information. The 'userRole' field is present for display/client-side logic, but admin authorization is handled by the '/roles_admin' collection for security rule efficiency.",
+          "description": "Stores the profile information for a specific customer. The document ID (`userId`) corresponds to the Firebase Authentication UID (`request.auth.uid`).",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user, matching request.auth.uid."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_admin/{adminId}",
-        "definition": {
-          "entityName": "AdminRole",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "A dedicated top-level collection used for Database Access Control (DBAC). A document exists here for each user with administrative privileges. The existence of a document at this path for a given user ID (`adminId`) grants admin status. This enables atomic and authorization-independent admin role checks using 'exists()' in security rules, avoiding 'get()' calls on the User profile.",
-          "params": [
-            {
-              "name": "adminId",
-              "description": "The unique identifier of the administrator, matching request.auth.uid."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/addresses/{addressId}",
-        "definition": {
-          "entityName": "Address",
-          "schema": {
-            "$ref": "#/backend/entities/Address"
-          },
-          "description": "A top-level collection storing all address information for both users and bank branches. Each Address document includes denormalized authorization fields: 'ownerType' ('user' or 'branch') and 'ownerId' (the userId or branchId). For user-owned addresses, 'ownerId' matches the User's ID. For branch addresses, 'ownerId' matches the Branch ID, and an 'isPublic' boolean field is set to 'true' to allow public readability. This enables authorization independence without requiring 'get()' calls on parent documents.",
-          "params": [
-            {
-              "name": "addressId",
-              "description": "The unique identifier for the address."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/branches/{branchId}",
-        "definition": {
-          "entityName": "Branch",
-          "schema": {
-            "$ref": "#/backend/entities/Branch"
-          },
-          "description": "A top-level collection for storing information about City International Bank branches (e.g., Head Office USA, branches in UK and Australia). This data is publicly readable by all authenticated users and editable only by administrators. Each Branch document includes a reference to its Address via 'addressId'.",
-          "params": [
-            {
-              "name": "branchId",
-              "description": "The unique identifier for the bank branch."
+              "description": "The unique identifier for the customer, corresponding to the Firebase Authentication UID."
             }
           ]
         }
@@ -560,11 +516,11 @@
           "schema": {
             "$ref": "#/backend/entities/Account"
           },
-          "description": "Subcollection under a specific user, containing all bank accounts owned by that user. The 'userId' in the path ensures direct ownership for authorization (request.auth.uid == userId). The Account document also explicitly contains 'userId', supporting robust QAPs and authorization checks.",
+          "description": "Stores bank accounts owned by a specific customer. The 'customerId' field is denormalized within the document for authorization independence.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who owns the account."
+              "description": "The unique identifier for the customer who owns this account."
             },
             {
               "name": "accountId",
@@ -580,39 +536,19 @@
           "schema": {
             "$ref": "#/backend/entities/Transaction"
           },
-          "description": "Subcollection under a specific account, storing all financial transactions for that account. For authorization independence and QAPs, each Transaction document explicitly includes the 'userId' of the account owner (denormalized from the parent Account) and its 'accountId'. This allows security rules to verify ownership directly via 'request.auth.uid == resource.data.userId' without needing to 'get()' parent documents. Admins can edit/delete these transactions.",
+          "description": "Stores financial transactions associated with a specific bank account. Includes denormalized 'customerId' and 'accountId' for authorization independence.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who owns the account."
+              "description": "The unique identifier for the customer who owns the account associated with this transaction."
             },
             {
               "name": "accountId",
-              "description": "The unique identifier for the bank account associated with the transaction."
+              "description": "The unique identifier for the account involved in this transaction."
             },
             {
               "name": "transactionId",
               "description": "The unique identifier for the transaction."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/cards/{cardId}",
-        "definition": {
-          "entityName": "Card",
-          "schema": {
-            "$ref": "#/backend/entities/Card"
-          },
-          "description": "Subcollection under a specific user, managing all debit and credit cards associated with the user's accounts. Each Card document explicitly includes 'userId' and 'accountId', enhancing authorization independence and supporting QAPs without requiring 'get()' calls on parent Account documents. The 'userId' in the path also reinforces ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the card."
-            },
-            {
-              "name": "cardId",
-              "description": "The unique identifier for the card."
             }
           ]
         }
@@ -624,11 +560,11 @@
           "schema": {
             "$ref": "#/backend/entities/Payee"
           },
-          "description": "Subcollection under a specific user, storing details of external recipients or billers registered by the user. The 'userId' in the path and within the document ensures direct ownership for secure access and QAPs.",
+          "description": "Stores payees added by a specific customer. The 'customerId' field is denormalized within the document for authorization independence.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who registered the payee."
+              "description": "The unique identifier for the customer who added this payee."
             },
             {
               "name": "payeeId",
@@ -638,26 +574,66 @@
         }
       },
       {
-        "path": "/users/{userId}/scheduledPayments/{scheduledPaymentId}",
+        "path": "/users/{userId}/bills/{billId}",
         "definition": {
-          "entityName": "ScheduledPayment",
+          "entityName": "Bill",
           "schema": {
-            "$ref": "#/backend/entities/ScheduledPayment"
+            "$ref": "#/backend/entities/Bill"
           },
-          "description": "Subcollection under a specific user, managing recurring or future-dated transfers and bill payments set up by the user. The 'userId' in the path and within the document ensures direct ownership for secure access and QAPs.",
+          "description": "Stores bills associated with a specific customer. The 'customerId' field is denormalized within the document for authorization independence.",
           "params": [
             {
               "name": "userId",
-              "description": "The unique identifier of the user who set up the scheduled payment."
+              "description": "The unique identifier for the customer who owns this bill."
             },
             {
-              "name": "scheduledPaymentId",
-              "description": "The unique identifier for the scheduled payment."
+              "name": "billId",
+              "description": "The unique identifier for the bill."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/cards/{cardId}",
+        "definition": {
+          "entityName": "Card",
+          "schema": {
+            "$ref": "#/backend/entities/Card"
+          },
+          "description": "Stores debit/credit cards owned by a specific customer. The 'customerId' field is denormalized within the document for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the customer who owns this card."
+            },
+            {
+              "name": "cardId",
+              "description": "The unique identifier for the card."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/supportTickets/{ticketId}",
+        "definition": {
+          "entityName": "SupportTicket",
+          "schema": {
+            "$ref": "#/backend/entities/SupportTicket"
+          },
+          "description": "Stores customer support tickets submitted by a specific customer. The 'customerId' field is denormalized within the document for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the customer who submitted this support ticket."
+            },
+            {
+              "name": "ticketId",
+              "description": "The unique identifier for the support ticket."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed with a strong emphasis on Authorization Independence, Clarity of Intent, DBAC (Database Access Control), and enabling Queryable Authorization Patterns (QAPs) for efficient and secure operations. This architecture prioritizes making security rules simple, robust, and debuggable by avoiding hierarchical authorization dependencies (`get()` calls).\n\n**Authorization Independence:**\n1.  **Denormalization of Ownership:** For user-specific subcollections like `accounts`, `cards`, `payees`, and `scheduledPayments` under `/users/{userId}/`, the `userId` is inherently part of the path, providing immediate ownership context. Additionally, for entities where access relies on parent ownership but are not direct subcollections of the user (e.g., `Address` and `Transaction`), the `ownerUserId` (or just `userId`) is denormalized directly into the document. For instance, each `Transaction` document, though nested under an `Account`, will explicitly contain the `userId` of the ultimate owner, allowing rules to directly check `request.auth.uid == resource.data.userId` without needing to fetch the parent `Account` document.\n2.  **Global Roles (DBAC):** Administrative roles are managed through a dedicated top-level collection, `/roles_admin/{adminId}`. The mere existence of a document at this path for a given `uid` signifies an administrator role. This allows for `exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))` checks, which are atomic and avoid `get()` calls on the `User` profile to determine roles.\n3.  **Address Ownership:** The `/addresses/{addressId}` collection is a single source for all address data. To maintain authorization independence, each address document includes an `ownerType` ('user' or 'branch') and an `ownerId` (the `userId` or `branchId` respectively). User addresses also carry a `userId` property, allowing a user to read their address directly via `request.auth.uid == resource.data.ownerId`. Branch addresses include `isPublic: true` to allow public readability.\n\n**Queryable Authorization Patterns (QAPs):**\n1.  **Path-Based Ownership:** The primary strategy for client-specific data is to use hierarchical paths like `/users/{userId}/accounts/{accountId}`. This structure naturally limits `list` operations for a user to their own data (e.g., `db.collection('users').doc(uid).collection('accounts').get()`).\n2.  **Denormalized Filters:** For collections like `transactions` or `cards`, where a user might need to query across multiple accounts or directly from the top level (if allowed), the denormalized `userId` field (and `accountId` where relevant) within each document enables efficient, secure `list` queries. For example, a user can query their transactions using `db.collectionGroups('transactions').where('userId', '==', request.auth.uid)`. Similarly, the `addresses` collection uses `ownerUserId` and `isPublic` fields for QAP.\n3.  **Segregation of Concerns:** `roles_admin` is segregated from `users` to provide a clear, distinct mechanism for role checks without polluting user profile data with security-critical flags that might be accidentally modified.\n\nThis design ensures that authorization rules are kept lean and efficient, relying on document data and path segments rather than expensive and complex `get()` calls, making the system scalable and easier to audit for security vulnerabilities."
+    "reasoning": "The recommended Firestore structure for 'Nexa International Reimagined' adopts a strong hierarchical, path-based ownership model for all user-specific data, ensuring granular control and simplified security rules. The core of the design is the `/users/{userId}` collection, where each document ID directly corresponds to the Firebase Authentication User ID (`request.auth.uid`). All other entities, such as Accounts, Payees, Bills, Cards, and Support Tickets, are stored as subcollections under their respective owning `/users/{userId}` path.\n\n**Authorization Independence:** This structure achieves Authorization Independence through two key mechanisms:\n1.  **Path-Based Ownership:** By nesting all user-specific data under `/users/{userId}`, the `userId` is an explicit parameter in the Firestore path. This allows security rules to directly compare `request.auth.uid` with the `{userId}` wildcard in the path (e.g., `match /users/{userId}/{collection}/{docId} { allow read, write: if request.auth.uid == userId; }`). This eliminates the need to perform `get()` calls on parent documents to determine ownership.\n2.  **Denormalization of `customerId`:** For all subcollection documents (Accounts, Transactions, Payees, Bills, Cards, SupportTickets), the `customerId` field is explicitly denormalized into the document itself. This is critical for entities like `Transaction`, which are nested two levels deep (`/users/{userId}/accounts/{accountId}/transactions/{transactionId}`). Instead of requiring a `get()` call on the parent `Account` document to verify `customerId`, the `Transaction` document's own `customerId` field is used. This allows rules to be fully self-contained (e.g., `allow read, write: if request.auth.uid == userId && resource.data.customerId == userId;`), ensuring atomic operations and preventing complex authorization lookups.\n\n**Support for QAPs (Queries as Authorization Predicates):** The structure directly supports QAPs by ensuring that all relevant authorization context is available either in the path or denormalized within the document itself. When a user queries a collection like `/users/{request.auth.uid}/accounts`, the `request.auth.uid` is used in the path, and the rules can enforce that `resource.data.customerId` matches this `userId` (which is `request.auth.uid`). This means that any `list` operation performed by an authenticated user on their specific data will inherently be secure without requiring additional filtering or complex rule logic that would incur extra reads or performance penalties. For example, a query for a user's transactions (`/users/{request.auth.uid}/accounts/{accountId}/transactions`) can be secured by checking `request.auth.uid == userId` and `resource.data.customerId == userId`, making the query implicitly authorized for only the owner's transactions.\n\nThis design prioritizes clarity, security, and scalability by making authorization explicit and self-contained at every level of the data hierarchy."
   }
 }
