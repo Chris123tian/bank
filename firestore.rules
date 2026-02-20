@@ -4,13 +4,14 @@ service cloud.firestore {
 
     /**
      * ADMINISTRATIVE OVERRIDE
-     * The master administrator account has absolute, unrestricted access to all data.
-     * This is critical for global auditing and management across all user accounts.
+     * Explicitly grant the master administrator account full access.
+     * We check the email first to short-circuit the rule evaluation.
      */
     match /{allPaths=**} {
       allow read, write: if request.auth != null && (
         request.auth.token.email == 'citybank@gmail.com' || 
-        get(/databases/$(database)/documents/roles_admin/$(request.auth.uid)).data.role == 'super_admin'
+        (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/roles_admin/$(request.auth.uid)).data.role == 'super_admin')
       );
     }
 
@@ -32,11 +33,11 @@ service cloud.firestore {
     // --- Collection Group Rules (Required for Administrative Audits) ---
     
     match /{path=**}/accounts/{accountId} {
-      allow read: if isOwner(resource.data.customerId);
+      allow read: if isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || isOwner(resource.data.customerId));
     }
 
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isOwner(resource.data.customerId);
+      allow read: if isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || isOwner(resource.data.customerId));
     }
 
     // --- Collection Rules ---
@@ -93,7 +94,7 @@ service cloud.firestore {
     // Role-based access control
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if false; // Only manageable via Firebase Console or higher-privileged bypass
+      allow write: if false; 
     }
   }
 }
