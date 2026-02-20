@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Building2, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -28,14 +28,25 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (user && !isUserLoading) {
+      setLoading(true);
       // Auto-Admin Logic for the prototype
       if (user.email === "citybank@gmail.com") {
         const adminRef = doc(db, "roles_admin", user.uid);
-        setDoc(adminRef, { 
-          email: user.email, 
-          assignedAt: serverTimestamp(),
-          role: "super_admin"
-        }, { merge: true }).then(() => {
+        // Check if admin record exists, if not create it
+        getDoc(adminRef).then((snapshot) => {
+          if (!snapshot.exists()) {
+            setDoc(adminRef, { 
+              email: user.email, 
+              assignedAt: serverTimestamp(),
+              role: "super_admin"
+            }, { merge: true }).then(() => {
+              router.push("/dashboard");
+            });
+          } else {
+            router.push("/dashboard");
+          }
+        }).catch(() => {
+          // Fallback if permission is denied during check
           router.push("/dashboard");
         });
       } else {
@@ -78,7 +89,10 @@ export default function AuthPage() {
         <div className="bg-primary p-2 rounded-lg">
           <Building2 className="text-white h-6 w-6" />
         </div>
-        <span className="font-headline font-black text-2xl tracking-tighter text-primary">CITY BANK</span>
+        <div className="flex flex-col -space-y-1">
+          <span className="font-headline font-black text-2xl tracking-tighter text-primary leading-none">CITY BANK</span>
+          <span className="text-[8px] font-black tracking-[0.2em] text-accent uppercase">International</span>
+        </div>
       </Link>
 
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-accent">

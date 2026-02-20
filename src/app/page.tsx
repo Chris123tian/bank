@@ -1,28 +1,28 @@
-import Link from "next/image";
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { 
   Building2, 
-  Shield, 
   Smartphone, 
   Globe, 
   ChevronRight, 
-  CheckCircle2,
   TrendingUp,
-  CreditCard,
-  ArrowRightLeft,
-  MapPin,
   Landmark,
   CircleDollarSign,
   Briefcase,
-  UserCheck,
+  ArrowRightLeft,
+  MapPin,
   Zap,
   ShieldCheck,
   Headphones
 } from "lucide-react";
 import LinkNext from "next/link";
 import Image from "next/image";
+import { useUser } from "@/firebase";
 
 export default function LandingPage() {
+  const { user } = useUser();
+
   return (
     <div className="min-h-screen flex flex-col font-body text-foreground">
       {/* Navigation */}
@@ -44,12 +44,20 @@ export default function LandingPage() {
             <LinkNext href="/auth" className="hover:text-accent transition-colors">Wealth</LinkNext>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" className="hidden sm:inline-flex text-primary font-bold" asChild>
-              <LinkNext href="/auth">Sign In</LinkNext>
-            </Button>
-            <Button className="bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20" asChild>
-              <LinkNext href="/auth?mode=signup">Open Account</LinkNext>
-            </Button>
+            {user ? (
+              <Button className="bg-primary hover:bg-primary/90 shadow-lg" asChild>
+                <LinkNext href="/dashboard">Go to Dashboard</LinkNext>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" className="hidden sm:inline-flex text-primary font-bold" asChild>
+                  <LinkNext href="/auth">Sign In</LinkNext>
+                </Button>
+                <Button className="bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20" asChild>
+                  <LinkNext href="/auth?mode=signup">Open Account</LinkNext>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -75,7 +83,9 @@ export default function LandingPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Button size="lg" className="bg-accent hover:bg-accent/90 text-lg px-8 py-7 shadow-xl shadow-accent/30" asChild>
-                    <LinkNext href="/auth?mode=signup">Get Started Now <ChevronRight className="ml-2 h-5 w-5" /></LinkNext>
+                    <LinkNext href={user ? "/dashboard/accounts/new" : "/auth?mode=signup"}>
+                      Get Started Now <ChevronRight className="ml-2 h-5 w-5" />
+                    </LinkNext>
                   </Button>
                   <Button size="lg" variant="outline" className="text-white border-white/30 hover:bg-white/10 text-lg px-8 py-7" asChild>
                     <LinkNext href="#services">View Our Services</LinkNext>

@@ -1,31 +1,62 @@
 "use client";
 
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { collectionGroup, doc } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit3, ShieldAlert } from "lucide-react";
+import { Trash2, Edit3, ShieldAlert, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminTransactionsAuditPage() {
   const { toast } = useToast();
   const db = useFirestore();
+  const { user } = useUser();
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, "roles_admin", user.uid);
+  }, [db, user]);
+
+  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
+  const isAdmin = !!adminRole;
 
   // collectionGroup('transactions') allows admin to see all transactions across all users
-  const transactionsRef = useMemoFirebase(() => collectionGroup(db, "transactions"), [db]);
-  const { data: transactions, isLoading } = useCollection(transactionsRef);
+  const transactionsRef = useMemoFirebase(() => {
+    // Only query if we know the user is an admin to avoid permission errors
+    if (!db || !isAdmin) return null;
+    return collectionGroup(db, "transactions");
+  }, [db, isAdmin]);
+
+  const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
 
   const handleDelete = (transaction: any) => {
-    // Correctly reconstruct path for deletion: /users/{userId}/accounts/{accountId}/transactions/{transactionId}
     const path = `users/${transaction.userId}/accounts/${transaction.accountId}/transactions/${transaction.id}`;
     const docRef = doc(db, path);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Transaction Deleted", description: `Audit trail updated for ID: ${transaction.id}` });
   };
+
+  if (isAdminRoleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin && !isAdminRoleLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <ShieldAlert className="h-12 w-12 text-red-500" />
+        <h2 className="text-2xl font-bold">Access Denied</h2>
+        <p className="text-muted-foreground">You do not have administrative privileges to view this page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 text-foreground">
@@ -57,11 +88,11 @@ export default function AdminTransactionsAuditPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {isTransactionsLoading ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-10">Auditing records...</TableCell></TableRow>
               ) : transactions?.map((tx) => (
                 <TableRow key={tx.id}>
-                  <TableCell className="text-xs font-mono">{tx.transactionDate || 'N/A'}</TableCell>
+                  <TableCell className="text-xs font-mono">{tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell className="text-xs font-mono">{tx.userId}</TableCell>
                   <TableCell className="font-medium">{tx.description}</TableCell>
                   <TableCell>
@@ -71,7 +102,7 @@ export default function AdminTransactionsAuditPage() {
                     ${Math.abs(tx.amount).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400" onClick={() => toast({ title: "Edit Mode", description: "Edit functionality coming soon."})}>
                       <Edit3 className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -85,6 +116,13 @@ export default function AdminTransactionsAuditPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!isTransactionsLoading && (!transactions || transactions.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">
+                    No transactions found in the global ledger.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

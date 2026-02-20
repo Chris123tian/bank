@@ -20,11 +20,11 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collection, doc, serverTimestamp } from "firebase/firestore";
+import { collection } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 const chartData = [
   { month: "Jan", income: 4500, expenses: 3200 },
@@ -41,7 +41,6 @@ const chartConfig = {
 };
 
 export default function DashboardPage() {
-  const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
 
@@ -58,23 +57,6 @@ export default function DashboardPage() {
   }, [db, user, accounts]);
 
   const { data: recentTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
-
-  const handleOpenAccount = () => {
-    if (!user || !accountsRef) return;
-    const accountData = {
-      accountNumber: `CITY-${Math.floor(10000000 + Math.random() * 90000000)}`,
-      accountType: "Checking",
-      balance: 100, // Starting bonus
-      currency: "USD",
-      userId: user.uid,
-      branchId: "usa_head_office",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-    
-    addDocumentNonBlocking(accountsRef, accountData);
-    toast({ title: "Account Opened", description: "Your new City Bank Checking account is ready with a $100 starting bonus." });
-  };
 
   if (isUserLoading) {
     return (
@@ -96,8 +78,10 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-headline font-bold text-primary">Welcome, {user?.displayName || user?.email?.split('@')[0] || 'Client'}</h1>
           <p className="text-muted-foreground mt-1">City International Bank • Personal Wealth Overview</p>
         </div>
-        <Button onClick={handleOpenAccount} className="bg-accent hover:bg-accent/90 shadow-lg">
-          <PlusCircle className="mr-2 h-4 w-4" /> Open New Account
+        <Button asChild className="bg-accent hover:bg-accent/90 shadow-lg">
+          <Link href="/dashboard/accounts/new">
+            <PlusCircle className="mr-2 h-4 w-4" /> Open New Account
+          </Link>
         </Button>
       </div>
 
@@ -113,7 +97,9 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2">
               You haven't opened any accounts yet. Create your first Checking or Savings account today.
             </p>
-            <Button variant="default" className="mt-6 bg-accent" onClick={handleOpenAccount}>Open Your First Account</Button>
+            <Button variant="default" className="mt-6 bg-accent" asChild>
+              <Link href="/dashboard/accounts/new">Open Your First Account</Link>
+            </Button>
           </Card>
         ) : accounts.map((acc) => (
           <Card key={acc.id} className="relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 border-l-primary">

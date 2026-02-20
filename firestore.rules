@@ -28,6 +28,13 @@ service cloud.firestore {
       return resource != null && isAdmin();
     }
 
+    // --- Collection Group Rules ---
+    // Required for the Admin Audit page to query all transactions
+    match /{path=**}/transactions/{transactionId} {
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
     // --- Collection Rules ---
 
     match /users/{userId} {
