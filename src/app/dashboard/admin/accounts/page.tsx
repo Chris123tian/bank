@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { collectionGroup, doc, serverTimestamp } from "firebase/firestore";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ export default function AdminAccountsAuditPage() {
   const db = useFirestore();
   const { user } = useUser();
   const [editingAccount, setEditingAccount] = useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -66,6 +67,7 @@ export default function AdminAccountsAuditPage() {
 
     toast({ title: "Account Updated", description: `Record for ${editingAccount.accountNumber} has been modified.` });
     setEditingAccount(null);
+    setIsDialogOpen(false);
   };
 
   const handleDeleteAccount = (acc: any) => {
@@ -140,9 +142,15 @@ export default function AdminAccountsAuditPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-2">
-                    <Dialog onOpenChange={(open) => !open && setEditingAccount(null)}>
+                    <Dialog open={isDialogOpen && editingAccount?.id === acc.id} onOpenChange={(open) => {
+                      setIsDialogOpen(open);
+                      if (!open) setEditingAccount(null);
+                    }}>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" onClick={() => setEditingAccount(acc)}>
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          setEditingAccount(acc);
+                          setIsDialogOpen(true);
+                        }}>
                           <Edit3 className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>

@@ -14,7 +14,7 @@ import {
   Landmark
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -26,10 +26,11 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar";
-import { useDoc, useUser } from "@/firebase";
+import { useDoc, useUser, useAuth } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
+import { initiateSignOut } from "@/firebase/non-blocking-login";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -47,7 +48,9 @@ const adminItems = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useUser();
+  const auth = useAuth();
   const db = useFirestore();
 
   const adminRoleRef = useMemoFirebase(() => {
@@ -57,6 +60,11 @@ export function DashboardSidebar() {
 
   const { data: adminRole } = useDoc(adminRoleRef);
   const isAdmin = !!adminRole;
+
+  const handleLogout = () => {
+    initiateSignOut(auth);
+    router.push("/");
+  };
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -115,17 +123,21 @@ export function DashboardSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings">
-              <Settings />
-              <span>Settings</span>
+            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/dashboard/settings"}>
+              <Link href="/dashboard/settings">
+                <Settings />
+                <span>Settings</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Logout" className="text-red-400 hover:text-red-300">
-              <Link href="/">
-                <LogOut />
-                <span>Logout</span>
-              </Link>
+            <SidebarMenuButton 
+              tooltip="Logout" 
+              className="text-red-400 hover:text-red-300"
+              onClick={handleLogout}
+            >
+              <LogOut />
+              <span>Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

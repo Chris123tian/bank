@@ -11,9 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
@@ -71,6 +71,16 @@ export default function AdminUsersPage() {
     toast({ title: "User Profile Created", description: `Profile for ${formData.firstName} has been added.` });
     setIsCreating(false);
     setFormData({ firstName: "", lastName: "", email: "", phoneNumber: "", userRole: "client" });
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    if (userId === currentUser?.uid) {
+      toast({ variant: "destructive", title: "Action Denied", description: "You cannot delete your own administrative account." });
+      return;
+    }
+    const userRef = doc(db, "users", userId);
+    deleteDocumentNonBlocking(userRef);
+    toast({ title: "User Deleted", description: "The user profile has been removed from the system." });
   };
 
   const filteredUsers = users?.filter(u => 
@@ -167,11 +177,12 @@ export default function AdminUsersPage() {
                 <TableHead>Role</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isUsersLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-10">Syncing user records...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-10">Syncing user records...</TableCell></TableRow>
               ) : filteredUsers?.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="font-bold text-primary">{u.firstName} {u.lastName}</TableCell>
@@ -186,11 +197,21 @@ export default function AdminUsersPage() {
                   <TableCell className="text-xs opacity-60">
                     {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-red-400 hover:text-red-600"
+                      onClick={() => handleDeleteUser(u.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
               {!isUsersLoading && (!filteredUsers || filteredUsers.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">
+                  <TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">
                     No user profiles found.
                   </TableCell>
                 </TableRow>

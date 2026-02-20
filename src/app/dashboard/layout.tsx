@@ -1,14 +1,38 @@
+"use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/firebase";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { ChatbotWidget } from "@/components/chatbot-widget";
 import { Toaster } from "@/components/ui/toaster";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/auth");
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-full bg-background overflow-hidden">
@@ -18,10 +42,10 @@ export default function DashboardLayout({
             <SidebarTrigger />
             <div className="ml-auto flex items-center gap-4">
               <div className="text-sm font-medium hidden sm:block">
-                Welcome back, Alex Thompson
+                Welcome back, {user.displayName || user.email?.split('@')[0]}
               </div>
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20">
-                AT
+                {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase()}
               </div>
             </div>
           </header>
