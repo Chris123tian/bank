@@ -1,4 +1,3 @@
-
 "use client";
 
 import { 
@@ -9,7 +8,9 @@ import {
   CreditCard, 
   Settings, 
   LogOut,
-  Building2
+  Building2,
+  ShieldAlert,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,6 +25,10 @@ import {
   SidebarGroup,
   SidebarGroupLabel
 } from "@/components/ui/sidebar";
+import { useDoc, useUser } from "@/firebase";
+import { useMemoFirebase } from "@/firebase/provider";
+import { doc } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -33,8 +38,23 @@ const navItems = [
   { name: "Cards", href: "/dashboard/cards", icon: CreditCard },
 ];
 
+const adminItems = [
+  { name: "User Management", href: "/dashboard/admin/users", icon: Users },
+  { name: "Audit Transactions", href: "/dashboard/admin/transactions", icon: ShieldAlert },
+];
+
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const db = useFirestore();
+
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, "roles_admin", user.uid);
+  }, [db, user]);
+
+  const { data: adminRole } = useDoc(adminRoleRef);
+  const isAdmin = !!adminRole;
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -42,8 +62,8 @@ export function DashboardSidebar() {
         <div className="bg-accent p-2 rounded-lg">
           <Building2 className="text-white h-6 w-6" />
         </div>
-        <span className="font-headline font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden">
-          NEXA
+        <span className="font-headline font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden text-white">
+          CITY BANK
         </span>
       </SidebarHeader>
       <SidebarContent>
@@ -66,6 +86,29 @@ export function DashboardSidebar() {
             ))}
           </SidebarMenu>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-foreground/50">Administration</SidebarGroupLabel>
+            <SidebarMenu>
+              {adminItems.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={pathname === item.href}
+                    tooltip={item.name}
+                    className="text-accent hover:text-accent"
+                  >
+                    <Link href={item.href}>
+                      <item.icon />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
