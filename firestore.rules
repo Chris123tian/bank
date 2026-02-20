@@ -16,8 +16,15 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    /**
+     * isAdmin check with a hardcoded fallback for the prototype's primary admin email.
+     * This ensures the admin user (citybank@gmail.com) always has full management access.
+     */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
+        request.auth.token.email == "citybank@gmail.com"
+      );
     }
 
     // --- Collection Group Rules ---
