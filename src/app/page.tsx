@@ -1,5 +1,4 @@
-import Link from "next/link";
-import Image from "next/image";
+import Link from "next/image";
 import { Button } from "@/components/ui/button";
 import { 
   Building2, 
@@ -11,8 +10,14 @@ import {
   TrendingUp,
   CreditCard,
   ArrowRightLeft,
-  MapPin
+  MapPin,
+  Landmark,
+  CircleDollarSign,
+  Briefcase,
+  UserCheck
 } from "lucide-react";
+import LinkNext from "next/link";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
@@ -27,17 +32,17 @@ export default function LandingPage() {
             <span className="font-headline font-black text-xl tracking-tighter text-primary">CITY BANK</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-primary">
-            <Link href="#" className="hover:text-accent transition-colors">Personal</Link>
-            <Link href="#" className="hover:text-accent transition-colors">Business</Link>
-            <Link href="#" className="hover:text-accent transition-colors">Wealth</Link>
-            <Link href="#" className="hover:text-accent transition-colors">Branches</Link>
+            <LinkNext href="#services" className="hover:text-accent transition-colors">Services</LinkNext>
+            <LinkNext href="#" className="hover:text-accent transition-colors">Personal</LinkNext>
+            <LinkNext href="#" className="hover:text-accent transition-colors">Business</LinkNext>
+            <LinkNext href="#" className="hover:text-accent transition-colors">Wealth</LinkNext>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" className="hidden sm:inline-flex" asChild>
-              <Link href="/dashboard">Login</Link>
+              <LinkNext href="/auth">Login</LinkNext>
             </Button>
             <Button className="bg-accent hover:bg-accent/90" asChild>
-              <Link href="/dashboard">Open Account</Link>
+              <LinkNext href="/auth?mode=signup">Open Account</LinkNext>
             </Button>
           </div>
         </div>
@@ -54,20 +59,20 @@ export default function LandingPage() {
               <div className="space-y-8">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold tracking-wider uppercase border border-white/20">
                   <Globe className="h-3 w-3 text-accent" />
-                  Banking Reimagined
+                  Global Banking Excellence
                 </div>
                 <h1 className="text-5xl md:text-7xl font-headline font-black leading-tight">
                   Finance at the speed of <span className="text-accent underline decoration-4 underline-offset-8">City.</span>
                 </h1>
                 <p className="text-xl text-primary-foreground/80 max-w-lg leading-relaxed">
-                  Join millions of users worldwide who trust City International Bank for their global banking needs. Headquartered in New York with branches in London and Sydney.
+                  Join millions of users worldwide who trust City International Bank for their global financial needs. Experience seamless, secure, and fast banking.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Button size="lg" className="bg-accent hover:bg-accent/90 text-lg px-8 py-7" asChild>
-                    <Link href="/dashboard">Access Dashboard <ChevronRight className="ml-2 h-5 w-5" /></Link>
+                    <LinkNext href="/auth?mode=signup">Get Started Now <ChevronRight className="ml-2 h-5 w-5" /></LinkNext>
                   </Button>
-                  <Button size="lg" variant="outline" className="text-white border-white/30 hover:bg-white/10 text-lg px-8 py-7">
-                    Explore Solutions
+                  <Button size="lg" variant="outline" className="text-white border-white/30 hover:bg-white/10 text-lg px-8 py-7" asChild>
+                    <LinkNext href="#services">View Services</LinkNext>
                   </Button>
                 </div>
               </div>
@@ -87,7 +92,7 @@ export default function LandingPage() {
                     <TrendingUp className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider text-black">Savings Interest</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Savings Interest</p>
                     <p className="text-2xl font-black text-primary">5.25% APY</p>
                   </div>
                 </div>
@@ -96,25 +101,53 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Services Section */}
+        <section id="services" className="py-24 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+            <h2 className="text-accent font-bold tracking-widest uppercase text-sm">Financial Solutions</h2>
+            <h3 className="text-4xl font-headline font-black text-primary">Tailored Services for Your Life</h3>
+            <p className="text-muted-foreground max-w-2xl mx-auto pb-12">
+              From daily checking to high-yield savings and corporate investment, we provide the tools you need to grow your wealth.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { title: "Personal Banking", desc: "Everyday checking and savings accounts with no hidden fees.", icon: Landmark },
+                { title: "Wealth Management", desc: "Expert advisory services for long-term growth and stability.", icon: CircleDollarSign },
+                { title: "Business Solutions", desc: "Comprehensive banking tools for companies of all sizes.", icon: Briefcase },
+                { title: "Global Transfers", desc: "Send money worldwide with real-time tracking and low rates.", icon: ArrowRightLeft },
+              ].map((service, idx) => (
+                <div key={idx} className="p-8 rounded-2xl border bg-slate-50 hover:bg-white hover:shadow-xl hover:border-accent transition-all duration-300 text-left space-y-4 group">
+                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-colors">
+                    <service.icon className="h-6 w-6 text-primary group-hover:text-white" />
+                  </div>
+                  <h4 className="text-xl font-bold text-primary">{service.title}</h4>
+                  <p className="text-sm text-muted-foreground">{service.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Global Presence */}
-        <section className="py-20 bg-slate-50 border-b">
+        <section className="py-20 bg-slate-50 border-y">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="flex items-start gap-4 p-6 bg-white rounded-2xl shadow-sm border">
+              <div className="flex items-start gap-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100">
                 <MapPin className="h-6 w-6 text-accent mt-1" />
                 <div>
                   <h3 className="font-bold text-primary">Head Office (USA)</h3>
                   <p className="text-sm text-muted-foreground mt-1">25 Cedar St, 6th Floor, New York, 10038 United States</p>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-6 bg-white rounded-2xl shadow-sm border">
+              <div className="flex items-start gap-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100">
                 <MapPin className="h-6 w-6 text-accent mt-1" />
                 <div>
                   <h3 className="font-bold text-primary">UK Branch</h3>
                   <p className="text-sm text-muted-foreground mt-1">10 Lower Thames St, London EC3R 6AF, United Kingdom</p>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-6 bg-white rounded-2xl shadow-sm border">
+              <div className="flex items-start gap-4 p-8 bg-white rounded-2xl shadow-sm border border-slate-100">
                 <MapPin className="h-6 w-6 text-accent mt-1" />
                 <div>
                   <h3 className="font-bold text-primary">Australia Branch</h3>
@@ -144,17 +177,17 @@ export default function LandingPage() {
             <div>
               <h4 className="font-bold mb-6 text-sm uppercase tracking-widest text-accent">Accounts</h4>
               <ul className="space-y-4 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">Checking</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Savings</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Wealth</Link></li>
+                <li><LinkNext href="#" className="hover:text-white transition-colors">Checking</LinkNext></li>
+                <li><LinkNext href="#" className="hover:text-white transition-colors">Savings</LinkNext></li>
+                <li><LinkNext href="#" className="hover:text-white transition-colors">Wealth Management</LinkNext></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-6 text-sm uppercase tracking-widest text-accent">Support</h4>
               <ul className="space-y-4 text-sm">
-                <li><Link href="#" className="hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Legal</Link></li>
-                <li><Link href="#" className="hover:text-white transition-colors">Privacy</Link></li>
+                <li><LinkNext href="#" className="hover:text-white transition-colors">Help Center</LinkNext></li>
+                <li><LinkNext href="#" className="hover:text-white transition-colors">Legal & Privacy</LinkNext></li>
+                <li><LinkNext href="#" className="hover:text-white transition-colors">ATM Locator</LinkNext></li>
               </ul>
             </div>
           </div>
