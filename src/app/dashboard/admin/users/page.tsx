@@ -24,14 +24,15 @@ export default function AdminUsersPage() {
 
   // Verify Admin Status
   const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !currentUser) return null;
+    if (!db || !currentUser?.uid) return null;
     return doc(db, "roles_admin", currentUser.uid);
-  }, [db, currentUser]);
+  }, [db, currentUser?.uid]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   
   const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
-  const isAdmin = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
+  const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
+  const isAdminReady = !isAdminRoleLoading && isAdminConfirmed;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -42,16 +43,16 @@ export default function AdminUsersPage() {
     userRole: "client",
   });
 
-  // Only query users if confirmed as admin
+  // Only query users if confirmed as admin and authentication is stable
   const usersRef = useMemoFirebase(() => {
-    if (!db || !isAdmin) return null;
+    if (!db || !isAdminReady) return null;
     return collection(db, "users");
-  }, [db, isAdmin]);
+  }, [db, isAdminReady]);
 
   const { data: users, isLoading: isUsersLoading } = useCollection(usersRef);
 
   const handleCreateUser = () => {
-    if (!formData.email || !formData.firstName) {
+    if (!db || !formData.email || !formData.firstName) {
       toast({ variant: "destructive", title: "Error", description: "Email and First Name are required." });
       return;
     }
@@ -76,6 +77,7 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = (userId: string) => {
+    if (!db) return;
     if (userId === currentUser?.uid) {
       toast({ variant: "destructive", title: "Action Denied", description: "You cannot delete your own administrative account." });
       return;
@@ -94,7 +96,7 @@ export default function AdminUsersPage() {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  if (!isAdmin) {
+  if (!isAdminConfirmed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
         <ShieldAlert className="h-12 w-12 text-red-500" />

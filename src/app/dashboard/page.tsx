@@ -51,16 +51,18 @@ export default function DashboardPage() {
   const db = useFirestore();
 
   const accountsRef = useMemoFirebase(() => {
-    if (!db || !user) return null;
+    // Safe Pattern: Ensure user and db are ready before constructing reference.
+    if (!db || !user?.uid) return null;
     return collection(db, "users", user.uid, "accounts");
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
 
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !user || !accounts?.length) return null;
+    // Safe Pattern: Guard against root listing by checking all required path parameters.
+    if (!db || !user?.uid || !accounts?.length || !accounts[0]?.id) return null;
     return collection(db, "users", user.uid, "accounts", accounts[0].id, "transactions");
-  }, [db, user, accounts]);
+  }, [db, user?.uid, accounts]);
 
   const { data: recentTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 

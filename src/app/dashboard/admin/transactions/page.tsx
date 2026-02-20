@@ -45,12 +45,13 @@ export default function AdminTransactionsAuditPage() {
   
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
+  const isAdminReady = !isAdminRoleLoading && isAdminConfirmed;
 
   const transactionsRef = useMemoFirebase(() => {
-    // Only query if status is strictly confirmed to avoid root listing.
-    if (!db || !user?.uid || !isAdminConfirmed) return null;
+    // Strictly guard against root listing by ensuring both user and admin confirmation are stable.
+    if (!db || !user?.uid || !isAdminReady) return null;
     return collectionGroup(db, "transactions");
-  }, [db, user?.uid, isAdminConfirmed]);
+  }, [db, user?.uid, isAdminReady]);
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
 
