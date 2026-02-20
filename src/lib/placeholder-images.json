@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-banking",
+      "description": "Modern digital banking interface",
+      "imageUrl": "https://images.unsplash.com/photo-1556742521-9713bf272865?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkaWdpdGFsJTIwYmFua2luZ3xlbnwwfHx8fDE3NzE1Nzk1NDN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "digital banking"
+    },
+    {
+      "id": "secure-vault",
+      "description": "Bank vault representing security",
+      "imageUrl": "https://images.unsplash.com/photo-1764983255241-3768b4df0c57?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxiYW5rJTIwc2VjdXJpdHl8ZW58MHx8fHwxNzcxNTc5NTQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bank security"
+    },
+    {
+      "id": "customer-service",
+      "description": "Friendly support representative",
+      "imageUrl": "https://images.unsplash.com/photo-1553775282-20af80779df7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjdXN0b21lciUyMHN1cHBvcnR8ZW58MHx8fHwxNzcxNTA3NzI2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "customer support"
+    },
+    {
+      "id": "mobile-app",
+      "description": "Nexa mobile app in use",
+      "imageUrl": "https://images.unsplash.com/photo-1571867424488-4565932edb41?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtb2JpbGUlMjBiYW5raW5nfGVufDB8fHx8MTc3MTU3OTU0M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mobile banking"
+    }
+  ]
 }
