@@ -4,94 +4,42 @@ service cloud.firestore {
 
     /**
      * City International Bank - Security Rules
-     * 
-     * Core Philosophy:
-     * This ruleset implements a strict user-ownership model for sensitive financial data, 
-     * complemented by a Database Access Control (DBAC) layer for administrators. 
-     * The security posture ensures that clients can only access their own profiles, 
-     * accounts, and transactions, while administrators have the elevated privileges 
-     * necessary to manage the platform and its users.
-     * 
-     * Data Structure:
-     * - User-specific data is organized hierarchically under /users/{userId}.
-     * - Global entities like /branches and /roles_admin are stored at the root.
-     * - Shared resources like /addresses are stored at the root but use denormalized 
-     *   ownership fields for authorization.
-     * 
-     * Key Security Decisions:
-     * 1. DBAC for Admin: Admin authorization is verified by checking for the existence 
-     *    of a document in the '/roles_admin' collection, which is faster and more 
-     *    secure than checking fields on the user profile.
-     * 2. Denormalization for Performance: Ownership fields (userId, ownerId) are 
-     *    strictly required on documents to allow for direct authorization checks 
-     *    without expensive 'get()' calls to parent documents.
-     * 3. Prototyping Flexibility: While authorization is strictly enforced based 
-     *    on identity and ownership, specific data schemas (types, formats) are 
-     *    left flexible to allow for rapid development.
-     * 4. Relational Integrity: On creation, the rules enforce that internal 
-     *    ownership fields match the authenticated user and/or the document path.
      */
 
     // --- Helper Functions ---
 
-    /** @description Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's ID matches the provided userId. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks if the authenticated user is a registered administrator. */
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    /** @description Combined check for ownership and existence of the document. */
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
 
-    /** @description Combined check for admin status and existence of the document. */
     function isExistingAdmin() {
       return resource != null && isAdmin();
     }
 
     // --- Collection Rules ---
 
-    /**
-     * @description Access control for the user's root profile document.
-     * @path /users/{userId}
-     * @allow (create) if the user is creating their own profile.
-     * @deny (read/write) if the user is not the owner or an admin.
-     * @principle Self-creation and ownership-based access.
-     */
     match /users/{userId} {
       allow get, list: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update, delete: if isExistingOwner(userId) || isExistingAdmin();
 
-      /**
-       * @description Access control for bank accounts owned by the user.
-       * @path /users/{userId}/accounts/{accountId}
-       * @allow (get) if owner or admin.
-       * @deny (create) if userId in path doesn't match authenticated user.
-       * @principle Path-based ownership with relational integrity check.
-       */
       match /accounts/{accountId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update, delete: if isExistingOwner(userId) || isExistingAdmin();
 
-        /**
-         * @description Access control for transaction history.
-         * @path /users/{userId}/accounts/{accountId}/transactions/{transactionId}
-         * @allow (update/delete) if user is an admin (per requirement).
-         * @deny (create) if transaction isn't linked to the correct account.
-         * @principle Denormalized ownership for secure list operations.
-         */
         match /transactions/{transactionId} {
           allow get, list: if isOwner(userId) || isAdmin();
           allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.accountId == accountId;
@@ -99,34 +47,18 @@ service cloud.firestore {
         }
       }
 
-      /**
-       * @description Access control for credit/debit cards.
-       * @path /users/{userId}/cards/{cardId}
-       * @allow (list) if user owns the parent path.
-       * @principle Enforces path-based ownership.
-       */
       match /cards/{cardId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update, delete: if isExistingOwner(userId) || isExistingAdmin();
       }
 
-      /**
-       * @description Access control for user-registered payees.
-       * @path /users/{userId}/payees/{payeeId}
-       * @principle Restricts access to user's private address book/payees.
-       */
       match /payees/{payeeId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update, delete: if isExistingOwner(userId) || isExistingAdmin();
       }
 
-      /**
-       * @description Access control for future or recurring payments.
-       * @path /users/{userId}/scheduledPayments/{scheduledPaymentId}
-       * @principle Ensures users only manage their own payment schedules.
-       */
       match /scheduledPayments/{scheduledPaymentId} {
         allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
@@ -134,38 +66,20 @@ service cloud.firestore {
       }
     }
 
-    /**
-     * @description Registry of administrative UIDs.
-     * @path /roles_admin/{adminId}
-     * @allow (get) if authenticated to allow for existence checks.
-     * @deny (write) Restricted to system-level operations.
-     * @principle DBAC (Database Access Control) using existence checks.
-     */
     match /roles_admin/{adminId} {
       allow get: if isSignedIn();
       allow list: if isAdmin();
-      allow create, update, delete: if false; 
+      // Prototype Exception: Allow the seed admin email to create their own role record
+      allow create: if isOwner(adminId) && request.auth.token.email == "citybank@gmail.com";
+      allow update, delete: if isAdmin(); 
     }
 
-    /**
-     * @description Shared collection for user and branch addresses.
-     * @path /addresses/{addressId}
-     * @allow (get) if the address is marked public or the user is the owner.
-     * @principle Denormalized ownership and visibility flags for flexible access.
-     */
     match /addresses/{addressId} {
       allow get, list: if isAdmin() || (isSignedIn() && (resource.data.isPublic == true || resource.data.ownerId == request.auth.uid));
       allow create: if isSignedIn() && (isAdmin() || request.resource.data.ownerId == request.auth.uid);
       allow update, delete: if isExistingAdmin() || (resource.data.ownerId == request.auth.uid);
     }
 
-    /**
-     * @description Public bank branch information.
-     * @path /branches/{branchId}
-     * @allow (read) for all signed-in users.
-     * @allow (write) restricted to administrators.
-     * @principle Publicly readable configuration data with admin-only management.
-     */
     match /branches/{branchId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();

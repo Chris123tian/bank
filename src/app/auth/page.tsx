@@ -2,21 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth, useUser } from "@/firebase";
+import { useAuth, useUser, useFirestore } from "@/firebase";
 import { initiateEmailSignIn, initiateEmailSignUp } from "@/firebase/non-blocking-login";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, ArrowRight, Loader2 } from "lucide-react";
+import { Building2, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const auth = useAuth();
+  const db = useFirestore();
   const { user, isUserLoading } = useUser();
 
   const [isLogin, setIsLogin] = useState(searchParams.get("mode") !== "signup");
@@ -26,9 +28,21 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (user && !isUserLoading) {
-      router.push("/dashboard");
+      // Auto-Admin Logic for the prototype
+      if (user.email === "citybank@gmail.com") {
+        const adminRef = doc(db, "roles_admin", user.uid);
+        setDoc(adminRef, { 
+          email: user.email, 
+          assignedAt: serverTimestamp(),
+          role: "super_admin"
+        }, { merge: true }).then(() => {
+          router.push("/dashboard");
+        });
+      } else {
+        router.push("/dashboard");
+      }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, db]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +54,11 @@ export default function AuthPage() {
       } else {
         initiateEmailSignUp(auth, email, password);
       }
-      // Non-blocking, so we wait for auth state change in useEffect
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: error.message || "Failed to sign in. Please check your credentials.",
+        description: error.message || "Failed to authenticate.",
       });
       setLoading(false);
     }
@@ -69,22 +82,22 @@ export default function AuthPage() {
       </Link>
 
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-accent">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">{isLogin ? "Welcome Back" : "Create Account"}</CardTitle>
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold">{isLogin ? "Sign In" : "Join City Bank"}</CardTitle>
           <CardDescription>
             {isLogin 
-              ? "Access your City International Bank dashboard securely." 
-              : "Join millions of users worldwide and start your banking journey."}
+              ? "Access your secure global banking dashboard." 
+              : "Experience the future of finance today."}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="citybank@gmail.com" 
+                placeholder="name@example.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -95,25 +108,26 @@ export default function AuthPage() {
               <Input 
                 id="password" 
                 type="password" 
-                placeholder="AdminCity"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            {isLogin && email === "citybank@gmail.com" && (
-              <p className="text-[10px] text-muted-foreground italic">
-                Tip: Use your assigned administrator credentials for system-wide access.
-              </p>
+            {email === "citybank@gmail.com" && (
+              <div className="flex items-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-lg text-xs font-bold text-accent">
+                <ShieldCheck className="h-4 w-4" />
+                Administrator Login Detected
+              </div>
             )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
+            <Button className="w-full bg-primary hover:bg-primary/90 py-6" disabled={loading}>
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? "Sign In" : "Register"}
+                  {isLogin ? "Log In to Secure Dashboard" : "Create My Global Account"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
@@ -121,16 +135,16 @@ export default function AuthPage() {
             <div className="text-center text-sm">
               {isLogin ? (
                 <span>
-                  Don't have an account?{" "}
+                  New to City Bank?{" "}
                   <button type="button" onClick={() => setIsLogin(false)} className="text-accent font-bold hover:underline">
-                    Sign up now
+                    Get Started Now
                   </button>
                 </span>
               ) : (
                 <span>
-                  Already have an account?{" "}
+                  Already a member?{" "}
                   <button type="button" onClick={() => setIsLogin(true)} className="text-accent font-bold hover:underline">
-                    Log in
+                    Log In
                   </button>
                 </span>
               )}
@@ -139,10 +153,14 @@ export default function AuthPage() {
         </form>
       </Card>
       
-      <p className="mt-8 text-xs text-muted-foreground text-center max-w-xs">
-        © 2024 City International Bank. Secure, global banking at the speed of life. 
-        Member FDIC. Equal Housing Lender.
-      </p>
+      <div className="mt-8 text-center max-w-sm space-y-2">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">
+          Global Security Standards • 256-bit Encryption
+        </p>
+        <p className="text-xs text-muted-foreground">
+          © 2024 City International Bank. Member FDIC. Equal Housing Lender.
+        </p>
+      </div>
     </div>
   );
 }
