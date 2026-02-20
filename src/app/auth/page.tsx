@@ -32,7 +32,6 @@ export default function AuthPage() {
       // Auto-Admin Logic for the prototype
       if (user.email === "citybank@gmail.com") {
         const adminRef = doc(db, "roles_admin", user.uid);
-        // Check if admin record exists, if not create it
         getDoc(adminRef).then((snapshot) => {
           if (!snapshot.exists()) {
             setDoc(adminRef, { 
@@ -46,7 +45,6 @@ export default function AuthPage() {
             router.push("/dashboard");
           }
         }).catch(() => {
-          // Fallback if permission is denied during check
           router.push("/dashboard");
         });
       } else {

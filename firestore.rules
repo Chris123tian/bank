@@ -39,37 +39,38 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update, delete: if isOwner(userId);
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update, delete: if isOwner(userId) || isAdmin();
 
       match /accounts/{accountId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update, delete: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if (isOwner(userId) && request.resource.data.userId == userId) || isAdmin();
+        allow update, delete: if isOwner(userId) || isAdmin();
 
         match /transactions/{transactionId} {
-          allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.accountId == accountId;
-          allow update, delete: if isOwner(userId);
+          allow get, list: if isOwner(userId) || isAdmin();
+          allow create: if (isOwner(userId) && request.resource.data.userId == userId) || isAdmin();
+          allow update, delete: if isOwner(userId) || isAdmin();
         }
       }
 
       match /cards/{cardId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update, delete: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) || isAdmin();
+        allow update, delete: if isOwner(userId) || isAdmin();
       }
 
       match /payees/{payeeId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update, delete: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) || isAdmin();
+        allow update, delete: if isOwner(userId) || isAdmin();
       }
 
       match /scheduledPayments/{scheduledPaymentId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update, delete: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) || isAdmin();
+        allow update, delete: if isOwner(userId) || isAdmin();
       }
     }
 
@@ -78,14 +79,14 @@ service cloud.firestore {
     match /roles_admin/{adminId} {
       allow get: if isSignedIn();
       allow list: if isAdmin();
-      allow create: if isOwner(adminId) && request.auth.token.email == "citybank@gmail.com";
+      allow create: if isSignedIn() && (request.auth.token.email == "citybank@gmail.com" || isAdmin());
       allow update, delete: if isAdmin(); 
     }
 
     match /addresses/{addressId} {
-      allow get, list: if isSignedIn() && (resource.data.isPublic == true || resource.data.ownerId == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow get, list: if isSignedIn() && (resource.data.isPublic == true || resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
     }
 
     match /branches/{branchId} {
@@ -94,15 +95,14 @@ service cloud.firestore {
     }
 
     // --- Explicit Collection Group Rules ---
-    // These ensure that collectionGroup queries for 'transactions' and 'accounts' 
-    // work correctly for both admins and owners.
-    
     match /{path=**}/transactions/{transactionId} {
-      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
     }
   }
 }
