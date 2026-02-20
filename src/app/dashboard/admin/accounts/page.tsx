@@ -114,7 +114,7 @@ export default function AdminAccountsAuditPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <div className="p-3 bg-primary/10 rounded-xl text-primary">
-          <Landmark className="h-8 w-8" />
+          < Landmark className="h-8 w-8" />
         </div>
         <div>
           <h1 className="text-3xl font-headline font-bold text-primary">Global Account Audit</h1>

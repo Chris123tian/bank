@@ -18,7 +18,6 @@ service cloud.firestore {
 
     /**
      * isAdmin check with a hardcoded fallback for the prototype's primary admin email.
-     * This ensures the admin user (citybank@gmail.com) always has full management access.
      */
     function isAdmin() {
       return isSignedIn() && (
@@ -28,17 +27,14 @@ service cloud.firestore {
     }
 
     // --- Global Admin Bypass ---
-    // Absolute authority for the master administrator. 
-    // This recursive wildcard covers all collections and collection groups.
+    // Absolute authority for the master administrator at the root level.
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
     // --- User-Specific Rules ---
-    // Note: Admin access is already granted by the bypass above.
-
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if isOwner(userId) || isAdmin();
       allow update, delete: if isOwner(userId) || isAdmin();
@@ -94,8 +90,7 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // --- Explicit Collection Group Rules ---
-    // Essential for auditing all accounts/transactions across users
+    // --- Explicit Collection Group Rules for Global Auditing ---
     match /{path=**}/transactions/{transactionId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow write: if isAdmin();
