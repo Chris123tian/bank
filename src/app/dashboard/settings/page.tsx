@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { User as UserIcon, ShieldCheck, Loader2 } from "lucide-react";
 
@@ -97,7 +98,7 @@ export default function SettingsPage() {
               <p className="font-bold text-sm">Two-Factor Authentication</p>
               <p className="text-xs text-muted-foreground">Enabled via NexaSecure Device Link</p>
             </div>
-            <Badge className="bg-green-100 text-green-700">Protected</Badge>
+            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Protected</Badge>
           </div>
         </CardContent>
       </Card>
