@@ -29,13 +29,13 @@ service cloud.firestore {
     }
 
     // --- Collection Group Rules ---
-    // Required for the Admin Audit page to query all transactions
+    // These allow global queries across all documents in collections named 'transactions' or 'accounts'
+    
     match /{path=**}/transactions/{transactionId} {
       allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
-    // Required for Admin Account management
     match /{path=**}/accounts/{accountId} {
       allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
@@ -44,7 +44,10 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     match /users/{userId} {
-      allow get, list: if isOwner(userId) || isAdmin();
+      // Allow admins to list all users, but individual users can only get their own document
+      allow list: if isAdmin();
+      allow get: if isOwner(userId) || isAdmin();
+      
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update, delete: if isExistingOwner(userId) || isExistingAdmin();
 

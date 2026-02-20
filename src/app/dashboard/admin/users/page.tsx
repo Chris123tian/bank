@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -11,15 +11,25 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Search, ShieldCheck } from "lucide-react";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
   const db = useFirestore();
+  const { user: currentUser } = useUser();
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  // Verify Admin Status
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !currentUser) return null;
+    return doc(db, "roles_admin", currentUser.uid);
+  }, [db, currentUser]);
+
+  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
+  const isAdmin = !!adminRole;
 
   // Form state
   const [formData, setFormData] = useState({
@@ -30,8 +40,13 @@ export default function AdminUsersPage() {
     userRole: "client",
   });
 
-  const usersRef = useMemoFirebase(() => collection(db, "users"), [db]);
-  const { data: users, isLoading } = useCollection(usersRef);
+  // Only query users if confirmed as admin
+  const usersRef = useMemoFirebase(() => {
+    if (!db || !isAdmin) return null;
+    return collection(db, "users");
+  }, [db, isAdmin]);
+
+  const { data: users, isLoading: isUsersLoading } = useCollection(usersRef);
 
   const handleCreateUser = () => {
     if (!formData.email || !formData.firstName) {
@@ -39,8 +54,6 @@ export default function AdminUsersPage() {
       return;
     }
 
-    // In a real app, this would integrate with Firebase Auth. 
-    // Here we create the profile document as requested.
     const newUserId = "user_" + Math.random().toString(36).substr(2, 9);
     const userDocRef = doc(db, "users", newUserId);
     
@@ -65,6 +78,20 @@ export default function AdminUsersPage() {
     `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (isAdminRoleLoading) {
+    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+        <ShieldAlert className="h-12 w-12 text-red-500" />
+        <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
+        <p className="text-muted-foreground">Administrative privileges are required to manage users.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
@@ -73,7 +100,7 @@ export default function AdminUsersPage() {
           <p className="text-muted-foreground">Create and manage client and admin profiles.</p>
         </div>
         <Button onClick={() => setIsCreating(!isCreating)} className="bg-accent">
-          <UserPlus className="mr-2 h-4 w-4" /> {isCreating ? "Cancel" : "New Profile"}
+          {isCreating ? "Cancel" : <><UserPlus className="mr-2 h-4 w-4" /> New Profile</>}
         </Button>
       </div>
 
@@ -114,7 +141,7 @@ export default function AdminUsersPage() {
             </div>
           </CardContent>
           <CardFooter className="justify-end border-t pt-6">
-            <Button onClick={handleCreateUser}>Create Profile</Button>
+            <Button onClick={handleCreateUser} className="bg-primary">Create Profile</Button>
           </CardFooter>
         </Card>
       )}
@@ -143,24 +170,31 @@ export default function AdminUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-10">Loading users...</TableCell></TableRow>
-              ) : filteredUsers?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-bold">{user.firstName} {user.lastName}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+              {isUsersLoading ? (
+                <TableRow><TableCell colSpan={5} className="text-center py-10">Syncing user records...</TableCell></TableRow>
+              ) : filteredUsers?.map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell className="font-bold text-primary">{u.firstName} {u.lastName}</TableCell>
+                  <TableCell>{u.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.userRole === 'admin' ? 'destructive' : 'secondary'}>
-                      {user.userRole === 'admin' && <ShieldCheck className="h-3 w-3 mr-1" />}
-                      {user.userRole}
+                    <Badge variant={u.userRole === 'admin' ? 'destructive' : 'secondary'} className="capitalize">
+                      {u.userRole === 'admin' && <ShieldCheck className="h-3 w-3 mr-1" />}
+                      {u.userRole}
                     </Badge>
                   </TableCell>
-                  <TableCell>{user.phoneNumber}</TableCell>
+                  <TableCell>{u.phoneNumber}</TableCell>
                   <TableCell className="text-xs opacity-60">
-                    {user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                    {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
                   </TableCell>
                 </TableRow>
               ))}
+              {!isUsersLoading && (!filteredUsers || filteredUsers.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">
+                    No user profiles found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
