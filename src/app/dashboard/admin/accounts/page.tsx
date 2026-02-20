@@ -43,15 +43,15 @@ export default function AdminAccountsAuditPage() {
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   
-  // Wait for loading to finish unless it's the master admin email
+  // Confirmed Admin logic
   const isMasterAdmin = user?.email === "citybank@gmail.com";
-  const isAdmin = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
+  const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
 
   const accountsRef = useMemoFirebase(() => {
-    // Only query if we are confirmed as an admin to prevent rule violations
-    if (!db || !isAdmin) return null;
+    // Strictly guard against querying until admin status is confirmed and user is stable
+    if (!db || !user || !isAdminConfirmed) return null;
     return collectionGroup(db, "accounts");
-  }, [db, isAdmin]);
+  }, [db, user, isAdminConfirmed]);
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
 
@@ -92,10 +92,15 @@ export default function AdminAccountsAuditPage() {
   };
 
   if (isAdminRoleLoading && !isMasterAdmin) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground font-medium">Verifying Credentials...</p>
+      </div>
+    );
   }
 
-  if (!isAdmin) {
+  if (!isAdminConfirmed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
         <ShieldAlert className="h-12 w-12 text-red-500" />
@@ -179,6 +184,13 @@ export default function AdminAccountsAuditPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!isAccountsLoading && (!accounts || accounts.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-20 text-muted-foreground italic">
+                    No account records found in the database.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -196,7 +208,7 @@ export default function AdminAccountsAuditPage() {
               <Input 
                 type="number" 
                 step="0.01"
-                value={editingAccount?.balance ?? ""} 
+                value={editingAccount?.balance ?? 0} 
                 onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
               />
             </div>
@@ -218,7 +230,7 @@ export default function AdminAccountsAuditPage() {
             <div className="space-y-2">
               <Label>Account Type</Label>
               <Select 
-                value={editingAccount?.accountType ?? ""} 
+                value={editingAccount?.accountType ?? "Checking"} 
                 onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
               >
                 <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>

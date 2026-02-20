@@ -44,12 +44,13 @@ export default function AdminTransactionsAuditPage() {
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   
   const isMasterAdmin = user?.email === "citybank@gmail.com";
-  const isAdmin = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
+  const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
 
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !isAdmin) return null;
+    // Only query if confirmed admin AND user is stable
+    if (!db || !user || !isAdminConfirmed) return null;
     return collectionGroup(db, "transactions");
-  }, [db, isAdmin]);
+  }, [db, user, isAdminConfirmed]);
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
 
@@ -93,10 +94,15 @@ export default function AdminTransactionsAuditPage() {
   };
 
   if (isAdminRoleLoading && !isMasterAdmin) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Validating Role...</p>
+      </div>
+    );
   }
 
-  if (!isAdmin) {
+  if (!isAdminConfirmed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
         <ShieldAlert className="h-12 w-12 text-red-500" />
@@ -219,7 +225,7 @@ export default function AdminTransactionsAuditPage() {
             <div className="space-y-2">
               <Label>Category (Type)</Label>
               <Select 
-                value={editingTransaction?.transactionType ?? ""} 
+                value={editingTransaction?.transactionType ?? "withdrawal"} 
                 onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -237,7 +243,7 @@ export default function AdminTransactionsAuditPage() {
               <Input 
                 type="number" 
                 step="0.01"
-                value={editingTransaction?.amount ?? ""} 
+                value={editingTransaction?.amount ?? 0} 
                 onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
               />
             </div>

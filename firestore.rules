@@ -95,6 +95,7 @@ service cloud.firestore {
     }
 
     // --- Explicit Collection Group Rules ---
+    // Essential for auditing all accounts/transactions across users
     match /{path=**}/transactions/{transactionId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow write: if isAdmin();
