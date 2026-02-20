@@ -82,7 +82,8 @@ export function useCollection<T = any>(
           if ('path' in memoizedTargetRefOrQuery) {
             path = (memoizedTargetRefOrQuery as CollectionReference).path;
           } else {
-            path = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString() || 'collection-group';
+            // Using canonicalString for query paths
+            path = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query?.path?.canonicalString() || 'collection-group';
           }
         } catch (e) {
           path = 'unknown/query';

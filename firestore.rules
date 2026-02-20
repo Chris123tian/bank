@@ -5,7 +5,7 @@ service cloud.firestore {
     /**
      * ADMINISTRATIVE OVERRIDE
      * Explicitly grant the master administrator account full access.
-     * This is placed first to ensure administrative bypass for all operations.
+     * Placed first to ensure total authority over all collections and collection groups.
      */
     match /{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
@@ -36,14 +36,14 @@ service cloud.firestore {
 
       match /accounts/{accountId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.customerId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
+        allow create: if isOwner(userId) && (request.resource.data.customerId == userId || request.resource.data.userId == userId);
+        allow update: if isExistingOwner(userId) && (request.resource.data.customerId == resource.data.customerId || request.resource.data.userId == resource.data.userId);
         allow delete: if isExistingOwner(userId);
 
         match /transactions/{transactionId} {
           allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId) && request.resource.data.customerId == userId;
-          allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
+          allow create: if isOwner(userId) && (request.resource.data.customerId == userId || request.resource.data.userId == userId);
+          allow update: if isExistingOwner(userId) && (request.resource.data.customerId == resource.data.customerId || request.resource.data.userId == resource.data.userId);
           allow delete: if isExistingOwner(userId);
         }
       }
