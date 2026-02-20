@@ -135,7 +135,7 @@ export default function AdminAccountsAuditPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-2">
-                    <Dialog>
+                    <Dialog onOpenChange={(open) => !open && setEditingAccount(null)}>
                       <DialogTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={() => setEditingAccount(acc)}>
                           <Edit3 className="h-4 w-4" />
@@ -151,17 +151,17 @@ export default function AdminAccountsAuditPage() {
                             <Label>Account Balance ($)</Label>
                             <Input 
                               type="number" 
-                              value={editingAccount?.balance} 
+                              value={editingAccount?.balance ?? ""} 
                               onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
                             />
                           </div>
                           <div className="space-y-2">
                             <Label>Account Type</Label>
                             <Select 
-                              value={editingAccount?.accountType} 
+                              value={editingAccount?.accountType ?? ""} 
                               onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
                             >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="Checking">Checking</SelectItem>
                                 <SelectItem value="Savings">Savings</SelectItem>
@@ -172,7 +172,7 @@ export default function AdminAccountsAuditPage() {
                           <div className="space-y-2">
                             <Label>Operational Status</Label>
                             <Select 
-                              value={editingAccount?.status || "Active"} 
+                              value={editingAccount?.status ?? "Active"} 
                               onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}
                             >
                               <SelectTrigger><SelectValue /></SelectTrigger>
