@@ -45,9 +45,9 @@ export default function LandingPage() {
           </div>
           
           <div className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-widest font-black text-slate-400">
-            <LinkNext href="#services" className="hover:text-white transition-colors">{t('nav_wealth')}</LinkNext>
+            <LinkNext href="/about" className="hover:text-white transition-colors">{t('nav_about')}</LinkNext>
+            <LinkNext href="/services" className="hover:text-white transition-colors">{t('nav_services')}</LinkNext>
             <LinkNext href="#security" className="hover:text-white transition-colors">{t('nav_security')}</LinkNext>
-            <LinkNext href="/auth" className="hover:text-white transition-colors">{t('nav_treasury')}</LinkNext>
             <LinkNext href="/auth" className="hover:text-white transition-colors">{t('nav_institutional')}</LinkNext>
           </div>
 
@@ -116,7 +116,7 @@ export default function LandingPage() {
                   </LinkNext>
                 </Button>
                 <Button size="lg" variant="outline" className="border-white/20 bg-white/5 hover:bg-white/10 text-xs sm:text-sm px-6 sm:px-10 h-14 sm:h-16 rounded-xl sm:rounded-2xl w-full sm:w-auto" asChild>
-                  <LinkNext href="#services">{t('hero_cta_secondary')}</LinkNext>
+                  <LinkNext href="/services">{t('hero_cta_secondary')}</LinkNext>
                 </Button>
               </div>
 
@@ -240,13 +240,17 @@ export default function LandingPage() {
                 <p className="text-slate-400 max-w-sm mx-auto md:mx-0 text-xs sm:text-sm font-medium leading-relaxed">
                   Redefining the standard for international capital management through advanced settlement infrastructure and institutional custody.
                 </p>
+                <div className="pt-4 space-y-2 text-xs text-slate-500 font-bold uppercase tracking-widest">
+                  <p>{t('footer_address')}</p>
+                  <p>{t('footer_branches')}</p>
+                </div>
              </div>
              <div className="space-y-4 text-center md:text-left">
-                <h5 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">Network</h5>
+                <h5 className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500">Company</h5>
                 <ul className="space-y-2 sm:space-y-4 text-xs sm:text-sm font-bold text-slate-300">
-                  <li className="hover:text-accent cursor-pointer transition-colors">Wealth Engine</li>
-                  <li className="hover:text-accent cursor-pointer transition-colors">Institutional Portal</li>
-                  <li className="hover:text-accent cursor-pointer transition-colors">Settlement API</li>
+                  <li className="hover:text-accent cursor-pointer transition-colors"><LinkNext href="/about">{t('nav_about')}</LinkNext></li>
+                  <li className="hover:text-accent cursor-pointer transition-colors"><LinkNext href="/services">{t('nav_services')}</LinkNext></li>
+                  <li className="hover:text-accent cursor-pointer transition-colors">Global Careers</li>
                 </ul>
              </div>
              <div className="space-y-4 text-center md:text-left">
