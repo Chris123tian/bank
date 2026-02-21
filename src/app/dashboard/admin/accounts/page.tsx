@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -41,7 +40,7 @@ export default function AdminAccountsAuditPage() {
   // Create Form State
   const [newAccount, setNewAccount] = useState({
     userId: "",
-    accountType: "Checking",
+    accountType: "Current Account",
     balance: "1000",
     currency: "USD"
   });
@@ -98,7 +97,7 @@ export default function AdminAccountsAuditPage() {
     addDocumentNonBlocking(colRef, accountData);
     toast({ title: "Account Created", description: `Manual entry for user ${newAccount.userId} added.` });
     setIsCreateDialogOpen(false);
-    setNewAccount({ userId: "", accountType: "Checking", balance: "1000", currency: "USD" });
+    setNewAccount({ userId: "", accountType: "Current Account", balance: "1000", currency: "USD" });
   };
 
   const handleUpdateAccount = () => {
@@ -154,7 +153,7 @@ export default function AdminAccountsAuditPage() {
           </div>
           <div>
             <h1 className="text-3xl font-headline font-bold text-primary">Global Account Audit</h1>
-            <p className="text-muted-foreground">Full oversight of all Checking and Savings assets.</p>
+            <p className="text-muted-foreground">Full oversight of all institutional assets.</p>
           </div>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent">
@@ -165,7 +164,7 @@ export default function AdminAccountsAuditPage() {
       <Card>
         <CardHeader>
           <CardTitle>Asset Ledger</CardTitle>
-          <CardDescription>Managing liquid capital across the City Bank network.</CardDescription>
+          <CardDescription>Managing institutional capital across the Nexa International network.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -188,7 +187,7 @@ export default function AdminAccountsAuditPage() {
                   <TableCell className="font-mono text-xs">{acc.accountNumber}</TableCell>
                   <TableCell className="text-xs">{acc.customerId || acc.userId}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{acc.accountType}</Badge>
+                    <Badge variant="outline" className="text-[10px]">{acc.accountType}</Badge>
                   </TableCell>
                   <TableCell className="font-bold text-primary">
                     {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
@@ -210,7 +209,7 @@ export default function AdminAccountsAuditPage() {
                           ...acc,
                           balance: acc.balance ?? 0,
                           currency: acc.currency ?? "USD",
-                          accountType: acc.accountType ?? "Checking",
+                          accountType: acc.accountType ?? "Current Account",
                           status: acc.status ?? "Active"
                         });
                         setIsEditDialogOpen(true);
@@ -227,7 +226,7 @@ export default function AdminAccountsAuditPage() {
               {!isAccountsLoading && (!accounts || accounts.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-20 text-muted-foreground italic">
-                    No account records found.
+                    No account records found in the bank ledger.
                   </TableCell>
                 </TableRow>
               )}
@@ -241,7 +240,7 @@ export default function AdminAccountsAuditPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Manual Account Entry</DialogTitle>
-            <DialogDescription>Create a new account for an existing client ID.</DialogDescription>
+            <DialogDescription>Create a new account for an existing client UID.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -258,9 +257,11 @@ export default function AdminAccountsAuditPage() {
                 <Select value={newAccount.accountType} onValueChange={(v) => setNewAccount({...newAccount, accountType: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Checking">Checking</SelectItem>
-                    <SelectItem value="Savings">Savings</SelectItem>
-                    <SelectItem value="Investment">Investment</SelectItem>
+                    <SelectItem value="Current Account">Current Account</SelectItem>
+                    <SelectItem value="Savings Account">Savings Account</SelectItem>
+                    <SelectItem value="Business Account">Business Account</SelectItem>
+                    <SelectItem value="Internet Banking">Internet Banking</SelectItem>
+                    <SelectItem value="Safety Deposits">Safety Deposits</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -286,7 +287,7 @@ export default function AdminAccountsAuditPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleCreateAccount} className="bg-primary">Inject Ledger Entry</Button>
+            <Button onClick={handleCreateAccount} className="bg-primary w-full">Inject Ledger Entry</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -296,9 +297,25 @@ export default function AdminAccountsAuditPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modify Account: {editingAccount?.accountNumber}</DialogTitle>
-            <DialogDescription>Adjust financial parameters and status.</DialogDescription>
+            <DialogDescription>Adjust financial parameters and operational status.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Account Type</Label>
+              <Select 
+                value={editingAccount?.accountType ?? "Current Account"} 
+                onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Current Account">Current Account</SelectItem>
+                  <SelectItem value="Savings Account">Savings Account</SelectItem>
+                  <SelectItem value="Business Account">Business Account</SelectItem>
+                  <SelectItem value="Internet Banking">Internet Banking</SelectItem>
+                  <SelectItem value="Safety Deposits">Safety Deposits</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label>Account Balance</Label>
               <Input 
@@ -324,7 +341,7 @@ export default function AdminAccountsAuditPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleUpdateAccount}>Apply Ledger Update</Button>
+            <Button onClick={handleUpdateAccount} className="w-full">Apply Ledger Update</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

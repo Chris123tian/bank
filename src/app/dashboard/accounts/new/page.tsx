@@ -18,7 +18,7 @@ export default function NewAccountPage() {
   const { user } = useUser();
   const db = useFirestore();
   const [loading, setLoading] = useState(false);
-  const [accountType, setAccountType] = useState("checking");
+  const [accountType, setAccountType] = useState("Current Account");
 
   const handleOpenAccount = async () => {
     if (!user || !db) return;
@@ -27,11 +27,11 @@ export default function NewAccountPage() {
     const accountsRef = collection(db, "users", user.uid, "accounts");
     const accountData = {
       accountNumber: `CITY-${Math.floor(10000000 + Math.random() * 90000000)}`,
-      accountType: accountType.charAt(0).toUpperCase() + accountType.slice(1),
-      balance: accountType === "savings" ? 250 : 100, // Special bonus for savings
+      accountType: accountType,
+      balance: accountType === "Savings Account" ? 250 : 100, // Special bonus for savings
       currency: "USD",
       userId: user.uid,
-      customerId: user.uid, // Explicitly add customerId for admin group queries
+      customerId: user.uid,
       branchId: "usa_head_office",
       status: "Active",
       createdAt: serverTimestamp(),
@@ -43,40 +43,42 @@ export default function NewAccountPage() {
     setTimeout(() => {
       toast({ 
         title: "Account Opened!", 
-        description: `Your new City Bank ${accountData.accountType} account is active.` 
+        description: `Your new City Bank ${accountData.accountType} is active.` 
       });
       router.push("/dashboard");
     }, 1000);
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-12">
+    <div className="max-w-2xl mx-auto py-12 px-4">
       <div className="flex items-center gap-4 mb-8">
         <div className="bg-primary p-3 rounded-2xl text-white shadow-lg">
           <Landmark className="h-8 w-8" />
         </div>
         <div>
-          <h1 className="text-3xl font-headline font-bold text-primary">Open New Account</h1>
-          <p className="text-muted-foreground">Expand your global financial footprint with City International Bank.</p>
+          <h1 className="text-3xl font-headline font-bold text-primary">Initialize Institutional Account</h1>
+          <p className="text-muted-foreground text-sm">Expand your global financial footprint with Nexa International.</p>
         </div>
       </div>
 
-      <Card className="shadow-xl">
+      <Card className="shadow-xl border-t-4 border-t-accent">
         <CardHeader>
           <CardTitle>Select Your Account Type</CardTitle>
-          <CardDescription>Choose the banking product that best fits your goals.</CardDescription>
+          <CardDescription>Choose the banking product that best fits your capital requirements.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
-            <Label>Account Category</Label>
+            <Label className="text-xs uppercase font-black tracking-widest text-slate-500">Account Category</Label>
             <Select value={accountType} onValueChange={setAccountType}>
-              <SelectTrigger className="h-12 text-lg">
+              <SelectTrigger className="h-12 text-base font-bold">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="checking">Premier Checking (Daily Transactions)</SelectItem>
-                <SelectItem value="savings">High-Yield Savings (5.25% APY)</SelectItem>
-                <SelectItem value="investment">Wealth Investment Portal</SelectItem>
+                <SelectItem value="Current Account">Current Account (Daily Operations)</SelectItem>
+                <SelectItem value="Savings Account">Savings Account (High-Yield 5.25%)</SelectItem>
+                <SelectItem value="Business Account">Business Account (Corporate Liquidity)</SelectItem>
+                <SelectItem value="Internet Banking">Internet Banking Portal (Digital Only)</SelectItem>
+                <SelectItem value="Safety Deposits">Safety Deposits (Asset Vaulting)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -84,17 +86,17 @@ export default function NewAccountPage() {
           <div className="p-6 bg-slate-50 rounded-2xl space-y-4 border border-slate-100">
             <h4 className="font-bold text-primary flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
-              Included Benefits:
+              Standard Institutional Benefits:
             </h4>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">• No Monthly Maintenance Fees</li>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-medium text-muted-foreground">
+              <li className="flex items-center gap-2">• Zero Monthly Maintenance Fees</li>
               <li className="flex items-center gap-2">• Global ATM Fee Reimbursement</li>
-              <li className="flex items-center gap-2">• 256-bit Secure Encryption</li>
-              <li className="flex items-center gap-2">• Instant NexaNetwork Transfers</li>
+              <li className="flex items-center gap-2">• AES-256 Secure Encryption</li>
+              <li className="flex items-center gap-2">• Instant NexaNetwork Settlement</li>
             </ul>
             <div className="pt-4 border-t border-slate-200">
-              <p className="text-xs font-bold text-accent uppercase tracking-widest">Initial Deposit Bonus</p>
-              <p className="text-xl font-black text-primary">${accountType === "savings" ? '250.00' : '100.00'}</p>
+              <p className="text-[10px] font-black text-accent uppercase tracking-widest">Initial Asset Injection Bonus</p>
+              <p className="text-2xl font-black text-primary">${accountType === "Savings Account" ? '250.00' : '100.00'}</p>
             </div>
           </div>
         </CardContent>
@@ -108,13 +110,13 @@ export default function NewAccountPage() {
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
               <>
-                Initialize My Account
+                Confirm Initialization
                 <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}
           </Button>
-          <p className="text-[10px] text-center text-muted-foreground uppercase font-black tracking-tighter">
-            By clicking above, you agree to our Global Banking Disclosure & Privacy Policy.
+          <p className="text-[9px] text-center text-muted-foreground uppercase font-black tracking-tighter leading-tight">
+            By initializing this account, you agree to the Nexa International Global Banking Disclosure, Privacy Policy, and Institutional Terms of Service.
           </p>
         </CardFooter>
       </Card>
