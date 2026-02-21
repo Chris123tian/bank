@@ -80,7 +80,8 @@ export function DashboardSidebar() {
   }, [db, user?.uid]);
 
   const { data: adminRole } = useDoc(adminRoleRef);
-  const isAdmin = !!adminRole || user?.email === "citybank@gmail.com";
+  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isAdmin = isMasterAdmin || !!adminRole;
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
 

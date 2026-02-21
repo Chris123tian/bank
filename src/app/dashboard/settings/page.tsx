@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -27,7 +28,8 @@ import {
   Upload,
   Image as ImageIcon,
   Edit,
-  ArrowLeft
+  ArrowLeft,
+  Settings2
 } from "lucide-react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -204,24 +206,10 @@ export default function SettingsPage() {
             <p className="text-muted-foreground">Manage your secure global profile and financial identity.</p>
           </div>
         </div>
-        {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)} className="bg-accent hover:bg-accent/90">
-            <Edit className="mr-2 h-4 w-4" /> Edit Profile
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={loading}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateProfile} disabled={loading || !!uploadingField} className="bg-accent hover:bg-accent/90">
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save All Changes"}
-            </Button>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           {!isEditing ? (
             /* IMAGE REFERENCE MODE: DISPLAY VIEW */
             <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200">
@@ -306,15 +294,15 @@ export default function SettingsPage() {
             </div>
           ) : (
             /* EDIT MODE: FORM VIEW */
-            <Card className="shadow-sm">
-              <CardHeader>
+            <Card className="shadow-sm border-accent/20">
+              <CardHeader className="bg-accent/5">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <ShieldCheck className="h-5 w-5 text-accent" />
-                  Basic Information
+                  <Settings2 className="h-5 w-5 text-accent" />
+                  Modify Profile Details
                 </CardTitle>
-                <CardDescription>Personal identification and contact details.</CardDescription>
+                <CardDescription>Update your personal identification and contact details.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-6">
                 <div className="flex flex-col md:flex-row gap-6 items-start">
                   <div className="relative group">
                     <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-xl overflow-hidden">
@@ -491,6 +479,31 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </CardContent>
+              <CardFooter className="bg-slate-50 border-t p-6 flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setIsEditing(false)} disabled={loading}>Cancel</Button>
+                <Button onClick={handleUpdateProfile} disabled={loading || !!uploadingField} className="bg-accent">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Save All Changes
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
+
+          {/* Separate Editing Section */}
+          {!isEditing && (
+            <Card className="border-dashed border-2 border-slate-200 bg-slate-50/50">
+              <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
+                <div className="p-3 bg-primary/10 rounded-full text-primary">
+                  <Edit className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-primary">Manage Profile Information</h3>
+                  <p className="text-sm text-muted-foreground">Modify your identity, contact, and address records.</p>
+                </div>
+                <Button onClick={() => setIsEditing(true)} variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+                  Enter Edit Mode
+                </Button>
+              </CardContent>
             </Card>
           )}
         </div>
@@ -538,11 +551,6 @@ export default function SettingsPage() {
                 )}
               </div>
             </CardContent>
-            <CardFooter className="border-t pt-4">
-              <Button variant="outline" className="w-full text-xs" asChild>
-                <a href="/dashboard/accounts/new">Open Supplemental Account</a>
-              </Button>
-            </CardFooter>
           </Card>
 
           <Card className="bg-accent/5 border-accent/20">

@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState } from "react";
 import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, doc, serverTimestamp } from "firebase/firestore";
+import { collectionGroup, doc, serverTimestamp, collection } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,16 +26,25 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Landmark, ShieldAlert, Loader2, Edit3, Trash2 } from "lucide-react";
+import { Landmark, ShieldAlert, Loader2, Edit3, Trash2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminAccountsAuditPage() {
   const { toast } = useToast();
   const db = useFirestore();
   const { user } = useUser();
   const [editingAccount, setEditingAccount] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
+  // Create Form State
+  const [newAccount, setNewAccount] = useState({
+    userId: "",
+    accountType: "Checking",
+    balance: "1000",
+    currency: "USD"
+  });
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
@@ -46,7 +56,6 @@ export default function AdminAccountsAuditPage() {
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
   
-  // CRITICAL: Guard queries until privileges are confirmed to prevent permission denied errors.
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   const accountsRef = useMemoFirebase(() => {
@@ -67,6 +76,31 @@ export default function AdminAccountsAuditPage() {
     }
   };
 
+  const handleCreateAccount = () => {
+    if (!db || !newAccount.userId) {
+      toast({ variant: "destructive", title: "Missing ID", description: "Target User ID is required." });
+      return;
+    }
+
+    const colRef = collection(db, "users", newAccount.userId, "accounts");
+    const accountData = {
+      accountNumber: `CITY-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      accountType: newAccount.accountType,
+      balance: Number(newAccount.balance),
+      currency: newAccount.currency,
+      userId: newAccount.userId,
+      customerId: newAccount.userId,
+      status: "Active",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    addDocumentNonBlocking(colRef, accountData);
+    toast({ title: "Account Created", description: `Manual entry for user ${newAccount.userId} added.` });
+    setIsCreateDialogOpen(false);
+    setNewAccount({ userId: "", accountType: "Checking", balance: "1000", currency: "USD" });
+  };
+
   const handleUpdateAccount = () => {
     if (!editingAccount || !db) return;
     
@@ -82,7 +116,7 @@ export default function AdminAccountsAuditPage() {
 
     toast({ title: "Account Updated", description: `Record for ${editingAccount.accountNumber} has been modified.` });
     setEditingAccount(null);
-    setIsDialogOpen(false);
+    setIsEditDialogOpen(false);
   };
 
   const handleDeleteAccount = (acc: any) => {
@@ -113,14 +147,19 @@ export default function AdminAccountsAuditPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-primary/10 rounded-xl text-primary">
-          < Landmark className="h-8 w-8" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary">
+            <Landmark className="h-8 w-8" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-headline font-bold text-primary">Global Account Audit</h1>
+            <p className="text-muted-foreground">Full oversight of all Checking and Savings assets.</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-headline font-bold text-primary">Global Account Audit</h1>
-          <p className="text-muted-foreground">Full oversight of all Checking and Savings assets.</p>
-        </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent">
+          <PlusCircle className="mr-2 h-4 w-4" /> Create Account
+        </Button>
       </div>
 
       <Card>
@@ -174,7 +213,7 @@ export default function AdminAccountsAuditPage() {
                           accountType: acc.accountType ?? "Checking",
                           status: acc.status ?? "Active"
                         });
-                        setIsDialogOpen(true);
+                        setIsEditDialogOpen(true);
                       }}
                     >
                       <Edit3 className="h-4 w-4" />
@@ -188,7 +227,7 @@ export default function AdminAccountsAuditPage() {
               {!isAccountsLoading && (!accounts || accounts.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-20 text-muted-foreground italic">
-                    No account records found in the database.
+                    No account records found.
                   </TableCell>
                 </TableRow>
               )}
@@ -197,7 +236,63 @@ export default function AdminAccountsAuditPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* Manual Creation Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manual Account Entry</DialogTitle>
+            <DialogDescription>Create a new account for an existing client ID.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Target User ID</Label>
+              <Input 
+                placeholder="Paste UID here" 
+                value={newAccount.userId} 
+                onChange={(e) => setNewAccount({...newAccount, userId: e.target.value})}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Account Type</Label>
+                <Select value={newAccount.accountType} onValueChange={(v) => setNewAccount({...newAccount, accountType: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Checking">Checking</SelectItem>
+                    <SelectItem value="Savings">Savings</SelectItem>
+                    <SelectItem value="Investment">Investment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Initial Balance</Label>
+                <Input 
+                  type="number" 
+                  value={newAccount.balance} 
+                  onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <Select value={newAccount.currency} onValueChange={(v) => setNewAccount({...newAccount, currency: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USD">USD</SelectItem>
+                  <SelectItem value="EUR">EUR</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCreateAccount} className="bg-primary">Inject Ledger Entry</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modify Account: {editingAccount?.accountNumber}</DialogTitle>
@@ -212,35 +307,6 @@ export default function AdminAccountsAuditPage() {
                 value={editingAccount?.balance ?? ""} 
                 onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <Select 
-                value={editingAccount?.currency ?? "USD"} 
-                onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD - US Dollar</SelectItem>
-                  <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                  <SelectItem value="EUR">EUR - Euro</SelectItem>
-                  <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Account Type</Label>
-              <Select 
-                value={editingAccount?.accountType ?? "Checking"} 
-                onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
-              >
-                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Checking">Checking</SelectItem>
-                  <SelectItem value="Savings">Savings</SelectItem>
-                  <SelectItem value="Investment">Investment</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label>Operational Status</Label>
