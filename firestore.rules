@@ -6,7 +6,7 @@ service cloud.firestore {
     /**
      * ADMINISTRATIVE OVERRIDE
      * Explicitly grant the master administrator account full access to the entire root.
-     * This bypasses path-based restrictions for audits.
+     * This bypasses path-based restrictions for global audits.
      */
     match /{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
@@ -22,60 +22,24 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Combines ownership check with existence check for updates and deletes. */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    // --- Collection Rules ---
+    // --- User Profile & Private Data ---
 
     match /users/{userId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      // Owners have full access to their own profile and nested collections
+      allow read, write: if isOwner(userId);
 
       match /accounts/{accountId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && (request.resource.data.customerId == userId || request.resource.data.userId == userId);
-        allow update: if isExistingOwner(userId) && (request.resource.data.customerId == resource.data.customerId || request.resource.data.userId == resource.data.userId);
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
 
         match /transactions/{transactionId} {
-          allow get, list: if isOwner(userId);
-          allow create: if isOwner(userId) && (request.resource.data.customerId == userId || request.resource.data.userId == userId);
-          allow update: if isExistingOwner(userId) && (request.resource.data.customerId == resource.data.customerId || request.resource.data.userId == resource.data.userId);
-          allow delete: if isExistingOwner(userId);
+          allow read, write: if isOwner(userId);
         }
       }
 
-      match /payees/{payeeId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.customerId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /bills/{billId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.customerId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /cards/{cardId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.customerId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
-        allow delete: if isExistingOwner(userId);
-      }
-
-      match /supportTickets/{ticketId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.customerId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.customerId == resource.data.customerId;
-        allow delete: if isExistingOwner(userId);
-      }
+      match /payees/{payeeId} { allow read, write: if isOwner(userId); }
+      match /bills/{billId} { allow read, write: if isOwner(userId); }
+      match /cards/{cardId} { allow read, write: if isOwner(userId); }
+      match /supportTickets/{ticketId} { allow read, write: if isOwner(userId); }
     }
 
     // Role-based access control metadata
@@ -84,15 +48,18 @@ service cloud.firestore {
       allow write: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com'; 
     }
 
-    // Support for collectionGroup queries used in administrative audits
+    /** 
+     * Collection Group Rules 
+     * Required for administrative collectionGroup queries (e.g., Audit pages).
+     */
     match /{path=**}/accounts/{accountId} {
-      allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
+      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
     match /{path=**}/transactions/{transactionId} {
-      allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
+      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
     match /{path=**}/cards/{cardId} {
-      allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
+      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
   }
 }
