@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
 import { updateProfile } from "firebase/auth";
 import { doc, serverTimestamp, collection } from "firebase/firestore";
@@ -23,7 +23,9 @@ import {
   Building2,
   Mail,
   Camera,
-  Globe
+  Globe,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -32,6 +34,8 @@ export default function SettingsPage() {
   const db = useFirestore();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   // Profile data fetch
   const profileRef = useMemoFirebase(() => {
@@ -69,7 +73,7 @@ export default function SettingsPage() {
     if (profile) {
       setFormData({
         username: profile.username || "",
-        profilePictureUrl: profile.profilePictureUrl || "",
+        profilePictureUrl: profile.profilePictureUrl || user?.photoURL || "",
         firstName: profile.firstName || user?.displayName?.split(' ')[0] || "",
         lastName: profile.lastName || user?.displayName?.split(' ')[1] || "",
         email: profile.email || user?.email || "",
@@ -83,6 +87,30 @@ export default function SettingsPage() {
       });
     }
   }, [profile, user]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: 'profilePictureUrl' | 'signature') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) { // 1MB Limit for Base64 prototype storage
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "Please select an image smaller than 1MB for verification."
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, [field]: reader.result as string }));
+      toast({
+        title: "Image Uploaded",
+        description: `Successfully processed ${field === 'signature' ? 'handwritten signature' : 'profile image'}.`
+      });
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleUpdateProfile = async () => {
     if (!user || !db) return;
@@ -146,29 +174,37 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Basic Information Form */}
         <div className="lg:col-span-2 space-y-8">
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <ShieldCheck className="h-5 w-5 text-accent" />
                 Basic Information
               </CardTitle>
               <CardDescription>Personal identification and contact details.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Profile Picture & Username Row */}
               <div className="flex flex-col md:flex-row gap-6 items-start">
                 <div className="relative group">
-                  <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-xl">
-                    <AvatarImage src={formData.profilePictureUrl} />
+                  <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-xl overflow-hidden">
+                    <AvatarImage src={formData.profilePictureUrl} className="object-cover" />
                     <AvatarFallback className="bg-primary/5 text-primary text-2xl font-bold">
                       {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <button 
+                    onClick={() => profileInputRef.current?.click()}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
                     <Camera className="text-white h-6 w-6" />
-                  </div>
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={profileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={(e) => handleFileChange(e, 'profilePictureUrl')} 
+                  />
                 </div>
                 <div className="flex-1 space-y-4 w-full">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,12 +217,10 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Profile Image URL</Label>
-                      <Input 
-                        placeholder="https://image-url.com/photo.jpg" 
-                        value={formData.profilePictureUrl} 
-                        onChange={(e) => setFormData({...formData, profilePictureUrl: e.target.value})}
-                      />
+                      <Label>Identity Status</Label>
+                      <div className="h-10 px-3 flex items-center bg-green-50 text-green-700 text-xs font-bold rounded-md border border-green-100">
+                        <ShieldCheck className="h-4 w-4 mr-2" /> Verified Profile
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -220,33 +254,31 @@ export default function SettingsPage() {
                     disabled 
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3 text-green-500" />
-                  Primary verification email cannot be changed here.
-                </p>
               </div>
 
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-bold text-sm flex items-center gap-2">
+                <h4 className="font-bold text-sm flex items-center gap-2 text-primary">
                   <MapPin className="h-4 w-4 text-accent" />
                   Residential Address
                 </h4>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Address Line 1</Label>
-                    <Input 
-                      placeholder="Street address, P.O. box" 
-                      value={formData.addressLine1} 
-                      onChange={(e) => setFormData({...formData, addressLine1: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Address Line 2 (Optional)</Label>
-                    <Input 
-                      placeholder="Apartment, suite, unit, building, floor" 
-                      value={formData.addressLine2} 
-                      onChange={(e) => setFormData({...formData, addressLine2: e.target.value})}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Address Line 1</Label>
+                      <Input 
+                        placeholder="Street address, P.O. box" 
+                        value={formData.addressLine1} 
+                        onChange={(e) => setFormData({...formData, addressLine1: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Address Line 2 (Optional)</Label>
+                      <Input 
+                        placeholder="Apt, unit, floor" 
+                        value={formData.addressLine2} 
+                        onChange={(e) => setFormData({...formData, addressLine2: e.target.value})}
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
@@ -264,7 +296,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Zip / Postal Code</Label>
+                      <Label>Postal Code</Label>
                       <Input 
                         value={formData.postalCode} 
                         onChange={(e) => setFormData({...formData, postalCode: e.target.value})}
@@ -287,36 +319,47 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-bold text-sm flex items-center gap-2">
-                  <PenTool className="h-4 w-4 text-accent" />
-                  Legal Signature
-                </h4>
-                <div className="space-y-2">
-                  <Label>Full Signature Name</Label>
-                  <Input 
-                    className="font-serif italic text-lg"
-                    placeholder="Type your legal name as a signature" 
-                    value={formData.signature} 
-                    onChange={(e) => setFormData({...formData, signature: e.target.value})}
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-sm flex items-center gap-2 text-primary">
+                    <PenTool className="h-4 w-4 text-accent" />
+                    Handwritten Signature
+                  </h4>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-xs h-8"
+                    onClick={() => signatureInputRef.current?.click()}
+                  >
+                    <Upload className="h-3 w-3 mr-2" /> Upload Image
+                  </Button>
+                  <input 
+                    type="file" 
+                    ref={signatureInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={(e) => handleFileChange(e, 'signature')} 
                   />
-                  <div className="p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg">
-                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Electronic Preview</p>
-                    <p className="text-3xl font-serif italic text-primary opacity-80 select-none">
-                      {formData.signature || "Your Signature"}
-                    </p>
-                  </div>
+                </div>
+                <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center min-h-[120px]">
+                  {formData.signature ? (
+                    <div className="relative group w-full flex justify-center">
+                      <img src={formData.signature} alt="Digital Signature" className="max-h-24 object-contain mix-blend-multiply" />
+                      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded">
+                        <Button variant="secondary" size="sm" onClick={() => setFormData(prev => ({ ...prev, signature: '' }))}>Clear</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <ImageIcon className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">No Signature Image Uploaded</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="bg-slate-50/50 justify-end py-4 rounded-b-lg">
-              <Button onClick={handleUpdateProfile} disabled={loading} className="bg-primary">
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Update Basic Information"}
-              </Button>
-            </CardFooter>
           </Card>
         </div>
 
-        {/* Right Column: Account Summary */}
         <div className="space-y-8">
           <Card className="border-primary/10 shadow-lg overflow-hidden">
             <CardHeader className="bg-primary text-white">

@@ -12,7 +12,10 @@ import {
   Building2,
   ShieldAlert,
   Users,
-  Landmark
+  Landmark,
+  User as UserIcon,
+  PieChart,
+  Wallet
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -25,13 +28,15 @@ import {
   SidebarMenuButton, 
   SidebarMenuItem,
   SidebarGroup,
-  SidebarGroupLabel
+  SidebarGroupLabel,
+  SidebarSeparator
 } from "@/components/ui/sidebar";
-import { useDoc, useUser, useAuth } from "@/firebase";
+import { useDoc, useUser, useAuth, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { doc } from "firebase/firestore";
+import { doc, collection } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
 import { initiateSignOut } from "@/firebase/non-blocking-login";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -55,6 +60,20 @@ export function DashboardSidebar() {
   const auth = useAuth();
   const db = useFirestore();
 
+  // Profile data fetch for Sidebar Basic Info
+  const profileRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user?.uid]);
+  const { data: profile } = useDoc(profileRef);
+
+  // Accounts fetch for Sidebar Summary
+  const accountsRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return collection(db, "users", user.uid, "accounts");
+  }, [db, user?.uid]);
+  const { data: accounts } = useCollection(accountsRef);
+
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
@@ -62,6 +81,8 @@ export function DashboardSidebar() {
 
   const { data: adminRole } = useDoc(adminRoleRef);
   const isAdmin = !!adminRole || user?.email === "citybank@gmail.com";
+
+  const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
 
   const handleLogout = async () => {
     try {
@@ -84,6 +105,53 @@ export function DashboardSidebar() {
         </span>
       </SidebarHeader>
       <SidebarContent>
+        {/* Basic Information Section */}
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Account Profile</SidebarGroupLabel>
+          <div className="px-2 py-3 flex items-center gap-3 bg-white/5 rounded-xl border border-white/5 mb-2">
+            <Avatar className="h-10 w-10 border border-white/20">
+              <AvatarImage src={profile?.profilePictureUrl || user?.photoURL || ""} className="object-cover" />
+              <AvatarFallback className="bg-accent text-white text-xs font-bold">
+                {profile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-white truncate">
+                {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.displayName || "Member")}
+              </span>
+              <span className="text-[10px] text-sidebar-foreground/60 truncate font-mono">
+                {profile?.username || user?.email?.split('@')[0]}
+              </span>
+            </div>
+          </div>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-2 opacity-10" />
+
+        {/* Account Summary Section */}
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Financial Summary</SidebarGroupLabel>
+          <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] uppercase font-black tracking-widest text-accent">Total Capital</span>
+              <Wallet className="h-3 w-3 text-accent" />
+            </div>
+            <div className="text-lg font-black text-white">
+              ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div className="space-y-1 mt-2">
+              {accounts?.slice(0, 2).map(acc => (
+                <div key={acc.id} className="flex justify-between text-[10px] font-medium text-sidebar-foreground/70">
+                  <span>{acc.accountType}</span>
+                  <span className="text-white">${acc.balance?.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </SidebarGroup>
+
+        <SidebarSeparator className="mx-2 opacity-10" />
+
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/50">Banking</SidebarGroupLabel>
           <SidebarMenu>
