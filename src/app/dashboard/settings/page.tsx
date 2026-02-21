@@ -92,11 +92,13 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 1024) { // 1MB Limit for Base64 prototype storage
+    // Increased size limit to 5MB
+    const MAX_SIZE = 5 * 1024 * 1024; 
+    if (file.size > MAX_SIZE) {
       toast({
         variant: "destructive",
         title: "File too large",
-        description: "Please select an image smaller than 1MB for verification."
+        description: "Please select an image smaller than 5MB."
       });
       return;
     }
@@ -106,7 +108,7 @@ export default function SettingsPage() {
       setFormData(prev => ({ ...prev, [field]: reader.result as string }));
       toast({
         title: "Image Uploaded",
-        description: `Successfully processed ${field === 'signature' ? 'handwritten signature' : 'profile image'}.`
+        description: `Successfully processed ${field === 'signature' ? 'handwritten signature' : 'profile image'}. Click "Save All Changes" to confirm.`
       });
     };
     reader.readAsDataURL(file);

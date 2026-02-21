@@ -105,49 +105,53 @@ export function DashboardSidebar() {
         </span>
       </SidebarHeader>
       <SidebarContent>
-        {/* Basic Information Section */}
+        {/* Basic Information Section - Clickable Link to Settings */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50">Account Profile</SidebarGroupLabel>
-          <div className="px-2 py-3 flex items-center gap-3 bg-white/5 rounded-xl border border-white/5 mb-2">
-            <Avatar className="h-10 w-10 border border-white/20">
-              <AvatarImage src={profile?.profilePictureUrl || user?.photoURL || ""} className="object-cover" />
-              <AvatarFallback className="bg-accent text-white text-xs font-bold">
-                {profile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-white truncate">
-                {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.displayName || "Member")}
-              </span>
-              <span className="text-[10px] text-sidebar-foreground/60 truncate font-mono">
-                {profile?.username || user?.email?.split('@')[0]}
-              </span>
+          <Link href="/dashboard/settings" className="block outline-none">
+            <div className="px-2 py-3 flex items-center gap-3 bg-white/5 rounded-xl border border-white/5 mb-2 hover:bg-white/10 transition-colors cursor-pointer group">
+              <Avatar className="h-10 w-10 border border-white/20 group-hover:border-accent/50 transition-colors">
+                <AvatarImage src={profile?.profilePictureUrl || user?.photoURL || ""} className="object-cover" />
+                <AvatarFallback className="bg-accent text-white text-xs font-bold">
+                  {profile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-white truncate group-hover:text-accent transition-colors">
+                  {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.displayName || "Member")}
+                </span>
+                <span className="text-[10px] text-sidebar-foreground/60 truncate font-mono">
+                  {profile?.username || user?.email?.split('@')[0]}
+                </span>
+              </div>
             </div>
-          </div>
+          </Link>
         </SidebarGroup>
 
         <SidebarSeparator className="mx-2 opacity-10" />
 
-        {/* Account Summary Section */}
+        {/* Account Summary Section - Clickable Link to Settings */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50">Financial Summary</SidebarGroupLabel>
-          <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] uppercase font-black tracking-widest text-accent">Total Capital</span>
-              <Wallet className="h-3 w-3 text-accent" />
+          <Link href="/dashboard/settings" className="block outline-none">
+            <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2 hover:bg-accent/20 transition-colors cursor-pointer group">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] uppercase font-black tracking-widest text-accent">Total Capital</span>
+                <Wallet className="h-3 w-3 text-accent group-hover:scale-110 transition-transform" />
+              </div>
+              <div className="text-lg font-black text-white">
+                ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className="space-y-1 mt-2">
+                {accounts?.slice(0, 2).map(acc => (
+                  <div key={acc.id} className="flex justify-between text-[10px] font-medium text-sidebar-foreground/70">
+                    <span>{acc.accountType}</span>
+                    <span className="text-white">${acc.balance?.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="text-lg font-black text-white">
-              ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div className="space-y-1 mt-2">
-              {accounts?.slice(0, 2).map(acc => (
-                <div key={acc.id} className="flex justify-between text-[10px] font-medium text-sidebar-foreground/70">
-                  <span>{acc.accountType}</span>
-                  <span className="text-white">${acc.balance?.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          </Link>
         </SidebarGroup>
 
         <SidebarSeparator className="mx-2 opacity-10" />
