@@ -1,6 +1,8 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { LanguageProvider } from '@/components/language-provider';
 
 export const metadata: Metadata = {
   title: 'City International Bank',
@@ -20,9 +22,11 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
-          {children}
-        </FirebaseClientProvider>
+        <LanguageProvider>
+          <FirebaseClientProvider>
+            {children}
+          </FirebaseClientProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

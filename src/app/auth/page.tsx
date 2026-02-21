@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -12,6 +13,8 @@ import { Building2, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { useTranslation } from "@/components/language-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 function AuthPageContent() {
   const router = useRouter();
@@ -20,6 +23,7 @@ function AuthPageContent() {
   const auth = useAuth();
   const db = useFirestore();
   const { user, isUserLoading } = useUser();
+  const { t } = useTranslation();
 
   const [isLogin, setIsLogin] = useState(searchParams.get("mode") !== "signup");
   const [email, setEmail] = useState("");
@@ -29,7 +33,6 @@ function AuthPageContent() {
   useEffect(() => {
     if (user && !isUserLoading) {
       setLoading(true);
-      // Ensure administrative privileges are active for the prototype admin
       if (user.email === "citybank@gmail.com") {
         const adminRef = doc(db, "roles_admin", user.uid);
         setDoc(adminRef, { 
@@ -76,7 +79,11 @@ function AuthPageContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 relative">
+      <div className="absolute top-6 right-6">
+        <LanguageSwitcher />
+      </div>
+      
       <Link href="/" className="mb-8 flex items-center gap-2">
         <div className="bg-primary p-2 rounded-lg">
           <Building2 className="text-white h-6 w-6" />
@@ -89,11 +96,9 @@ function AuthPageContent() {
 
       <Card className="w-full max-w-md shadow-xl border-t-4 border-t-accent">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">{isLogin ? "Sign In" : "Join City Bank"}</CardTitle>
+          <CardTitle className="text-2xl font-bold">{isLogin ? t('auth_signin') : t('auth_signup')}</CardTitle>
           <CardDescription>
-            {isLogin 
-              ? "Access your secure global banking dashboard." 
-              : "Experience the future of finance today."}
+            {isLogin ? t('auth_desc_login') : t('auth_desc_signup')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -133,7 +138,7 @@ function AuthPageContent() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? "Log In to Secure Dashboard" : "Create My Global Account"}
+                  {isLogin ? "Log In" : "Register"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}

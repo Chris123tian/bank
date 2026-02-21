@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -8,6 +9,7 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { ChatbotWidget } from "@/components/chatbot-widget";
 import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from "lucide-react";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function DashboardLayout({
   children,
@@ -43,6 +45,7 @@ export default function DashboardLayout({
           <header className="flex h-16 items-center border-b bg-white px-6 gap-4">
             <SidebarTrigger />
             <div className="ml-auto flex items-center gap-4">
+              <LanguageSwitcher />
               <div className="text-sm font-medium hidden sm:block">
                 Welcome, {user.displayName || user.email?.split('@')[0]}
               </div>
