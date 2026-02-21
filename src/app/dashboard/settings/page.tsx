@@ -2,107 +2,388 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
 import { updateProfile } from "firebase/auth";
+import { doc, serverTimestamp, collection } from "firebase/firestore";
+import { useMemoFirebase } from "@/firebase/provider";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { User as UserIcon, ShieldCheck, Loader2 } from "lucide-react";
+import { 
+  User as UserIcon, 
+  ShieldCheck, 
+  Loader2, 
+  MapPin, 
+  PenTool, 
+  CreditCard,
+  Building2,
+  Mail,
+  Camera,
+  Globe
+} from "lucide-react";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function SettingsPage() {
   const { user } = useUser();
+  const db = useFirestore();
   const { toast } = useToast();
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Profile data fetch
+  const profileRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user?.uid]);
+
+  const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef);
+
+  // Accounts fetch for Summary
+  const accountsRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return collection(db, "users", user.uid, "accounts");
+  }, [db, user?.uid]);
+
+  const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    username: "",
+    profilePictureUrl: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "",
+    signature: "",
+  });
+
   useEffect(() => {
-    if (user?.displayName) {
-      setName(user.displayName);
+    if (profile) {
+      setFormData({
+        username: profile.username || "",
+        profilePictureUrl: profile.profilePictureUrl || "",
+        firstName: profile.firstName || user?.displayName?.split(' ')[0] || "",
+        lastName: profile.lastName || user?.displayName?.split(' ')[1] || "",
+        email: profile.email || user?.email || "",
+        addressLine1: profile.addressLine1 || "",
+        addressLine2: profile.addressLine2 || "",
+        city: profile.city || "",
+        state: profile.state || "",
+        postalCode: profile.postalCode || "",
+        country: profile.country || "",
+        signature: profile.signature || "",
+      });
     }
-  }, [user]);
+  }, [profile, user]);
 
   const handleUpdateProfile = async () => {
-    if (!user) return;
+    if (!user || !db) return;
     setLoading(true);
 
     try {
-      await updateProfile(user, { displayName: name });
+      // Update Firebase Auth Profile (Display Name)
+      await updateProfile(user, { 
+        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
+        photoURL: formData.profilePictureUrl 
+      });
+
+      // Update Firestore Profile
+      const userDocRef = doc(db, "users", user.uid);
+      setDocumentNonBlocking(userDocRef, {
+        ...formData,
+        id: user.uid,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
       toast({
-        title: "Profile Updated",
-        description: "Your display name has been updated successfully.",
+        title: "Profile Synchronized",
+        description: "Your basic information has been updated across all systems.",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: error.message || "Failed to update profile.",
+        description: error.message || "Failed to update profile information.",
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
+
+  if (isProfileLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-primary/10 rounded-xl text-primary">
-          <UserIcon className="h-8 w-8" />
+    <div className="max-w-5xl mx-auto space-y-8 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary">
+            <UserIcon className="h-8 w-8" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-headline font-bold text-primary">Account User Information</h1>
+            <p className="text-muted-foreground">Manage your secure global profile and financial identity.</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-headline font-bold text-primary">Account Settings</h1>
-          <p className="text-muted-foreground">Manage your personal information and preferences.</p>
-        </div>
+        <Button onClick={handleUpdateProfile} disabled={loading} className="bg-accent hover:bg-accent/90">
+          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save All Changes"}
+        </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
-          <CardDescription>This information is visible across your banking dashboard.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input id="email" value={user?.email || ""} disabled className="bg-slate-50" />
-            <p className="text-[10px] text-muted-foreground italic flex items-center gap-1">
-              <ShieldCheck className="h-3 w-3" />
-              Verified secure global identifier
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="name">Display Name</Label>
-            <Input 
-              id="name" 
-              placeholder="e.g. Alex Thompson" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-        </CardContent>
-        <CardFooter className="border-t pt-6 justify-end">
-          <Button onClick={handleUpdateProfile} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Changes"}
-          </Button>
-        </CardFooter>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Basic Information Form */}
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-accent" />
+                Basic Information
+              </CardTitle>
+              <CardDescription>Personal identification and contact details.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Profile Picture & Username Row */}
+              <div className="flex flex-col md:flex-row gap-6 items-start">
+                <div className="relative group">
+                  <Avatar className="h-24 w-24 border-4 border-slate-50 shadow-xl">
+                    <AvatarImage src={formData.profilePictureUrl} />
+                    <AvatarFallback className="bg-primary/5 text-primary text-2xl font-bold">
+                      {formData.firstName.charAt(0)}{formData.lastName.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <Camera className="text-white h-6 w-6" />
+                  </div>
+                </div>
+                <div className="flex-1 space-y-4 w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Username</Label>
+                      <Input 
+                        placeholder="@username" 
+                        value={formData.username} 
+                        onChange={(e) => setFormData({...formData, username: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Profile Image URL</Label>
+                      <Input 
+                        placeholder="https://image-url.com/photo.jpg" 
+                        value={formData.profilePictureUrl} 
+                        onChange={(e) => setFormData({...formData, profilePictureUrl: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-      <Card className="border-red-100 bg-red-50/20">
-        <CardHeader>
-          <CardTitle className="text-red-600 text-lg">Security Zones</CardTitle>
-          <CardDescription>Highly sensitive account operations.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 bg-white border border-red-100 rounded-lg">
-            <div>
-              <p className="font-bold text-sm">Two-Factor Authentication</p>
-              <p className="text-xs text-muted-foreground">Enabled via NexaSecure Device Link</p>
-            </div>
-            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Protected</Badge>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input 
+                    value={formData.firstName} 
+                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input 
+                    value={formData.lastName} 
+                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    className="pl-10"
+                    type="email" 
+                    value={formData.email} 
+                    disabled 
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3 text-green-500" />
+                  Primary verification email cannot be changed here.
+                </p>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <h4 className="font-bold text-sm flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-accent" />
+                  Residential Address
+                </h4>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Address Line 1</Label>
+                    <Input 
+                      placeholder="Street address, P.O. box" 
+                      value={formData.addressLine1} 
+                      onChange={(e) => setFormData({...formData, addressLine1: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Address Line 2 (Optional)</Label>
+                    <Input 
+                      placeholder="Apartment, suite, unit, building, floor" 
+                      value={formData.addressLine2} 
+                      onChange={(e) => setFormData({...formData, addressLine2: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>City</Label>
+                      <Input 
+                        value={formData.city} 
+                        onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>State / Province</Label>
+                      <Input 
+                        value={formData.state} 
+                        onChange={(e) => setFormData({...formData, state: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Zip / Postal Code</Label>
+                      <Input 
+                        value={formData.postalCode} 
+                        onChange={(e) => setFormData({...formData, postalCode: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Country</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        className="pl-10"
+                        placeholder="United States" 
+                        value={formData.country} 
+                        onChange={(e) => setFormData({...formData, country: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <h4 className="font-bold text-sm flex items-center gap-2">
+                  <PenTool className="h-4 w-4 text-accent" />
+                  Legal Signature
+                </h4>
+                <div className="space-y-2">
+                  <Label>Full Signature Name</Label>
+                  <Input 
+                    className="font-serif italic text-lg"
+                    placeholder="Type your legal name as a signature" 
+                    value={formData.signature} 
+                    onChange={(e) => setFormData({...formData, signature: e.target.value})}
+                  />
+                  <div className="p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg">
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-2">Electronic Preview</p>
+                    <p className="text-3xl font-serif italic text-primary opacity-80 select-none">
+                      {formData.signature || "Your Signature"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-slate-50/50 justify-end py-4 rounded-b-lg">
+              <Button onClick={handleUpdateProfile} disabled={loading} className="bg-primary">
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Update Basic Information"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+
+        {/* Right Column: Account Summary */}
+        <div className="space-y-8">
+          <Card className="border-primary/10 shadow-lg overflow-hidden">
+            <CardHeader className="bg-primary text-white">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Account Summary
+              </CardTitle>
+              <CardDescription className="text-white/70">Consolidated financial overview.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="p-6 bg-primary/5 border-b border-primary/10">
+                <p className="text-xs font-bold text-primary uppercase tracking-widest">Total Managed Capital</p>
+                <p className="text-4xl font-black text-primary mt-1">
+                  ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+              <div className="p-6 space-y-4">
+                {isAccountsLoading ? (
+                  Array(2).fill(0).map((_, i) => <div key={i} className="h-12 bg-slate-100 animate-pulse rounded-lg" />)
+                ) : accounts && accounts.length > 0 ? (
+                  accounts.map((acc) => (
+                    <div key={acc.id} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-primary">{acc.accountType}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono">...{acc.accountNumber?.slice(-8)}</p>
+                        </div>
+                      </div>
+                      <p className="font-black text-sm text-right">
+                        ${acc.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 opacity-40">
+                    <p className="text-xs font-bold uppercase tracking-tighter">No Linked Accounts Found</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="border-t pt-4">
+              <Button variant="outline" className="w-full text-xs" asChild>
+                <a href="/dashboard/accounts/new">Open Supplemental Account</a>
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card className="bg-accent/5 border-accent/20">
+            <CardHeader>
+              <CardTitle className="text-sm font-bold text-accent uppercase tracking-widest">Security Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-accent/10 shadow-sm">
+                <span className="text-xs font-medium">KYC Verification</span>
+                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Verified</Badge>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-accent/10 shadow-sm">
+                <span className="text-xs font-medium">Account Status</span>
+                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Active</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
