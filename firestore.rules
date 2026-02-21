@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -88,6 +89,9 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
     }
     match /{path=**}/transactions/{transactionId} {
+      allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
+    }
+    match /{path=**}/cards/{cardId} {
       allow read: if request.auth != null && request.auth.token.email == 'citybank@gmail.com';
     }
   }

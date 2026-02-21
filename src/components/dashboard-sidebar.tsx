@@ -1,3 +1,4 @@
+
 "use client";
 
 import { 
@@ -44,6 +45,7 @@ const adminItems = [
   { name: "User Management", href: "/dashboard/admin/users", icon: Users },
   { name: "Audit Accounts", href: "/dashboard/admin/accounts", icon: Landmark },
   { name: "Audit Transactions", href: "/dashboard/admin/transactions", icon: ShieldAlert },
+  { name: "Audit Cards", href: "/dashboard/admin/cards", icon: CreditCard },
 ];
 
 export function DashboardSidebar() {
@@ -59,12 +61,11 @@ export function DashboardSidebar() {
   }, [db, user?.uid]);
 
   const { data: adminRole } = useDoc(adminRoleRef);
-  const isAdmin = !!adminRole;
+  const isAdmin = !!adminRole || user?.email === "citybank@gmail.com";
 
   const handleLogout = async () => {
     try {
       await initiateSignOut(auth);
-      // Immediately replace history to landing page
       router.replace("/");
     } catch (e) {
       console.error("Logout failed", e);
