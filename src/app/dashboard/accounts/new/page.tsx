@@ -31,7 +31,9 @@ export default function NewAccountPage() {
       balance: accountType === "savings" ? 250 : 100, // Special bonus for savings
       currency: "USD",
       userId: user.uid,
+      customerId: user.uid, // Explicitly add customerId for admin group queries
       branchId: "usa_head_office",
+      status: "Active",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -107,7 +109,7 @@ export default function NewAccountPage() {
             ) : (
               <>
                 Initialize My Account
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}
           </Button>

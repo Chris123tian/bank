@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,8 @@ import {
   ArrowRight,
   BarChart3,
   MousePointerClick,
-  Smartphone
+  Smartphone,
+  ChevronRight
 } from "lucide-react";
 import LinkNext from "next/link";
 import Image from "next/image";
@@ -75,60 +75,58 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Cinematic Hero */}
-        <section className="relative pt-16 pb-32 lg:pt-32 lg:pb-48 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(var(--primary),0.15),transparent_50%)]" />
+        <section className="relative min-h-[90vh] flex items-center pt-16 pb-32 overflow-hidden">
+          <div className="absolute inset-0 z-0">
+             <Image 
+                src={heroImage?.imageUrl || "https://images.unsplash.com/photo-1697335713414-42693f1a455f?q=80&w=2000"} 
+                alt="Institutional Banking"
+                fill
+                priority
+                className="object-cover opacity-40"
+                data-ai-hint="modern banking"
+             />
+             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
+             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+          </div>
           
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div className="space-y-8 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-accent text-[9px] font-black tracking-widest uppercase">
-                  <ShieldCheck className="h-3.5 w-3.5" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+            <div className="max-w-2xl space-y-10">
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 border border-accent/30 text-accent text-[10px] font-black tracking-widest uppercase">
+                  <ShieldCheck className="h-4 w-4" />
                   {t('hero_badge')}
                 </div>
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-headline font-black leading-[1.1] tracking-tighter">
+                <h1 className="text-5xl md:text-7xl lg:text-8xl font-headline font-black leading-[0.95] tracking-tighter">
                   {t('hero_title_1')} <br />
                   <span className="text-accent italic">{t('hero_title_accent')}</span> <br />
                   {t('hero_title_2')}
                 </h1>
-                <p className="text-base md:text-lg text-slate-400 max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium">
-                  {t('hero_desc')}
-                </p>
-                <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-                  <Button size="lg" className="bg-primary hover:bg-primary/90 text-sm px-8 h-14 rounded-xl group shadow-2xl shadow-primary/20" asChild>
-                    <LinkNext href={user ? "/dashboard" : "/auth?mode=signup"}>
-                      {t('hero_cta_primary')} <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </LinkNext>
-                  </Button>
-                  <Button size="lg" variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10 text-sm px-8 h-14 rounded-xl" asChild>
-                    <LinkNext href="#services">{t('hero_cta_secondary')}</LinkNext>
-                  </Button>
-                </div>
+              </div>
+              
+              <p className="text-lg md:text-xl text-slate-300 leading-relaxed font-medium max-w-xl">
+                {t('hero_desc')}
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="bg-primary hover:bg-primary/90 text-sm px-10 h-16 rounded-2xl group shadow-2xl shadow-primary/40" asChild>
+                  <LinkNext href={user ? "/dashboard" : "/auth?mode=signup"}>
+                    {t('hero_cta_primary')} <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </LinkNext>
+                </Button>
+                <Button size="lg" variant="outline" className="border-white/20 bg-white/5 hover:bg-white/10 text-sm px-10 h-16 rounded-2xl" asChild>
+                  <LinkNext href="#services">{t('hero_cta_secondary')}</LinkNext>
+                </Button>
               </div>
 
-              <div className="relative group max-w-md mx-auto lg:max-w-none">
-                <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
-                <div className="relative z-10 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-4xl bg-slate-900 aspect-[4/5]">
-                  <Image 
-                    src={heroImage?.imageUrl || "https://picsum.photos/seed/bank-hero/1200/1600"} 
-                    alt="City Bank Experience" 
-                    fill
-                    priority
-                    className="object-cover opacity-70 transition-transform duration-[20s] group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+              <div className="pt-10 flex items-center gap-8 border-t border-white/10">
+                <div className="space-y-1">
+                  <p className="text-3xl font-black text-white">5.25%</p>
+                  <p className="text-[9px] uppercase font-black tracking-[0.2em] text-slate-500">Savings APY</p>
                 </div>
-                
-                {/* Floating Stats */}
-                <div className="absolute -bottom-6 -left-6 bg-slate-900/90 backdrop-blur-xl p-6 rounded-[1.5rem] border border-white/10 shadow-2xl">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center text-white shadow-lg">
-                      <TrendingUp className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Reserve APY</p>
-                      <p className="text-2xl font-black text-white leading-none mt-1">5.25%</p>
-                    </div>
-                  </div>
+                <div className="h-10 w-px bg-white/10" />
+                <div className="space-y-1">
+                  <p className="text-3xl font-black text-white">180+</p>
+                  <p className="text-[9px] uppercase font-black tracking-[0.2em] text-slate-500">Global Markets</p>
                 </div>
               </div>
             </div>
@@ -136,14 +134,19 @@ export default function LandingPage() {
         </section>
 
         {/* Global Access Grid */}
-        <section id="services" className="py-24 relative bg-slate-950/50">
+        <section id="services" className="py-32 relative bg-slate-950">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16 space-y-3">
-              <h2 className="text-accent font-black tracking-[0.3em] uppercase text-[9px]">The Infrastructure</h2>
-              <h3 className="text-3xl md:text-5xl font-headline font-black tracking-tighter">Unified Banking Protocol.</h3>
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
+              <div className="space-y-4">
+                <h2 className="text-accent font-black tracking-[0.4em] uppercase text-[10px]">The Infrastructure</h2>
+                <h3 className="text-4xl md:text-6xl font-headline font-black tracking-tighter">Unified Banking Protocol.</h3>
+              </div>
+              <p className="text-slate-400 max-w-sm text-sm font-medium leading-relaxed">
+                Our global settlement network provides instant liquidity and institutional-grade custody for every asset class.
+              </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 { title: t('feature_custody'), desc: t('feature_custody_desc'), icon: Lock },
                 { title: t('feature_settlement'), desc: t('feature_settlement_desc'), icon: Zap },
@@ -152,12 +155,19 @@ export default function LandingPage() {
                 { title: "Concierge Support", desc: "Priority 24/7 access to specialized banking agents.", icon: Smartphone },
                 { title: "One-Click Liquidity", desc: "Instant credit lines backed by your diverse assets.", icon: MousePointerClick },
               ].map((item, i) => (
-                <div key={i} className="p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:border-accent/30 transition-all duration-300 group">
-                  <div className="h-12 w-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-accent transition-colors duration-300 mb-6">
-                    <item.icon className="h-5 w-5 text-accent group-hover:text-white transition-colors" />
+                <div key={i} className="group p-10 rounded-[2.5rem] bg-white/5 border border-white/5 hover:border-accent/40 transition-all duration-500 hover:bg-white/[0.07] flex flex-col justify-between h-[320px]">
+                  <div className="space-y-6">
+                    <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-accent transition-colors duration-500">
+                      <item.icon className="h-6 w-6 text-accent group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-xl font-black">{item.title}</h4>
+                      <p className="text-sm text-slate-400 leading-relaxed font-medium">{item.desc}</p>
+                    </div>
                   </div>
-                  <h4 className="text-lg font-black mb-2">{item.title}</h4>
-                  <p className="text-sm text-slate-400 leading-relaxed font-medium">{item.desc}</p>
+                  <Button variant="link" className="p-0 h-auto text-accent text-xs font-bold w-fit group-hover:translate-x-1 transition-transform">
+                    Learn More <ChevronRight className="h-3 w-3 ml-1" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -165,56 +175,94 @@ export default function LandingPage() {
         </section>
 
         {/* Security Section */}
-        <section id="security" className="py-24 bg-white text-slate-950 rounded-[3rem] mx-4 lg:mx-8 mb-20 overflow-hidden relative">
-          <div className="max-w-7xl mx-auto px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-             <div className="space-y-8">
-                <h3 className="text-4xl md:text-6xl font-headline font-black leading-tight tracking-tighter text-primary">
-                  {t('security_title')}
-                </h3>
-                <p className="text-lg text-slate-600 font-medium leading-relaxed">
-                  {t('security_desc')}
-                </p>
-                <div className="grid grid-cols-2 gap-8">
-                  <div className="space-y-1">
-                    <p className="text-2xl font-black text-primary">$420B+</p>
-                    <p className="text-[8px] uppercase font-black tracking-widest text-slate-400">Assets Under Custody</p>
+        <section id="security" className="py-24 bg-white text-slate-950 rounded-[4rem] mx-4 lg:mx-8 mb-20 overflow-hidden relative shadow-2xl">
+          <div className="max-w-7xl mx-auto px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+             <div className="space-y-10">
+                <div className="space-y-4">
+                  <h3 className="text-5xl md:text-7xl font-headline font-black leading-[0.9] tracking-tighter text-primary">
+                    {t('security_title')}
+                  </h3>
+                  <p className="text-xl text-slate-600 font-medium leading-relaxed max-w-lg">
+                    {t('security_desc')}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-12 pt-6 border-t border-slate-100">
+                  <div className="space-y-2">
+                    <p className="text-4xl font-black text-primary">$420B+</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">Assets Under Custody</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-black text-primary">0.0ms</p>
-                    <p className="text-[8px] uppercase font-black tracking-widest text-slate-400">Settlement Latency</p>
+                  <div className="space-y-2">
+                    <p className="text-4xl font-black text-primary">0.0ms</p>
+                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-400">Settlement Latency</p>
                   </div>
                 </div>
-                <Button className="bg-primary hover:bg-primary/90 rounded-full px-8 h-12 font-black text-[10px] uppercase tracking-widest">
-                  Security Whitepaper
-                </Button>
+
+                <div className="flex flex-wrap gap-4">
+                  <Button className="bg-primary hover:bg-primary/90 rounded-full px-10 h-14 font-black text-[11px] uppercase tracking-widest shadow-xl shadow-primary/20">
+                    Security Whitepaper
+                  </Button>
+                  <Button variant="outline" className="border-slate-200 rounded-full px-10 h-14 font-black text-[11px] uppercase tracking-widest hover:bg-slate-50">
+                    Compliance API
+                  </Button>
+                </div>
              </div>
-             <div className="relative aspect-[4/3] rounded-[2rem] overflow-hidden shadow-2xl border-4 border-slate-50">
-               <Image 
-                src={secureVaultImage?.imageUrl || "https://picsum.photos/seed/secure-vault/800/600"} 
-                alt="Security Vault" 
-                fill
-                className="object-cover"
-               />
+             
+             <div className="relative group">
+               <div className="absolute inset-0 bg-primary/10 rounded-[3rem] blur-3xl group-hover:bg-primary/20 transition-colors" />
+               <div className="relative aspect-[4/3] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-slate-50">
+                 <Image 
+                  src={secureVaultImage?.imageUrl || "https://images.unsplash.com/photo-1570044389283-6713c3b1c48b?q=80&w=1200"} 
+                  alt="Security Vault" 
+                  fill
+                  className="object-cover transition-transform duration-[10s] group-hover:scale-110"
+                  data-ai-hint="bank security"
+                 />
+                 <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
+               </div>
              </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-slate-950 py-16 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <Building2 className="text-accent h-7 w-7" />
-            <span className="font-headline font-black text-2xl tracking-tighter">CITY BANK</span>
+      <footer className="bg-slate-950 py-24 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+             <div className="col-span-1 md:col-span-2 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary p-2 rounded-xl">
+                    <Building2 className="text-white h-6 w-6" />
+                  </div>
+                  <span className="font-headline font-black text-2xl tracking-tighter">CITY BANK</span>
+                </div>
+                <p className="text-slate-400 max-w-sm text-sm font-medium leading-relaxed">
+                  Redefining the standard for international capital management through advanced settlement infrastructure and institutional custody.
+                </p>
+             </div>
+             <div className="space-y-6">
+                <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Network</h5>
+                <ul className="space-y-4 text-sm font-bold text-slate-300">
+                  <li className="hover:text-accent cursor-pointer transition-colors">Wealth Engine</li>
+                  <li className="hover:text-accent cursor-pointer transition-colors">Institutional Portal</li>
+                  <li className="hover:text-accent cursor-pointer transition-colors">Settlement API</li>
+                </ul>
+             </div>
+             <div className="space-y-6">
+                <h5 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Legal</h5>
+                <ul className="space-y-4 text-sm font-bold text-slate-300">
+                  <li className="hover:text-accent cursor-pointer transition-colors">Privacy Policy</li>
+                  <li className="hover:text-accent cursor-pointer transition-colors">Compliance Standards</li>
+                  <li className="hover:text-accent cursor-pointer transition-colors">Member FDIC</li>
+                </ul>
+             </div>
           </div>
-          <p className="text-[9px] text-slate-500 font-black uppercase tracking-[0.3em] mb-4">{t('footer_standard')}</p>
-          <div className="flex justify-center gap-8 text-[9px] font-black uppercase tracking-widest text-slate-400">
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Compliance</span>
+
+          <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">{t('footer_standard')}</p>
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest italic">
+              © 2024 City International Bank. All Rights Reserved. Member FDIC. Equal Housing Lender.
+            </p>
           </div>
-          <p className="mt-10 text-[8px] text-slate-600 font-bold uppercase tracking-widest italic">
-            © 2024 City International Bank. Member FDIC. Equal Housing Lender.
-          </p>
         </div>
       </footer>
     </div>
