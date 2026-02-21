@@ -20,7 +20,7 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // If auth state is determined and user is null, redirect to home.
+    // Optimization: Use replace for faster navigation and clean history
     if (!isUserLoading && !user) {
       router.replace("/");
     }

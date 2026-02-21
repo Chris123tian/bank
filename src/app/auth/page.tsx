@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -31,21 +32,17 @@ function AuthPageContent() {
 
   useEffect(() => {
     if (user && !isUserLoading) {
-      setLoading(true);
+      // Fast redirect - don't block on admin role update
       if (user.email === "citybank@gmail.com") {
         const adminRef = doc(db, "roles_admin", user.uid);
+        // Non-blocking background update
         setDoc(adminRef, { 
           email: user.email, 
           assignedAt: serverTimestamp(),
           role: "super_admin"
-        }, { merge: true }).then(() => {
-          router.push("/dashboard");
-        }).catch(() => {
-          router.push("/dashboard");
-        });
-      } else {
-        router.push("/dashboard");
+        }, { merge: true }).catch(() => {});
       }
+      router.replace("/dashboard");
     }
   }, [user, isUserLoading, router, db]);
 

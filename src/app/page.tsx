@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,8 @@ export default function LandingPage() {
                 src={heroImage?.imageUrl || "https://images.unsplash.com/photo-1697335713414-42693f1a455f?q=80&w=2000"} 
                 alt="Institutional Banking"
                 fill
-                priority
+                priority={true}
+                loading="eager"
                 className="object-cover opacity-30 sm:opacity-40"
                 data-ai-hint="modern banking"
              />
