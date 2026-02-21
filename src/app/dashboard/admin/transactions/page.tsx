@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -25,16 +26,19 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
-import { Trash2, Edit3, ShieldAlert, Loader2 } from "lucide-react";
+import { Trash2, Edit3, ShieldAlert, Loader2, Eye, Receipt, User, Landmark, CreditCard, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdminTransactionsAuditPage() {
   const { toast } = useToast();
   const db = useFirestore();
   const { user } = useUser();
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewingTransaction, setViewingTransaction] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
@@ -83,7 +87,7 @@ export default function AdminTransactionsAuditPage() {
 
     toast({ title: "Transaction Updated", description: "Audit trail record has been modified." });
     setEditingTransaction(null);
-    setIsDialogOpen(false);
+    setIsEditDialogOpen(false);
   };
 
   const handleDelete = (transaction: any) => {
@@ -120,24 +124,24 @@ export default function AdminTransactionsAuditPage() {
           <ShieldAlert className="h-8 w-8" />
         </div>
         <div>
-          <h1 className="text-3xl font-headline font-bold text-primary">Transaction Audit</h1>
-          <p className="text-muted-foreground">Global administrative access to modify or remove records.</p>
+          <h1 className="text-3xl font-headline font-bold text-primary">Global Transaction Audit</h1>
+          <p className="text-muted-foreground">Institutional oversight and metadata analysis for all financial movements.</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Global Ledger</CardTitle>
-          <CardDescription>All transactions recorded across City International Bank network.</CardDescription>
+          <CardTitle>Global Settlement Ledger</CardTitle>
+          <CardDescription>Auditing transactions and cross-border metadata across City International Bank.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>User ID</TableHead>
-                <TableHead>Merchant / Description</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>Client ID</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Settlement</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -145,22 +149,25 @@ export default function AdminTransactionsAuditPage() {
             </TableHeader>
             <TableBody>
               {isTransactionsLoading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-10">Auditing records...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-10">Auditing network...</TableCell></TableRow>
               ) : transactions?.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell className="text-xs font-mono">{tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString() : 'N/A'}</TableCell>
-                  <TableCell className="text-xs font-mono">{tx.customerId || tx.userId}</TableCell>
-                  <TableCell className="font-medium">{tx.description}</TableCell>
+                  <TableCell className="text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
+                  <TableCell className="font-medium truncate max-w-[200px]">{tx.description}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="capitalize">{tx.transactionType || "Other"}</Badge>
+                    <Badge variant="secondary" className="capitalize text-[10px]">{tx.transactionType || "Other"}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{tx.status}</Badge>
+                    <Badge variant="outline" className="text-[10px]">{tx.status}</Badge>
                   </TableCell>
                   <TableCell className={`font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
                   </TableCell>
-                  <TableCell className="text-right flex justify-end gap-2">
+                  <TableCell className="text-right flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingTransaction(tx)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -173,7 +180,7 @@ export default function AdminTransactionsAuditPage() {
                           status: tx.status ?? "pending",
                           transactionType: tx.transactionType ?? "withdrawal"
                         });
-                        setIsDialogOpen(true);
+                        setIsEditDialogOpen(true);
                       }}
                     >
                       <Edit3 className="h-4 w-4" />
@@ -192,7 +199,7 @@ export default function AdminTransactionsAuditPage() {
               {!isTransactionsLoading && (!transactions || transactions.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-20 text-muted-foreground italic">
-                    No transactions found in the global ledger.
+                    No transaction records found in the global network.
                   </TableCell>
                 </TableRow>
               )}
@@ -201,11 +208,135 @@ export default function AdminTransactionsAuditPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* Transaction View Dialog */}
+      <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none bg-slate-950 text-white rounded-3xl">
+          <DialogHeader className="p-8 bg-primary/20 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-2xl ${viewingTransaction?.amount > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                <Receipt className="h-6 w-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-black tracking-tight">Transaction Insight</DialogTitle>
+                <DialogDescription className="text-slate-400 text-xs font-mono">Reference: {viewingTransaction?.id}</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 p-8">
+            <div className="space-y-8">
+              {/* Core Financials */}
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Asset Amount</Label>
+                  <p className={`text-3xl font-black ${viewingTransaction?.amount > 0 ? 'text-green-400' : 'text-white'}`}>
+                    {viewingTransaction?.amount > 0 ? '+' : '-'}{formatCurrency(viewingTransaction?.amount || 0, viewingTransaction?.currency || 'USD')}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Execution Date</Label>
+                  <p className="text-lg font-bold">
+                    {viewingTransaction?.transactionDate ? new Date(viewingTransaction.transactionDate).toLocaleString() : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              <Separator className="bg-white/10" />
+
+              {/* Identity & Path */}
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <User className="h-4 w-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Client Identity</span>
+                  </div>
+                  <p className="text-sm font-mono bg-white/5 p-3 rounded-xl border border-white/5 truncate">
+                    {viewingTransaction?.customerId || viewingTransaction?.userId}
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <Landmark className="h-4 w-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Account ID</span>
+                  </div>
+                  <p className="text-sm font-mono bg-white/5 p-3 rounded-xl border border-white/5 truncate">
+                    {viewingTransaction?.accountId}
+                  </p>
+                </div>
+              </div>
+
+              {/* Settlement Description */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Send className="h-4 w-4" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Settlement Description</span>
+                </div>
+                <p className="text-sm font-medium leading-relaxed italic text-slate-300 bg-white/5 p-4 rounded-xl">
+                  "{viewingTransaction?.description}"
+                </p>
+              </div>
+
+              {/* TRANSFER METADATA (Recipient Information) */}
+              {viewingTransaction?.metadata && (
+                <div className="space-y-6 pt-4">
+                  <div className="flex items-center gap-2 text-accent">
+                    <ShieldAlert className="h-4 w-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Institutional Metadata (Audit)</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-accent/5 p-6 rounded-2xl border border-accent/20">
+                    <div className="space-y-1">
+                      <Label className="text-[9px] font-bold uppercase text-slate-500">Recipient Name</Label>
+                      <p className="text-sm font-bold text-white">{viewingTransaction.metadata.recipientName || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[9px] font-bold uppercase text-slate-500">Recipient Account</Label>
+                      <p className="text-sm font-mono text-white">{viewingTransaction.metadata.recipientAccount || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[9px] font-bold uppercase text-slate-500">Routing / IBAN</Label>
+                      <p className="text-sm font-mono text-white">{viewingTransaction.metadata.routingOrIban || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[9px] font-bold uppercase text-slate-500">Payment Method</Label>
+                      <p className="text-sm font-bold text-accent">{viewingTransaction.metadata.paymentMethod || '—'}</p>
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className="text-[9px] font-bold uppercase text-slate-500">Receiving Institution</Label>
+                      <p className="text-sm font-bold text-white">{viewingTransaction.metadata.bankName || '—'}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">{viewingTransaction.metadata.bankAddress || '—'}</p>
+                    </div>
+                    {viewingTransaction.metadata.note && (
+                      <div className="space-y-1 md:col-span-2 mt-2">
+                        <Label className="text-[9px] font-bold uppercase text-slate-500">Reference Note</Label>
+                        <p className="text-xs text-slate-300 italic">"{viewingTransaction.metadata.note}"</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-600">
+                <span>Security Level: Institutional</span>
+                <span>Verification: Nexa-Authenticated</span>
+              </div>
+            </div>
+          </ScrollArea>
+          
+          <DialogFooter className="p-6 bg-white/5 shrink-0">
+            <Button onClick={() => setViewingTransaction(null)} className="bg-primary hover:bg-primary/90 rounded-xl w-full">
+              Dismiss Record
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog (Existing) */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Modify Transaction Record</DialogTitle>
-            <DialogDescription>Record ID: {editingTransaction?.id}</DialogDescription>
+            <DialogDescription>Administrative override for record ID: {editingTransaction?.id}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -280,7 +411,7 @@ export default function AdminTransactionsAuditPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleUpdateTransaction}>Apply Changes</Button>
+            <Button onClick={handleUpdateTransaction} className="w-full">Apply Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

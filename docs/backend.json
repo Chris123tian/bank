@@ -104,7 +104,8 @@
         },
         "accountType": {
           "type": "string",
-          "description": "The type of bank account."
+          "description": "The type of bank account.",
+          "enum": ["Current Account", "Savings Account", "Business Account", "Internet Banking", "Safety Deposits"]
         },
         "currency": {
           "type": "string",
@@ -159,9 +160,13 @@
           "type": "string",
           "description": "Reference to the Account involved in this transaction."
         },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the customer who owns the transaction record."
+        },
         "transactionType": {
           "type": "string",
-          "description": "The type of transaction."
+          "description": "The type of transaction (e.g., transfer, deposit, withdrawal)."
         },
         "amount": {
           "type": "number",
@@ -174,6 +179,10 @@
         "description": {
           "type": "string",
           "description": "A brief description of the transaction."
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Detailed transfer metadata including recipient and bank details."
         },
         "transactionDate": {
           "type": "string",
@@ -257,6 +266,16 @@
             "$ref": "#/backend/entities/Account"
           },
           "description": "Stores bank accounts owned by a specific customer."
+        }
+      },
+      {
+        "path": "/users/{userId}/accounts/{accountId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores transaction records for a specific bank account."
         }
       }
     ]
