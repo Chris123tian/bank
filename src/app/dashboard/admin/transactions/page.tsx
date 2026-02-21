@@ -241,8 +241,8 @@ export default function AdminTransactionsAuditPage() {
             </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 p-8">
-            <div className="space-y-8">
+          <ScrollArea className="flex-1">
+            <div className="p-8 space-y-8">
               {/* Core Settlement Data */}
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-1">
@@ -295,7 +295,7 @@ export default function AdminTransactionsAuditPage() {
               </div>
 
               {/* INSTITUTIONAL METADATA - RECIPIENT & BANK DETAILS */}
-              <div className="space-y-6 pt-4">
+              <div className="space-y-6 pt-4 pb-4">
                 <div className="flex items-center gap-2 text-accent">
                   <ShieldAlert className="h-5 w-5" />
                   <span className="text-[11px] font-black uppercase tracking-widest">Institutional Metadata (Verified Audit)</span>
