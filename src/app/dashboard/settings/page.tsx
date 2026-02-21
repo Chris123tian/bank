@@ -1,10 +1,10 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
+import { useUser, useFirestore, useDoc, useCollection, useStorage } from "@/firebase";
 import { updateProfile } from "firebase/auth";
 import { doc, serverTimestamp, collection } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useMemoFirebase } from "@/firebase/provider";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,8 +32,11 @@ import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 export default function SettingsPage() {
   const { user } = useUser();
   const db = useFirestore();
+  const storage = useStorage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
+  
   const profileInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +89,6 @@ export default function SettingsPage() {
         signature: profile.signature || "",
       });
     } else if (user) {
-      // Fallback to auth user data if firestore profile doesn't exist yet
       setFormData(prev => ({
         ...prev,
         firstName: user.displayName?.split(' ')[0] || "",
@@ -97,11 +99,10 @@ export default function SettingsPage() {
     }
   }, [profile, user]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: 'profilePictureUrl' | 'signature') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'profilePictureUrl' | 'signature') => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user || !storage) return;
 
-    // Increased size limit to 5MB
     const MAX_SIZE = 5 * 1024 * 1024; 
     if (file.size > MAX_SIZE) {
       toast({
@@ -112,15 +113,38 @@ export default function SettingsPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, [field]: reader.result as string }));
-      toast({
-        title: "Image Uploaded",
-        description: `Successfully processed ${field === 'signature' ? 'handwritten signature' : 'profile image'}. Click "Save All Changes" to confirm.`
-      });
-    };
-    reader.readAsDataURL(file);
+    setUploadingField(field);
+
+    try {
+      const storageRef = ref(storage, `users/${user.uid}/${field === 'profilePictureUrl' ? 'profile' : 'signature'}_${Date.now()}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        null,
+        (error) => {
+          console.error("Upload error:", error);
+          toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "There was an error uploading your file."
+          });
+          setUploadingField(null);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          setFormData(prev => ({ ...prev, [field]: downloadURL }));
+          setUploadingField(null);
+          toast({
+            title: "Upload Complete",
+            description: `Successfully uploaded ${field === 'signature' ? 'signature' : 'profile image'}. Save changes to finalize.`
+          });
+        }
+      );
+    } catch (err) {
+      console.error(err);
+      setUploadingField(null);
+    }
   };
 
   const handleUpdateProfile = async () => {
@@ -128,13 +152,10 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      // Update Firebase Auth Profile (Display Name only)
-      // Note: We don't update photoURL here because base64 strings exceed the character limit for Firebase Auth profile attributes
       await updateProfile(user, { 
         displayName: `${formData.firstName} ${formData.lastName}`.trim(),
       });
 
-      // Update Firestore Profile (Firestore can handle large base64 strings)
       const userDocRef = doc(db, "users", user.uid);
       setDocumentNonBlocking(userDocRef, {
         ...formData,
@@ -143,14 +164,14 @@ export default function SettingsPage() {
       }, { merge: true });
 
       toast({
-        title: "Profile Synchronized",
-        description: "Your basic information has been updated across all systems.",
+        title: "Profile Updated",
+        description: "Your information has been securely updated.",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: error.message || "Failed to update profile information.",
+        description: error.message || "Failed to update profile.",
       });
     } finally {
       setLoading(false);
@@ -179,7 +200,7 @@ export default function SettingsPage() {
             <p className="text-muted-foreground">Manage your secure global profile and financial identity.</p>
           </div>
         </div>
-        <Button onClick={handleUpdateProfile} disabled={loading} className="bg-accent hover:bg-accent/90">
+        <Button onClick={handleUpdateProfile} disabled={loading || !!uploadingField} className="bg-accent hover:bg-accent/90">
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save All Changes"}
         </Button>
       </div>
@@ -205,16 +226,17 @@ export default function SettingsPage() {
                   </Avatar>
                   <button 
                     onClick={() => profileInputRef.current?.click()}
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    disabled={!!uploadingField}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
                   >
-                    <Camera className="text-white h-6 w-6" />
+                    {uploadingField === 'profilePictureUrl' ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : <Camera className="text-white h-6 w-6" />}
                   </button>
                   <input 
                     type="file" 
                     ref={profileInputRef} 
                     className="hidden" 
                     accept="image/*" 
-                    onChange={(e) => handleFileChange(e, 'profilePictureUrl')} 
+                    onChange={(e) => handleFileUpload(e, 'profilePictureUrl')} 
                   />
                 </div>
                 <div className="flex-1 space-y-4 w-full">
@@ -339,22 +361,24 @@ export default function SettingsPage() {
                     variant="outline" 
                     size="sm" 
                     className="text-xs h-8"
+                    disabled={!!uploadingField}
                     onClick={() => signatureInputRef.current?.click()}
                   >
-                    <Upload className="h-3 w-3 mr-2" /> Upload Image
+                    {uploadingField === 'signature' ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Upload className="h-3 w-3 mr-2" />}
+                    Upload Image
                   </Button>
                   <input 
                     type="file" 
                     ref={signatureInputRef} 
                     className="hidden" 
                     accept="image/*" 
-                    onChange={(e) => handleFileChange(e, 'signature')} 
+                    onChange={(e) => handleFileUpload(e, 'signature')} 
                   />
                 </div>
                 <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center min-h-[120px]">
                   {formData.signature ? (
                     <div className="relative group w-full flex justify-center">
-                      <img src={formData.signature} alt="Digital Signature" className="max-h-24 object-contain mix-blend-multiply" />
+                      <img src={formData.signature} alt="Digital Signature" className="max-h-24 object-contain" />
                       <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded">
                         <Button variant="secondary" size="sm" onClick={() => setFormData(prev => ({ ...prev, signature: '' }))}>Clear</Button>
                       </div>

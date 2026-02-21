@@ -3,7 +3,8 @@
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -11,8 +12,6 @@ export function initializeFirebase() {
     return getSdks(getApp());
   }
 
-  // Attempt to initialize using environment variables if available (common in CI/CD)
-  // or the provided config object.
   const config = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || firebaseConfig.apiKey,
     authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || firebaseConfig.authDomain,
@@ -23,11 +22,8 @@ export function initializeFirebase() {
 
   let firebaseApp;
   try {
-    // Attempt to initialize via Firebase App Hosting environment variables
     firebaseApp = initializeApp();
   } catch (e) {
-    // Only warn in production because it's normal to use the firebaseConfig to initialize
-    // during development
     if (process.env.NODE_ENV === "production" && !config.apiKey) {
       console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
     }
@@ -41,7 +37,8 @@ export function getSdks(firebaseApp: FirebaseApp) {
   return {
     firebaseApp,
     auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
+    firestore: getFirestore(firebaseApp),
+    storage: getStorage(firebaseApp)
   };
 }
 
