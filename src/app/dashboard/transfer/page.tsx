@@ -61,6 +61,7 @@ export default function TransferPage() {
     const transactionData = {
       accountId: fromAccountId,
       customerId: user.uid, // Required for authorization rules
+      userId: user.uid,     // For indexing in group queries
       transactionType: "transfer",
       amount: -Number(amount), 
       currency: selectedAccount.currency || "USD",

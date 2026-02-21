@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -20,7 +19,8 @@ import {
   MoreHorizontal,
   Calendar as CalendarIcon,
   Loader2,
-  History
+  History,
+  Landmark
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,23 +29,35 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, query, where, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, limit } from "firebase/firestore";
 
 export default function TransactionsPage() {
   const { user } = useUser();
   const db = useFirestore();
   const [date, setDate] = useState<Date>();
   const [search, setSearch] = useState("");
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  // Fetch accounts to allow filtering by account
+  const accountsRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return collection(db, "users", user.uid, "accounts");
+  }, [db, user?.uid]);
+
+  const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
+
+  // Use the first account if none is selected
+  const activeAccountId = selectedAccountId || (accounts?.[0]?.id || null);
 
   const transactionsQuery = useMemoFirebase(() => {
-    if (!db || !user) return null;
-    // Query all transactions across all accounts for this user
+    if (!db || !user?.uid || !activeAccountId) return null;
+    // Path-based query (authorized for standard users)
     return query(
-      collectionGroup(db, "transactions"),
-      where("userId", "==", user.uid),
-      orderBy("transactionDate", "desc")
+      collection(db, "users", user.uid, "accounts", activeAccountId, "transactions"),
+      orderBy("transactionDate", "desc"),
+      limit(50)
     );
-  }, [db, user]);
+  }, [db, user?.uid, activeAccountId]);
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
@@ -70,14 +82,11 @@ export default function TransactionsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-headline font-bold text-primary">Transaction History</h1>
-          <p className="text-muted-foreground">A detailed log of all your financial movements.</p>
+          <p className="text-muted-foreground">A detailed log of your financial movements.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="hidden sm:flex">
             <Download className="mr-2 h-4 w-4" /> Export CSV
-          </Button>
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <Download className="mr-2 h-4 w-4" /> PDF Statement
           </Button>
         </div>
       </div>
@@ -95,15 +104,21 @@ export default function TransactionsPage() {
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Select defaultValue="all">
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Category" />
+              <Select 
+                value={activeAccountId || ""} 
+                onValueChange={setSelectedAccountId}
+                disabled={accountsLoading}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <Landmark className="mr-2 h-4 w-4 opacity-50" />
+                  <SelectValue placeholder="Select Account" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="transfer">Transfers</SelectItem>
-                  <SelectItem value="bill_payment">Bills</SelectItem>
-                  <SelectItem value="income">Income</SelectItem>
+                  {accounts?.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id}>
+                      {acc.accountType} (...{acc.accountNumber.slice(-4)})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -139,12 +154,12 @@ export default function TransactionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {isLoading || accountsLoading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-20">
                       <div className="flex flex-col items-center gap-2">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <span className="text-sm text-muted-foreground">Loading transactions...</span>
+                        <span className="text-sm text-muted-foreground">Syncing records...</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -184,7 +199,7 @@ export default function TransactionsPage() {
                     <TableCell colSpan={6} className="text-center py-24">
                       <div className="flex flex-col items-center gap-2 opacity-40">
                         <History className="h-12 w-12" />
-                        <p className="text-sm font-bold uppercase tracking-widest">No transactions found</p>
+                        <p className="text-sm font-bold uppercase tracking-widest">No transactions recorded</p>
                       </div>
                     </TableCell>
                   </TableRow>

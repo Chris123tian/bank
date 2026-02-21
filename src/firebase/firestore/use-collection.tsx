@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -46,16 +45,22 @@ export function useCollection<T = any>(
     }
 
     let pathString = '';
+    let isGroupQuery = false;
+    
     try {
       if ('path' in memoizedTargetRefOrQuery) {
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
+        // For collectionGroup queries, _query.path is often empty or represents the group.
+        // We allow these if they are intentionally created by the admin or through a query builder.
         pathString = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query?.path?.canonicalString() || '';
+        isGroupQuery = true;
       }
     } catch (e) {}
 
-    // Firestore root path or path containing double slashes/undefined indicates a malformed reference.
-    if (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined')) {
+    // Firestore root path check. 
+    // We allow isGroupQuery to bypass the empty path check as it's targeted by definition.
+    if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);
       return;
@@ -78,7 +83,7 @@ export function useCollection<T = any>(
       (firestoreError: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: pathString,
+          path: pathString || '[Collection Group]',
         });
 
         setError(contextualError);
