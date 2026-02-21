@@ -85,6 +85,15 @@ export default function SettingsPage() {
         country: profile.country || "",
         signature: profile.signature || "",
       });
+    } else if (user) {
+      // Fallback to auth user data if firestore profile doesn't exist yet
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.displayName?.split(' ')[0] || "",
+        lastName: user.displayName?.split(' ')[1] || "",
+        email: user.email || "",
+        profilePictureUrl: user.photoURL || "",
+      }));
     }
   }, [profile, user]);
 
@@ -119,13 +128,13 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      // Update Firebase Auth Profile (Display Name)
+      // Update Firebase Auth Profile (Display Name only)
+      // Note: We don't update photoURL here because base64 strings exceed the character limit for Firebase Auth profile attributes
       await updateProfile(user, { 
         displayName: `${formData.firstName} ${formData.lastName}`.trim(),
-        photoURL: formData.profilePictureUrl 
       });
 
-      // Update Firestore Profile
+      // Update Firestore Profile (Firestore can handle large base64 strings)
       const userDocRef = doc(db, "users", user.uid);
       setDocumentNonBlocking(userDocRef, {
         ...formData,
@@ -253,7 +262,7 @@ export default function SettingsPage() {
                     className="pl-10"
                     type="email" 
                     value={formData.email} 
-                    disabled 
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
               </div>
