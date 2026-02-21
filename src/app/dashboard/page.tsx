@@ -22,6 +22,7 @@ import {
   BarChart, 
   XAxis, 
   Tooltip,
+  ResponsiveContainer
 } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useFirestore, useCollection, useUser } from "@/firebase";
@@ -51,7 +52,6 @@ export default function DashboardPage() {
   const db = useFirestore();
 
   const accountsRef = useMemoFirebase(() => {
-    // Safe Pattern: Ensure user and db are ready before constructing reference.
     if (!db || !user?.uid) return null;
     return collection(db, "users", user.uid, "accounts");
   }, [db, user?.uid]);
@@ -59,7 +59,6 @@ export default function DashboardPage() {
   const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
 
   const transactionsRef = useMemoFirebase(() => {
-    // Safe Pattern: Guard against root listing by checking all required path parameters.
     if (!db || !user?.uid || !accounts?.length || !accounts[0]?.id) return null;
     return collection(db, "users", user.uid, "accounts", accounts[0].id, "transactions");
   }, [db, user?.uid, accounts]);
@@ -93,22 +92,22 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto text-foreground">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-headline font-bold text-primary">Welcome, {user?.displayName || user?.email?.split('@')[0] || 'Client'}</h1>
-          <p className="text-muted-foreground mt-1">City International Bank • Personal Wealth Overview</p>
+        <div className="text-center md:text-left">
+          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary">Welcome, {user?.displayName || user?.email?.split('@')[0] || 'Client'}</h1>
+          <p className="text-sm text-muted-foreground mt-1">City International Bank • Personal Wealth Overview</p>
         </div>
-        <Button asChild className="bg-accent hover:bg-accent/90 shadow-lg">
+        <Button asChild className="bg-accent hover:bg-accent/90 shadow-lg w-full md:w-auto">
           <Link href="/dashboard/accounts/new">
             <PlusCircle className="mr-2 h-4 w-4" /> Open New Account
           </Link>
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {accountsLoading ? (
           Array(3).fill(0).map((_, i) => <Card key={i} className="h-32 animate-pulse bg-slate-100" />)
         ) : !accounts || accounts.length === 0 ? (
-          <Card className="col-span-3 py-16 text-center bg-white border-2 border-dashed border-slate-200 shadow-sm">
+          <Card className="col-span-full py-16 px-4 text-center bg-white border-2 border-dashed border-slate-200 shadow-sm">
             <div className="bg-slate-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
               <Landmark className="h-8 w-8" />
             </div>
@@ -116,7 +115,7 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2">
               You haven't opened any accounts yet. Create your first Checking or Savings account today.
             </p>
-            <Button variant="default" className="mt-6 bg-accent" asChild>
+            <Button variant="default" className="mt-6 bg-accent w-full sm:w-auto" asChild>
               <Link href="/dashboard/accounts/new">Open Your First Account</Link>
             </Button>
           </Card>
@@ -125,9 +124,9 @@ export default function DashboardPage() {
             <CardHeader className="pb-2">
               <CardDescription className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
                 {acc.accountType}
-                <span className="font-mono opacity-60">{acc.accountNumber}</span>
+                <span className="font-mono opacity-60">...{acc.accountNumber.slice(-8)}</span>
               </CardDescription>
-              <CardTitle className="text-3xl font-bold font-headline mt-1">
+              <CardTitle className="text-2xl sm:text-3xl font-bold font-headline mt-1">
                 {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
               </CardTitle>
             </CardHeader>
@@ -154,10 +153,10 @@ export default function DashboardPage() {
             <CardTitle className="text-lg font-headline">Wealth Growth</CardTitle>
             <CardDescription>Visualizing your financial trajectory over the last 6 months.</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[250px] sm:h-[300px] w-full">
             <ChartContainer config={chartConfig}>
-              <BarChart data={chartData}>
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+              <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="expenses" fill="var(--color-expenses)" radius={[4, 4, 0, 0]} />
@@ -172,36 +171,36 @@ export default function DashboardPage() {
             <CardDescription>Real-time updates from your primary account.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {transactionsLoading ? (
                 Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
               ) : recentTransactions?.length ? recentTransactions.map((t) => (
                 <div key={t.id} className="flex items-center justify-between group border-b border-slate-50 pb-3 last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl ${t.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                      {t.amount > 0 ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+                    <div className={`p-1.5 sm:p-2 rounded-xl ${t.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                      {t.amount > 0 ? <ArrowDownLeft className="h-3 w-3 sm:h-4 sm:w-4" /> : <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />}
                     </div>
-                    <div>
-                      <p className="text-sm font-bold leading-none text-primary">{t.description}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1 font-mono">{t.transactionDate ? new Date(t.transactionDate).toLocaleDateString() : 'Today'}</p>
+                    <div className="max-w-[120px] sm:max-w-none">
+                      <p className="text-xs sm:text-sm font-bold leading-tight text-primary truncate">{t.description}</p>
+                      <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 font-mono">{t.transactionDate ? new Date(t.transactionDate).toLocaleDateString() : 'Today'}</p>
                     </div>
                   </div>
-                  <div className={`text-sm font-black ${t.amount > 0 ? 'text-green-600' : 'text-foreground'}`}>
+                  <div className={`text-xs sm:text-sm font-black whitespace-nowrap ${t.amount > 0 ? 'text-green-600' : 'text-foreground'}`}>
                     {t.amount > 0 ? `+${formatCurrency(t.amount, t.currency || 'USD')}` : `-${formatCurrency(Math.abs(t.amount), t.currency || 'USD')}`}
                   </div>
                 </div>
               )) : (
-                <div className="text-center py-16 opacity-40">
-                  <div className="bg-slate-50 h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <History className="h-6 w-6" />
+                <div className="text-center py-10 sm:py-16 opacity-40">
+                  <div className="bg-slate-50 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <History className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
-                  <p className="text-xs font-bold uppercase tracking-widest">No recent records</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest">No recent records</p>
                 </div>
               )}
             </div>
           </CardContent>
-          <CardFooter className="border-t bg-slate-50/50 flex justify-center py-3 rounded-b-lg">
-             <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase font-black tracking-tighter">
+          <CardFooter className="border-t bg-slate-50/50 flex justify-center py-2 sm:py-3 rounded-b-lg">
+             <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-muted-foreground uppercase font-black tracking-tighter">
                 <ShieldCheck className="h-3 w-3 text-green-500" />
                 SECURED BY CITY BANK CRYPTO-VAULT
              </div>
