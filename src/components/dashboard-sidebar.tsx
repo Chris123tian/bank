@@ -29,7 +29,8 @@ import {
   SidebarMenuItem,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarSeparator
+  SidebarSeparator,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { useDoc, useUser, useAuth, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -59,6 +60,13 @@ export function DashboardSidebar() {
   const { user } = useUser();
   const auth = useAuth();
   const db = useFirestore();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   // Profile data fetch for Sidebar Basic Info
   const profileRef = useMemoFirebase(() => {
@@ -96,7 +104,7 @@ export function DashboardSidebar() {
   };
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon" className="bg-sidebar border-r-0">
       <SidebarHeader className="p-4 flex flex-row items-center gap-2">
         <div className="bg-accent p-2 rounded-lg">
           <Building2 className="text-white h-6 w-6" />
@@ -109,7 +117,7 @@ export function DashboardSidebar() {
         {/* Basic Information Section - Clickable Link to Settings */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50">Account Profile</SidebarGroupLabel>
-          <Link href="/dashboard/settings" className="block outline-none">
+          <Link href="/dashboard/settings" onClick={handleLinkClick} className="block outline-none">
             <div className="px-2 py-3 flex items-center gap-3 bg-white/5 rounded-xl border border-white/5 mb-2 hover:bg-white/10 transition-colors cursor-pointer group">
               <Avatar className="h-10 w-10 border border-white/20 group-hover:border-accent/50 transition-colors">
                 <AvatarImage src={profile?.profilePictureUrl || user?.photoURL || ""} className="object-cover" />
@@ -134,7 +142,7 @@ export function DashboardSidebar() {
         {/* Account Summary Section - Clickable Link to Settings */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50">Financial Summary</SidebarGroupLabel>
-          <Link href="/dashboard/settings" className="block outline-none">
+          <Link href="/dashboard/settings" onClick={handleLinkClick} className="block outline-none">
             <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2 hover:bg-accent/20 transition-colors cursor-pointer group">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] uppercase font-black tracking-widest text-accent">Total Capital</span>
@@ -166,6 +174,7 @@ export function DashboardSidebar() {
                   asChild 
                   isActive={pathname === item.href}
                   tooltip={item.name}
+                  onClick={handleLinkClick}
                 >
                   <Link href={item.href}>
                     <item.icon />
@@ -188,6 +197,7 @@ export function DashboardSidebar() {
                     isActive={pathname === item.href}
                     tooltip={item.name}
                     className="text-accent hover:text-accent"
+                    onClick={handleLinkClick}
                   >
                     <Link href={item.href}>
                       <item.icon />
@@ -203,7 +213,7 @@ export function DashboardSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/dashboard/settings"}>
+            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/dashboard/settings"} onClick={handleLinkClick}>
               <Link href="/dashboard/settings">
                 <Settings />
                 <span>Settings</span>
