@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -52,10 +51,11 @@ function AuthPageContent() {
 
     try {
       if (isLogin) {
-        initiateEmailSignIn(auth, email, password);
+        await initiateEmailSignIn(auth, email, password);
       } else {
-        initiateEmailSignUp(auth, email, password);
+        await initiateEmailSignUp(auth, email, password);
       }
+      // Redirection is handled by the useEffect watching 'user'
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -66,9 +66,19 @@ function AuthPageContent() {
     }
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setLoading(true);
-    initiateGoogleSignIn(auth);
+    try {
+      await initiateGoogleSignIn(auth);
+    } catch (error: any) {
+      // Handle "Popup blocked" or "Popup closed by user"
+      toast({
+        variant: "destructive",
+        title: "Google Authentication Error",
+        description: error.message || "The authentication window was closed or blocked.",
+      });
+      setLoading(false);
+    }
   };
 
   if (isUserLoading) {

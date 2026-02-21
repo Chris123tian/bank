@@ -11,7 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2 } from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -21,6 +28,7 @@ export default function AdminUsersPage() {
   const { user: currentUser } = useUser();
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [viewingUser, setViewingUser] = useState<any>(null);
 
   // Verify Admin Status
   const adminRoleRef = useMemoFirebase(() => {
@@ -33,10 +41,9 @@ export default function AdminUsersPage() {
   const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
   
-  // Guard query until privileges are stable
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
-  // Form state
+  // Form state for Manual Creation
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -64,8 +71,6 @@ export default function AdminUsersPage() {
     const newUserData = {
       ...formData,
       id: newUserId,
-      addressId: "temp_address",
-      dateOfBirth: "1990-01-01",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -180,33 +185,41 @@ export default function AdminUsersPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Joined</TableHead>
+                <TableHead className="hidden md:table-cell">Joined</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isUsersLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-10">Syncing user records...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-10">Syncing user records...</TableCell></TableRow>
               ) : filteredUsers?.map((u) => (
                 <TableRow key={u.id}>
-                  <TableCell className="font-bold text-primary">{u.firstName} {u.lastName}</TableCell>
-                  <TableCell>{u.email}</TableCell>
+                  <TableCell className="font-bold text-primary">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 overflow-hidden">
+                        {u.profilePictureUrl ? <img src={u.profilePictureUrl} className="h-full w-full object-cover" /> : u.firstName?.charAt(0)}
+                      </div>
+                      <span className="truncate max-w-[120px]">{u.firstName} {u.lastName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="truncate max-w-[150px]">{u.email}</TableCell>
                   <TableCell>
-                    <Badge variant={u.userRole === 'admin' ? 'destructive' : 'secondary'} className="capitalize">
+                    <Badge variant={u.userRole === 'admin' ? 'destructive' : 'secondary'} className="capitalize text-[10px]">
                       {u.userRole === 'admin' && <ShieldCheck className="h-3 w-3 mr-1" />}
-                      {u.userRole}
+                      {u.userRole || 'client'}
                     </Badge>
                   </TableCell>
-                  <TableCell>{u.phoneNumber}</TableCell>
-                  <TableCell className="text-xs opacity-60">
+                  <TableCell className="text-xs opacity-60 hidden md:table-cell">
                     {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingUser(u)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="text-red-400 hover:text-red-600"
+                      className="h-8 w-8 text-red-400 hover:text-red-600"
                       onClick={() => handleDeleteUser(u.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -216,7 +229,7 @@ export default function AdminUsersPage() {
               ))}
               {!isUsersLoading && (!filteredUsers || filteredUsers.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-24 text-muted-foreground italic">
+                  <TableCell colSpan={5} className="text-center py-24 text-muted-foreground italic">
                     No user profiles found.
                   </TableCell>
                 </TableRow>
@@ -225,6 +238,95 @@ export default function AdminUsersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* User Detail View Dialog */}
+      <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Client Identity Profile</DialogTitle>
+          </DialogHeader>
+          <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
+            <div className="max-w-md mx-auto space-y-10">
+              {/* Header */}
+              <div className="relative inline-block">
+                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</h2>
+                <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
+              </div>
+
+              {/* Avatar */}
+              <div className="flex justify-center pt-2">
+                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white">
+                  {viewingUser?.profilePictureUrl ? (
+                    <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-white text-7xl font-bold">
+                      {viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Data Fields */}
+              <div className="space-y-6 pt-4">
+                <div className="flex gap-2 text-xl text-slate-700">
+                  <span className="font-bold min-w-[120px]">Username:</span>
+                  <span className="font-medium">{viewingUser?.username || "N/A"}</span>
+                </div>
+                
+                <div className="flex gap-2 text-xl text-slate-700">
+                  <span className="font-bold min-w-[120px]">Email:</span>
+                  <span className="font-medium underline decoration-1 underline-offset-4">{viewingUser?.email}</span>
+                </div>
+
+                <div className="pt-8 space-y-5 border-t border-slate-300">
+                  <div className="flex gap-2 text-xl text-slate-700">
+                    <span className="font-bold min-w-[160px]">Name :</span>
+                    <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
+                  </div>
+
+                  <div className="flex gap-2 text-xl text-slate-700">
+                    <span className="font-bold min-w-[160px]">Address 1:</span>
+                    <span className="font-medium">{viewingUser?.addressLine1 || "—"}</span>
+                  </div>
+
+                  <div className="flex gap-2 text-xl text-slate-700">
+                    <span className="font-bold min-w-[160px]">Address 2:</span>
+                    <span className="font-medium">{viewingUser?.addressLine2 || "—"}</span>
+                  </div>
+
+                  <div className="flex gap-2 text-xl text-slate-700">
+                    <span className="font-bold min-w-[160px]">City/State/Zip:</span>
+                    <span className="font-medium">
+                      {viewingUser?.city}{viewingUser?.state ? `, ${viewingUser.state}` : ''}{viewingUser?.postalCode ? ` ${viewingUser.postalCode}` : ''}
+                      {!viewingUser?.city && !viewingUser?.state && "—"}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2 text-xl text-slate-700">
+                    <span className="font-bold min-w-[160px]">Country:</span>
+                    <span className="font-medium">{viewingUser?.country || "—"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Signature */}
+              <div className="pt-12">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Authenticated Legal Signature</p>
+                <div className="bg-white p-4 inline-block shadow-lg rounded-xl min-w-[200px] border border-slate-200">
+                  {viewingUser?.signature ? (
+                    <img src={viewingUser.signature} alt="Signature" className="h-20 object-contain mx-auto" />
+                  ) : (
+                    <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-100 italic text-slate-300 text-sm">
+                      No signature on file
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 h-1 w-full bg-slate-300 rounded-full opacity-30" />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
