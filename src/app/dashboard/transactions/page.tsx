@@ -56,6 +56,7 @@ export default function TransactionsPage() {
     }
     
     // Clients see all their transactions across all accounts aggregated in one list
+    // Crucially uses userId filter to satisfy collection group security rules
     return query(
       collectionGroup(db, "transactions"),
       where("userId", "==", user.uid),
@@ -82,7 +83,7 @@ export default function TransactionsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Unified Ledger</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive regulatory history across all institutional assets.</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Aggregated history across all institutional assets.</p>
         </div>
         <Button variant="outline" size="sm" className="w-full md:w-auto font-bold border-slate-200 shadow-sm h-10">
           <Download className="mr-2 h-4 w-4" /> Export Ledger
