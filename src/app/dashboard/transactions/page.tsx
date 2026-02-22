@@ -69,13 +69,12 @@ export default function TransactionsPage() {
 
   const { data: accounts } = useCollection(accountsRef);
 
-  // Dynamic query based on filter
+  // Aggregated query logic synchronized with Security Rules
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
 
     if (selectedAccountId === "all") {
-      // Aggregate view across all accounts
-      // Security rules require customerId filter for collectionGroup
+      // Secure collectionGroup query requiring customerId filter
       return query(
         collectionGroup(db, "transactions"),
         where("customerId", "==", user.uid),
@@ -83,7 +82,7 @@ export default function TransactionsPage() {
         limit(100)
       );
     } else {
-      // Single account view - inherent security stability
+      // Direct path query for specific account
       return query(
         collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions"),
         orderBy("transactionDate", "desc"),

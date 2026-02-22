@@ -19,24 +19,24 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * These rules are evaluated for collectionGroup() queries.
+     * These rules are evaluated for collectionGroup() queries used in aggregate history views.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
-        isAdmin() || 
+        isMasterAdmin() || 
         resource.data.get('customerId', '') == request.auth.uid || 
         resource.data.get('userId', '') == request.auth.uid
       );
-      allow write: if isAdmin();
+      allow write: if isMasterAdmin() || isAdmin();
     }
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
-        isAdmin() || 
+        isMasterAdmin() || 
         resource.data.get('customerId', '') == request.auth.uid || 
         resource.data.get('userId', '') == request.auth.uid
       );
-      allow write: if isAdmin();
+      allow write: if isMasterAdmin() || isAdmin();
     }
 
     /**
