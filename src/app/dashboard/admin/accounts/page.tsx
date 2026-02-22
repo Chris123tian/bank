@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -25,7 +26,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Landmark, ShieldAlert, Loader2, Edit3, Trash2, PlusCircle } from "lucide-react";
+import { Landmark, ShieldAlert, Loader2, Edit3, Trash2, PlusCircle, Eye, Search, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -34,8 +35,10 @@ export default function AdminAccountsAuditPage() {
   const db = useFirestore();
   const { user } = useUser();
   const [editingAccount, setEditingAccount] = useState<any>(null);
+  const [viewingClientPortfolio, setViewingClientPortfolio] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Create Form State
   const [newAccount, setNewAccount] = useState({
@@ -125,6 +128,15 @@ export default function AdminAccountsAuditPage() {
     toast({ title: "Account Terminated", description: "The account record has been removed from the bank ledger." });
   };
 
+  const filteredAccounts = accounts?.filter(acc => 
+    acc.accountNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (acc.customerId || acc.userId)?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const clientPortfolioAccounts = accounts?.filter(acc => 
+    (acc.customerId || acc.userId) === viewingClientPortfolio
+  );
+
   if (isAdminRoleLoading && !isMasterAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -146,7 +158,7 @@ export default function AdminAccountsAuditPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-primary/10 rounded-xl text-primary">
             <Landmark className="h-8 w-8" />
@@ -156,9 +168,20 @@ export default function AdminAccountsAuditPage() {
             <p className="text-muted-foreground">Full oversight of all institutional assets.</p>
           </div>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent">
-          <PlusCircle className="mr-2 h-4 w-4" /> Create Account
-        </Button>
+        <div className="flex gap-2">
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search Client or Account..." 
+              className="pl-10 h-10" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent h-10">
+            <PlusCircle className="mr-2 h-4 w-4" /> Create Account
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -174,18 +197,17 @@ export default function AdminAccountsAuditPage() {
                 <TableHead>Owner ID</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Balance</TableHead>
-                <TableHead>Currency</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isAccountsLoading ? (
-                <TableRow><TableCell colSpan={7} className="text-center py-10">Syncing ledger...</TableCell></TableRow>
-              ) : accounts?.map((acc) => (
+                <TableRow><TableCell colSpan={6} className="text-center py-10">Syncing ledger...</TableCell></TableRow>
+              ) : filteredAccounts?.map((acc) => (
                 <TableRow key={acc.id}>
                   <TableCell className="font-mono text-xs">{acc.accountNumber}</TableCell>
-                  <TableCell className="text-xs">{acc.customerId || acc.userId}</TableCell>
+                  <TableCell className="text-xs truncate max-w-[120px]">{acc.customerId || acc.userId}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px]">{acc.accountType}</Badge>
                   </TableCell>
@@ -193,17 +215,24 @@ export default function AdminAccountsAuditPage() {
                     {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="font-mono">{acc.currency || "USD"}</Badge>
-                  </TableCell>
-                  <TableCell>
                     <Badge className={acc.status === 'Suspended' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
                       {acc.status || "Active"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right flex justify-end gap-2">
+                  <TableCell className="text-right flex justify-end gap-1">
                     <Button 
                       variant="ghost" 
                       size="icon" 
+                      className="h-8 w-8 text-primary"
+                      onClick={() => setViewingClientPortfolio(acc.customerId || acc.userId)}
+                      title="View Client Portfolio"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8"
                       onClick={() => {
                         setEditingAccount({
                           ...acc,
@@ -217,16 +246,16 @@ export default function AdminAccountsAuditPage() {
                     >
                       <Edit3 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-red-400" onClick={() => handleDeleteAccount(acc)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400" onClick={() => handleDeleteAccount(acc)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {!isAccountsLoading && (!accounts || accounts.length === 0) && (
+              {!isAccountsLoading && (!filteredAccounts || filteredAccounts.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-20 text-muted-foreground italic">
-                    No account records found in the bank ledger.
+                  <TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">
+                    No account records found for this query.
                   </TableCell>
                 </TableRow>
               )}
@@ -234,6 +263,59 @@ export default function AdminAccountsAuditPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Client Portfolio Dialog */}
+      <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
+        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] overflow-hidden shadow-2xl">
+          <div className="bg-primary p-8 text-white">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/10 rounded-2xl">
+                <Wallet className="h-8 w-8 text-accent" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-black">Client Financial Portfolio</DialogTitle>
+                <DialogDescription className="text-white/60 font-mono text-xs">
+                  Global Identifier: {viewingClientPortfolio}
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-8 space-y-6 bg-slate-50">
+            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Institutional Ledger Records</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {clientPortfolioAccounts?.map((acc) => (
+                <Card key={acc.id} className="border-none shadow-sm overflow-hidden">
+                  <div className={`h-1.5 w-full ${acc.status === 'Suspended' ? 'bg-red-500' : 'bg-accent'}`} />
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">{acc.accountType}</p>
+                        <p className="font-mono text-sm font-bold text-primary">{acc.accountNumber}</p>
+                      </div>
+                      <Badge variant="secondary" className="text-[9px]">{acc.status || "Active"}</Badge>
+                    </div>
+                    <div className="flex justify-between items-end pt-2">
+                      <div>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Available Capital</p>
+                        <p className="text-xl font-black text-primary">{formatCurrency(acc.balance, acc.currency)}</p>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400">{acc.currency || 'USD'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            {(!clientPortfolioAccounts || clientPortfolioAccounts.length === 0) && (
+              <div className="text-center py-12 text-slate-400 italic">No associated accounts found for this identifier.</div>
+            )}
+          </div>
+          
+          <DialogFooter className="p-6 bg-white border-t">
+            <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-12 rounded-xl font-bold bg-primary">Dismiss Portfolio View</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Manual Creation Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
