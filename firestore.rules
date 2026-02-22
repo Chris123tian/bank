@@ -50,16 +50,26 @@ service cloud.firestore {
 
     /** 
      * Collection Group Rules 
-     * Required for administrative collectionGroup queries (e.g., Audit pages).
+     * Required for collectionGroup queries (e.g., Dashboard summaries and Audit pages).
+     * We allow admins total access and owners access to their own data via filter matching.
      */
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
+      allow read: if isSignedIn() && (
+        request.auth.token.email == 'citybank@gmail.com' || 
+        (resource != null && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid))
+      );
     }
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
+      allow read: if isSignedIn() && (
+        request.auth.token.email == 'citybank@gmail.com' || 
+        (resource != null && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid))
+      );
     }
     match /{path=**}/cards/{cardId} {
-      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
+      allow read: if isSignedIn() && (
+        request.auth.token.email == 'citybank@gmail.com' || 
+        (resource != null && resource.data.customerId == request.auth.uid)
+      );
     }
   }
 }

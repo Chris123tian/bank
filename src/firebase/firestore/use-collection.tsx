@@ -52,16 +52,25 @@ export function useCollection<T = any>(
       if ('path' in memoizedTargetRefOrQuery) {
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
-        // For collectionGroup queries, _query.path is often empty or represents the group.
-        // We allow these if they are intentionally created by the admin or through a query builder.
-        pathString = (memoizedTargetRefOrQuery as unknown as InternalQuery)._query?.path?.canonicalString() || '';
+        // Check if it's a collectionGroup query
+        const internal = memoizedTargetRefOrQuery as unknown as InternalQuery;
+        pathString = internal._query?.path?.canonicalString() || '';
+        // If the query is a collectionGroup, internal path is often empty or just the group name
         isGroupQuery = true;
       }
     } catch (e) {}
 
     // Firestore root path check. 
-    // We allow isGroupQuery to bypass the empty path check as it's targeted by definition.
+    // We allow isGroupQuery to bypass if it has a valid structure, 
+    // but we block if path contains literal 'undefined'.
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
+      setData(null);
+      setIsLoading(false);
+      return;
+    }
+
+    // Extra safety for group queries: if path is 'undefined', it's likely a malformed session state.
+    if (pathString.includes('undefined')) {
       setData(null);
       setIsLoading(false);
       return;
