@@ -10,6 +10,7 @@ import {
   QuerySnapshot,
   CollectionReference,
 } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -55,8 +56,8 @@ export function useCollection<T = any>(
         // Identify collectionGroup queries via internal path structure
         const internal = memoizedTargetRefOrQuery as unknown as InternalQuery;
         pathString = internal._query?.path?.canonicalString() || '[Collection Group]';
-        // Group queries usually have a canonical path that is just the collection ID
-        isGroupQuery = pathString.split('/').length === 1 || pathString === '[Collection Group]';
+        // Group queries usually have a canonical path that is just the collection ID (no slashes)
+        isGroupQuery = !pathString.includes('/') || pathString === '[Collection Group]';
       }
     } catch (e) {
       pathString = '[Unknown Path]';
@@ -72,6 +73,17 @@ export function useCollection<T = any>(
 
     // Safety for group queries: if path contains 'undefined', the query is invalid.
     if (pathString.includes('undefined')) {
+      setData(null);
+      setIsLoading(false);
+      return;
+    }
+
+    // Additional Layer: If this is an authenticated-only collection group query,
+    // we wait for the Auth SDK to have a stable user before sending the request.
+    const auth = getAuth();
+    if (isGroupQuery && !auth.currentUser) {
+      // If we are in an admin context or expected dashboard context, 
+      // wait until auth.currentUser is populated to prevent 403 blocks.
       setData(null);
       setIsLoading(false);
       return;
@@ -93,7 +105,7 @@ export function useCollection<T = any>(
       },
       (firestoreError: FirestoreError) => {
         // Ensure pathString is descriptive for the contextual error report
-        const finalPath = pathString || '[Collection Group]';
+        const finalPath = isGroupQuery ? `[Collection Group: ${pathString}]` : pathString;
         
         const contextualError = new FirestorePermissionError({
           operation: 'list',

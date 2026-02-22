@@ -22,7 +22,7 @@ service cloud.firestore {
     /**
      * ADMINISTRATIVE OVERRIDE
      * Explicitly grant the master administrator account full access to the entire root.
-     * This match pattern is effective for path-based queries.
+     * Note: This primarily applies to path-based queries.
      */
     match /{allPaths=**} {
       allow read, write: if isAdmin();
@@ -31,15 +31,20 @@ service cloud.firestore {
     /** 
      * COLLECTION GROUP RULES 
      * Required for collectionGroup queries (e.g., Dashboard summaries and Admin Audit pages).
-     * These must be defined separately from path-based rules.
+     * These MUST use the {path=**} wildcard prefix to be effective.
      */
     match /{path=**}/accounts/{accountId} {
+      // Allow unfiltered list for admins, and filtered list for owners
       allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
     }
+    
     match /{path=**}/transactions/{transactionId} {
+      // Allow unfiltered list for admins, and filtered list for owners
       allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
     }
+    
     match /{path=**}/cards/{cardId} {
+      // Allow unfiltered list for admins, and filtered list for owners
       allow read: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
     }
 
