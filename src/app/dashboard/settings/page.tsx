@@ -62,12 +62,12 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Profile View - Overhauled to match requested image */}
+        {/* Main Profile View - "Basic Information" */}
         <div className="lg:col-span-8 space-y-8">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200">
             <div className="max-w-2xl mx-auto space-y-12">
               <div className="relative inline-block">
-                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Information</h2>
+                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</h2>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
 

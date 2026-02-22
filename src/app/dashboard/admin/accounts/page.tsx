@@ -155,7 +155,7 @@ export default function AdminAccountsAuditPage() {
       ...editingProfile,
       updatedAt: serverTimestamp(),
     });
-    toast({ title: "Dossier Updated", description: "Institutional identity record has been modified." });
+    toast({ title: "Profile Updated", description: "Basic Information records have been modified." });
     setIsEditProfileOpen(false);
     setEditingProfile(null);
   };
@@ -275,7 +275,7 @@ export default function AdminAccountsAuditPage() {
                       size="icon" 
                       className="h-8 w-8 text-primary"
                       onClick={() => setViewingClientPortfolio(acc.customerId || acc.userId)}
-                      title="View Client Dossier"
+                      title="View Client Basic Information"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -314,7 +314,7 @@ export default function AdminAccountsAuditPage() {
         </CardContent>
       </Card>
 
-      {/* Comprehensive Client Portfolio Dossier Dialog */}
+      {/* Basic Information Dossier Dialog */}
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
         <DialogContent className="max-w-5xl p-0 border-none rounded-[2rem] overflow-hidden shadow-2xl bg-white max-h-[95vh] flex flex-col">
           <div className="bg-primary p-8 text-white shrink-0">
@@ -324,7 +324,7 @@ export default function AdminAccountsAuditPage() {
                   <ShieldCheck className="h-8 w-8 text-accent" />
                 </div>
                 <div>
-                  <DialogTitle className="text-2xl font-black">Institutional Dossier</DialogTitle>
+                  <DialogTitle className="text-2xl font-black">Basic Information</DialogTitle>
                   <DialogDescription className="text-white/60 font-mono text-xs uppercase tracking-widest">
                     Verified Global Identifier: {viewingClientPortfolio}
                   </DialogDescription>
@@ -476,7 +476,7 @@ export default function AdminAccountsAuditPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-20 text-slate-400 italic">Initializing client dossier...</div>
+              <div className="text-center py-20 text-slate-400 italic">Initializing Basic Information...</div>
             )}
           </div>
           
@@ -493,8 +493,8 @@ export default function AdminAccountsAuditPage() {
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
               <div>
-                <DialogTitle className="text-xl font-bold">Institutional Dossier Modification</DialogTitle>
-                <DialogDescription>Administrative override for client UID: {editingProfile?.id}</DialogDescription>
+                <DialogTitle className="text-xl font-bold">Administrative Modification</DialogTitle>
+                <DialogDescription>Updating Basic Information for client UID: {editingProfile?.id}</DialogDescription>
               </div>
             </div>
           </div>
@@ -512,6 +512,7 @@ export default function AdminAccountsAuditPage() {
                   <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={editingProfile?.dob || ""} onChange={(e) => setEditingProfile({...editingProfile, dob: e.target.value})} /></div>
                   <div className="space-y-2"><Label>SSN / Tax ID</Label><Input value={editingProfile?.ssn || ""} onChange={(e) => setEditingProfile({...editingProfile, ssn: e.target.value})} /></div>
                   <div className="space-y-2"><Label>Phone Number</Label><Input value={editingProfile?.phoneNumber || ""} onChange={(e) => setEditingProfile({...editingProfile, phoneNumber: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Username</Label><Input value={editingProfile?.username || ""} onChange={(e) => setEditingProfile({...editingProfile, username: e.target.value})} /></div>
                 </div>
               </div>
 
@@ -561,7 +562,7 @@ export default function AdminAccountsAuditPage() {
               {/* Authorization Section */}
               <div className="space-y-4">
                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                  <FileText className="h-3 w-3" /> Signature Vault
+                  <FileText className="h-3 w-3" /> Legal Authorization
                 </h4>
                 <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl space-y-4">
                   {editingProfile?.signature ? (
@@ -574,7 +575,7 @@ export default function AdminAccountsAuditPage() {
                   ) : (
                     <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-slate-200 rounded-lg hover:border-primary cursor-pointer transition-all bg-white">
                       <Upload className="h-5 w-5 text-slate-400 mb-2" />
-                      <span className="text-[10px] font-bold text-slate-500">Upload New Signature</span>
+                      <span className="text-[10px] font-bold text-slate-500">Update Legal Signature</span>
                       <input type="file" className="hidden" accept="image/*" onChange={handleSignatureUpload} />
                     </label>
                   )}
@@ -585,140 +586,8 @@ export default function AdminAccountsAuditPage() {
           </div>
           
           <DialogFooter className="p-6 bg-slate-50 border-t shrink-0 flex gap-3">
-            <Button variant="outline" onClick={() => setIsEditProfileOpen(false)} className="flex-1 h-12 font-bold">Cancel Modification</Button>
-            <Button onClick={handleUpdateProfile} className="flex-1 h-12 font-black bg-primary">Commit Institutional Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Manual Creation Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Manual Account Entry</DialogTitle>
-            <DialogDescription>Create a new account for an existing client UID.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Target User ID</Label>
-              <Input 
-                placeholder="Paste UID here" 
-                value={newAccount.userId} 
-                onChange={(e) => setNewAccount({...newAccount, userId: e.target.value})}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Account Type</Label>
-                <Select value={newAccount.accountType} onValueChange={(v) => setNewAccount({...newAccount, accountType: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Current Account">Current Account</SelectItem>
-                    <SelectItem value="Savings Account">Savings Account</SelectItem>
-                    <SelectItem value="Business Account">Business Account</SelectItem>
-                    <SelectItem value="Internet Banking">Internet Banking</SelectItem>
-                    <SelectItem value="Safety Deposits">Safety Deposits</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Initial Balance</Label>
-                <Input 
-                  type="number" 
-                  value={newAccount.balance} 
-                  onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <Select value={newAccount.currency} onValueChange={(v) => setNewAccount({...newAccount, currency: v})}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCreateAccount} className="bg-primary w-full">Inject Ledger Entry</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] shadow-2xl overflow-y-auto max-h-[95vh]">
-          <DialogHeader className="p-6 bg-slate-50 border-b sticky top-0 z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
-              <div>
-                <DialogTitle className="text-xl font-bold">Operational Adjustment</DialogTitle>
-                <DialogDescription>Modifying financial parameters for: {editingAccount?.accountNumber}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Account Type</Label>
-                <Select 
-                  value={editingAccount?.accountType ?? "Current Account"} 
-                  onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Current Account">Current Account</SelectItem>
-                    <SelectItem value="Savings Account">Savings Account</SelectItem>
-                    <SelectItem value="Business Account">Business Account</SelectItem>
-                    <SelectItem value="Internet Banking">Internet Banking</SelectItem>
-                    <SelectItem value="Safety Deposits">Safety Deposits</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Account Balance</Label>
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  value={editingAccount?.balance ?? ""} 
-                  onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Operational Status</Label>
-                <Select 
-                  value={editingAccount?.status ?? "Active"} 
-                  onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Suspended">Suspended</SelectItem>
-                    <SelectItem value="Review Required">Review Required</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Currency</Label>
-                <Select value={editingAccount?.currency ?? "USD"} onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="GBP">GBP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="p-6 bg-slate-50 border-t sticky bottom-0 z-10 flex gap-3">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 font-bold">Cancel Audit</Button>
-            <Button onClick={handleUpdateAccount} className="bg-primary flex-1 h-12 font-black">Apply Ledger Update</Button>
+            <Button variant="outline" onClick={() => setIsEditProfileOpen(false)} className="flex-1 h-12 font-bold rounded-xl">Cancel Modification</Button>
+            <Button onClick={handleUpdateProfile} className="flex-1 h-12 font-black bg-primary rounded-xl">Commit Institutional Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

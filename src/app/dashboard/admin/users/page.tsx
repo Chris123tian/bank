@@ -20,7 +20,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, Upload } from "lucide-react";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, Upload, MapPin, Briefcase, User as UserIcon, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -123,6 +123,17 @@ export default function AdminUsersPage() {
     `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    } catch (e) {
+      return `$${amount.toLocaleString()}`;
+    }
+  };
+
   if (isAdminRoleLoading && !isMasterAdmin) {
     return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -196,64 +207,119 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Profile Dialog - Admin Only */}
+      {/* Comprehensive Modification Form - One Page Scrollable */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Administrative Profile Modification</DialogTitle>
-            <DialogDescription>Updating institutional records for UID: {editingUser?.id}</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
-            <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Personal & Identity</h4>
-              <div className="space-y-2"><Label>First Name</Label><Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} /></div>
-              <div className="space-y-2"><Label>Last Name</Label><Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} /></div>
-              <div className="space-y-2"><Label>DOB</Label><Input type="date" value={editingUser?.dob || ""} onChange={(e) => setEditingUser({...editingUser, dob: e.target.value})} /></div>
-              <div className="space-y-2"><Label>SSN / Tax ID</Label><Input value={editingUser?.ssn || ""} onChange={(e) => setEditingUser({...editingUser, ssn: e.target.value})} /></div>
-            </div>
-            <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Professional Records</h4>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={editingUser?.employmentStatus || "Full-Time"} onValueChange={(v) => setEditingUser({...editingUser, employmentStatus: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Full-Time">Full-Time</SelectItem>
-                    <SelectItem value="Part-Time">Part-Time</SelectItem>
-                    <SelectItem value="Self-Employed">Self-Employed</SelectItem>
-                    <SelectItem value="Student">Student</SelectItem>
-                    <SelectItem value="Retired">Retired</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2"><Label>Employer</Label><Input value={editingUser?.employerName || ""} onChange={(e) => setEditingUser({...editingUser, employerName: e.target.value})} /></div>
-              <div className="space-y-2"><Label>Job Title</Label><Input value={editingUser?.jobTitle || ""} onChange={(e) => setEditingUser({...editingUser, jobTitle: e.target.value})} /></div>
-              <div className="space-y-2"><Label>Annual Income</Label><Input type="number" value={editingUser?.annualIncome || ""} onChange={(e) => setEditingUser({...editingUser, annualIncome: e.target.value})} /></div>
-            </div>
-            <div className="md:col-span-2 space-y-4 border-t pt-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Signature Override</h4>
-              <div className="flex items-center gap-4">
-                {editingUser?.signature && <img src={editingUser.signature} className="h-16 w-32 object-contain bg-slate-50 border rounded p-2" />}
-                <label className="flex-1 cursor-pointer flex items-center justify-center h-16 border-2 border-dashed border-slate-200 rounded-lg hover:border-primary transition-colors">
-                  <Upload className="h-5 w-5 mr-2" /> Upload New Signature
-                  <input type="file" className="hidden" accept="image/*" onChange={handleSignatureUpload} />
-                </label>
+        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
+          <div className="p-6 bg-slate-50 border-b shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Administrative Modification</DialogTitle>
+                <DialogDescription>Updating Basic Information for client UID: {editingUser?.id}</DialogDescription>
               </div>
             </div>
           </div>
-          <DialogFooter className="sticky bottom-0 bg-background pt-4 border-t">
-            <Button onClick={handleUpdateUser} className="w-full h-12">Commit Institutional Changes</Button>
+          
+          <div className="flex-1 overflow-y-auto p-8 space-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Personal Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <UserIcon className="h-3 w-3" /> Personal Identity
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2"><Label>First Name</Label><Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Last Name</Label><Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={editingUser?.dob || ""} onChange={(e) => setEditingUser({...editingUser, dob: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>SSN / Tax ID</Label><Input value={editingUser?.ssn || ""} onChange={(e) => setEditingUser({...editingUser, ssn: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Phone Number</Label><Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Username</Label><Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} /></div>
+                </div>
+              </div>
+
+              {/* Residential Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <MapPin className="h-3 w-3" /> Residential Verification
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2"><Label>Street Address</Label><Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label>City</Label><Input value={editingUser?.city || ""} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} /></div>
+                    <div className="space-y-2"><Label>State</Label><Input value={editingUser?.state || ""} onChange={(e) => setEditingUser({...editingUser, state: e.target.value})} /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label>Zip Code</Label><Input value={editingUser?.postalCode || ""} onChange={(e) => setEditingUser({...editingUser, postalCode: e.target.value})} /></div>
+                    <div className="space-y-2"><Label>Country</Label><Input value={editingUser?.country || "USA"} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} /></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <Briefcase className="h-3 w-3" /> Professional & Financial Profile
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Employment Status</Label>
+                    <Select value={editingUser?.employmentStatus || "Full-Time"} onValueChange={(v) => setEditingUser({...editingUser, employmentStatus: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Full-Time">Full-Time</SelectItem>
+                        <SelectItem value="Part-Time">Part-Time</SelectItem>
+                        <SelectItem value="Self-Employed">Self-Employed</SelectItem>
+                        <SelectItem value="Student">Student</SelectItem>
+                        <SelectItem value="Retired">Retired</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2"><Label>Employer Entity</Label><Input value={editingUser?.employerName || ""} onChange={(e) => setEditingUser({...editingUser, employerName: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Job Title</Label><Input value={editingUser?.jobTitle || ""} onChange={(e) => setEditingUser({...editingUser, jobTitle: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Annual Household Income</Label><Input type="number" value={editingUser?.annualIncome || ""} onChange={(e) => setEditingUser({...editingUser, annualIncome: Number(e.target.value)})} /></div>
+                </div>
+              </div>
+
+              {/* Authorization Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <FileText className="h-3 w-3" /> Legal Authorization
+                </h4>
+                <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl space-y-4">
+                  {editingUser?.signature ? (
+                    <div className="relative group">
+                      <img src={editingUser.signature} alt="Signature" className="h-24 w-full object-contain bg-white border rounded p-2" />
+                      <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setEditingUser({...editingUser, signature: ""})}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-slate-200 rounded-lg hover:border-primary cursor-pointer transition-all bg-white">
+                      <Upload className="h-5 w-5 text-slate-400 mb-2" />
+                      <span className="text-[10px] font-bold text-slate-500">Update Legal Signature</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleSignatureUpload} />
+                    </label>
+                  )}
+                  <p className="text-[9px] text-muted-foreground uppercase font-black text-center">Identity Override Protocol</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="p-6 bg-slate-50 border-t shrink-0 flex gap-3">
+            <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1 h-12 font-bold rounded-xl">Cancel Modification</Button>
+            <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black bg-primary rounded-xl">Commit Institutional Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* User Detail View Dialog - Overhauled to match requested image */}
+      {/* User Detail View Dialog - "Basic Information" */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
-                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Information</DialogTitle>
+                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
                 <DialogDescription className="sr-only">Detailed view of the client's global institutional profile.</DialogDescription>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
