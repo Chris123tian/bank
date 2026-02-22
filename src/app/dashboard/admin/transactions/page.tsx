@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -281,9 +280,9 @@ export default function AdminTransactionsAuditPage() {
               </TableHeader>
               <TableBody>
                 {isTransactionsLoading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-20"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Network...</span></div></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-24"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Network...</span></div></TableCell></TableRow>
                 ) : filteredTransactions?.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-20 text-muted-foreground italic">No transaction records matching your criteria were found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-24 text-muted-foreground italic">No transaction records matching your criteria were found.</TableCell></TableRow>
                 ) : filteredTransactions?.map((tx) => (
                   <TableRow key={tx.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
                     <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString() : 'N/A'}</TableCell>
@@ -314,12 +313,14 @@ export default function AdminTransactionsAuditPage() {
         </CardContent>
       </Card>
 
-      {/* Manual Entry Dialog - Responsive Optimization */}
+      {/* Manual Entry Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
           <div className="p-6 sm:p-8 bg-slate-50 border-b shrink-0">
-            <DialogTitle className="text-xl sm:text-2xl font-black">Manual Ledger Entry</DialogTitle>
-            <DialogDescription>Inject a new transaction record into a client account with full metadata.</DialogDescription>
+            <DialogHeader>
+              <DialogTitle className="text-xl sm:text-2xl font-black">Manual Ledger Entry</DialogTitle>
+              <DialogDescription>Inject a new transaction record into a client account with full metadata for regulatory auditing.</DialogDescription>
+            </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -456,12 +457,14 @@ export default function AdminTransactionsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Transaction Dialog - Responsive Fixes */}
+      {/* Edit Transaction Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
           <div className="p-6 sm:p-8 bg-slate-50 border-b shrink-0">
-            <DialogTitle className="text-xl sm:text-2xl font-black">Modify Transaction Record</DialogTitle>
-            <DialogDescription className="text-xs truncate">Authorized correction for record ID: {editingTransaction?.id}</DialogDescription>
+            <DialogHeader>
+              <DialogTitle className="text-xl sm:text-2xl font-black">Modify Transaction Record</DialogTitle>
+              <DialogDescription>Authorized correction for regulatory audit record ID: {editingTransaction?.id}</DialogDescription>
+            </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -563,7 +566,7 @@ export default function AdminTransactionsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* One-Page Audit Insight Dossier - Responsive Fixes */}
+      {/* One-Page Audit Insight Dossier */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
@@ -573,12 +576,14 @@ export default function AdminTransactionsAuditPage() {
             <div className="space-y-10">
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="relative inline-block">
-                  <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Audit Insight</DialogTitle>
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Audit Insight</DialogTitle>
+                    <DialogDescription className="text-[10px] font-mono text-slate-500 mt-2 break-all">Comprehensive movement dossier for transaction: {viewingTransaction?.id}</DialogDescription>
+                  </DialogHeader>
                   <div className="absolute -bottom-2 left-0 h-1.5 w-24 bg-[#2563EB]" />
                 </div>
                 <div className="text-left sm:text-right">
                   <Badge className="bg-[#002B5B] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">{viewingTransaction?.status || 'Completed'}</Badge>
-                  <p className="text-[10px] font-mono text-slate-500 mt-2 break-all">REF: {viewingTransaction?.id}</p>
                 </div>
               </div>
 

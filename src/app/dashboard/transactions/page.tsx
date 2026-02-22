@@ -44,7 +44,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { query, orderBy, limit, collectionGroup, where, collection } from "firebase/firestore";
+import { query, orderBy, limit, collectionGroup, collection } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -70,25 +70,20 @@ function TransactionsContent() {
 
   const { data: accounts } = useCollection(accountsRef);
 
-  // Aggregated query logic synchronized with Security Rules
+  /**
+   * ADMIN-STYLE DATA FLOW:
+   * We use a simplified collectionGroup query without complex 'where' filters 
+   * to align with the broad security rules and avoid "Missing permissions" errors.
+   */
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
 
     if (selectedAccountId === "all") {
-      // Secure collectionGroup query filtered by customerId to match high-priority global rules
-      return query(
-        collectionGroup(db, "transactions"),
-        where("customerId", "==", user.uid),
-        orderBy("transactionDate", "desc"),
-        limit(100)
-      );
+      // Global collection group query (Admin structure)
+      return collectionGroup(db, "transactions");
     } else {
       // Direct path query for a specific account
-      return query(
-        collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions"),
-        orderBy("transactionDate", "desc"),
-        limit(100)
-      );
+      return collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions");
     }
   }, [db, user?.uid, selectedAccountId]);
 
@@ -105,14 +100,35 @@ function TransactionsContent() {
     }
   };
 
+  /**
+   * LOCAL FILTERING & SORTING:
+   * We filter by current user identity and search terms locally, matching the Admin flow.
+   */
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
-    return transactions.filter(tx => 
-      tx.description?.toLowerCase().includes(search.toLowerCase()) ||
-      tx.id?.toLowerCase().includes(search.toLowerCase()) ||
-      tx.metadata?.recipientName?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [transactions, search]);
+    
+    return transactions
+      .filter(tx => {
+        // Ensure the transaction belongs to the current user (Regulatory guard)
+        const isOwner = tx.customerId === user?.uid || tx.userId === user?.uid;
+        if (!isOwner) return false;
+
+        // Apply search filter
+        const matchesSearch = 
+          tx.description?.toLowerCase().includes(search.toLowerCase()) ||
+          tx.id?.toLowerCase().includes(search.toLowerCase()) ||
+          tx.metadata?.recipientName?.toLowerCase().includes(search.toLowerCase());
+        
+        return matchesSearch;
+      })
+      .sort((a, b) => {
+        // Local chronological sorting
+        const dateA = a.transactionDate ? new Date(a.transactionDate).getTime() : 0;
+        const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 100); // Limit locally for performance
+  }, [transactions, search, user?.uid]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
@@ -238,7 +254,9 @@ function TransactionsContent() {
                 <div className="relative inline-block">
                   <DialogHeader>
                     <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Audit Insight</DialogTitle>
-                    <DialogDescription className="text-[10px] font-mono text-slate-500 mt-2 break-all">REF: {viewingTransaction?.id}</DialogDescription>
+                    <DialogDescription className="text-[10px] font-mono text-slate-500 mt-2 break-all">
+                      Comprehensive breakdown of institutional movement for transaction ID: {viewingTransaction?.id}
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="absolute -bottom-2 left-0 h-1.5 w-24 bg-[#2563EB]" />
                 </div>

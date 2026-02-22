@@ -322,13 +322,15 @@ export default function AdminAccountsAuditPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl shrink-0"><TrendingUp className="h-6 w-6" /></div>
-              <div>
-                <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Capital Adjustment</DialogTitle>
-                <DialogDescription className="text-white/60 text-xs">Authorized correction for: {editingAccount?.accountNumber}</DialogDescription>
+            <DialogHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-2xl shrink-0"><TrendingUp className="h-6 w-6" /></div>
+                <div>
+                  <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Capital Adjustment</DialogTitle>
+                  <DialogDescription className="text-white/60 text-xs">Authorized regulatory correction for asset: {editingAccount?.accountNumber}</DialogDescription>
+                </div>
               </div>
-            </div>
+            </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
             <div className="space-y-4">
@@ -402,13 +404,15 @@ export default function AdminAccountsAuditPage() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-primary text-white shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl shrink-0"><PlusCircle className="h-6 w-6" /></div>
-              <div>
-                <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Open Institutional Account</DialogTitle>
-                <DialogDescription className="text-white/60 text-xs">Provisioning a new financial asset for a verified client.</DialogDescription>
+            <DialogHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-2xl shrink-0"><PlusCircle className="h-6 w-6" /></div>
+                <div>
+                  <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Open Institutional Account</DialogTitle>
+                  <DialogDescription className="text-white/60 text-xs">Provisioning a new financial asset for a verified client within the ledger.</DialogDescription>
+                </div>
               </div>
-            </div>
+            </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar">
             <div className="space-y-2">
@@ -486,8 +490,10 @@ export default function AdminAccountsAuditPage() {
             </button>
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
-                <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
-                <DialogDescription className="hidden">Detailed client profile information.</DialogDescription>
+                <DialogHeader>
+                  <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client.</DialogDescription>
+                </DialogHeader>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               

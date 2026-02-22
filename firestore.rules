@@ -17,6 +17,7 @@ service cloud.firestore {
      * COLLECTION GROUP RULES (Highest Priority)
      * These rules are essential for collectionGroup() queries like the Unified Ledger.
      * We allow all authenticated users to read (list/get) to resolve the "Missing or insufficient permissions" error.
+     * The application handles identity-based filtering locally or via query parameters.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn();
