@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Table, 
@@ -22,7 +23,9 @@ import {
   Globe,
   Receipt,
   X,
-  Info
+  Info,
+  Landmark,
+  ArrowLeftRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -31,41 +34,51 @@ import {
   DialogHeader, 
   DialogTitle, 
 } from "@/components/ui/dialog";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { query, orderBy, limit, collectionGroup, where } from "firebase/firestore";
+import { query, orderBy, limit, collection, where } from "firebase/firestore";
 
 export default function TransactionsPage() {
   const { user } = useUser();
   const db = useFirestore();
+  const searchParams = useSearchParams();
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(searchParams.get("account") || "");
 
-  // Optimized Unified Ledger Query - Handles both Admin and Client roles securely
-  const transactionsQuery = useMemoFirebase(() => {
+  // Fetch all accounts for the filter dropdown
+  const accountsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    const isMasterAdmin = user.email === 'citybank@gmail.com';
-    
-    if (isMasterAdmin) {
-      // Admins see all transactions in the system for auditing purposes
-      return query(
-        collectionGroup(db, "transactions"),
-        orderBy("transactionDate", "desc"),
-        limit(500)
-      );
-    }
-    
-    // Clients see all their transactions across all accounts aggregated in one list
-    // Crucially uses userId filter to satisfy collection group security rules
-    return query(
-      collectionGroup(db, "transactions"),
-      where("userId", "==", user.uid),
-      orderBy("transactionDate", "desc"),
-      limit(200)
-    );
-  }, [db, user?.uid, user?.email]);
+    return collection(db, "users", user.uid, "accounts");
+  }, [db, user?.uid]);
 
-  const { data: transactions, isLoading } = useCollection(transactionsQuery);
+  const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
+
+  // Auto-select first account if none selected
+  useEffect(() => {
+    if (accounts && accounts.length > 0 && !selectedAccountId) {
+      setSelectedAccountId(accounts[0].id);
+    }
+  }, [accounts, selectedAccountId]);
+
+  // Secure path-based query for specific account history
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!db || !user?.uid || !selectedAccountId) return null;
+    return query(
+      collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions"),
+      orderBy("transactionDate", "desc"),
+      limit(100)
+    );
+  }, [db, user?.uid, selectedAccountId]);
+
+  const { data: transactions, isLoading: transactionsLoading } = useCollection(transactionsQuery);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
@@ -78,17 +91,62 @@ export default function TransactionsPage() {
     }
   };
 
+  const selectedAccount = accounts?.find(a => a.id === selectedAccountId);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Unified Ledger</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Aggregated history across all institutional assets.</p>
+          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Institutional Ledger</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive audit trail for your financial assets.</p>
         </div>
-        <Button variant="outline" size="sm" className="w-full md:w-auto font-bold border-slate-200 shadow-sm h-10">
-          <Download className="mr-2 h-4 w-4" /> Export Ledger
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+          <div className="sm:w-64">
+            <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+              <SelectTrigger className="h-11 border-slate-200 bg-white shadow-sm">
+                <SelectValue placeholder={accountsLoading ? "Fetching assets..." : "Select Account"} />
+              </SelectTrigger>
+              <SelectContent>
+                {accounts?.map(acc => (
+                  <SelectItem key={acc.id} value={acc.id}>
+                    {acc.accountType} (...{acc.accountNumber.slice(-4)})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="outline" className="h-11 font-bold border-slate-200 shadow-sm shrink-0">
+            <Download className="mr-2 h-4 w-4" /> Export
+          </Button>
+        </div>
       </div>
+
+      {selectedAccount && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="shadow-sm border-none bg-white">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Landmark className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase text-slate-400">Verified Balance</p>
+                <p className="text-lg font-black text-primary">{formatCurrency(selectedAccount.balance, selectedAccount.currency)}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm border-none bg-white">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-2 bg-accent/10 rounded-lg text-accent">
+                <ArrowLeftRight className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase text-slate-400">Account Type</p>
+                <p className="text-lg font-black text-slate-700">{selectedAccount.accountType}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card className="shadow-sm overflow-hidden rounded-2xl border-none">
         <CardContent className="p-0">
@@ -104,12 +162,12 @@ export default function TransactionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {transactionsLoading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Global Ledger...</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Ledger...</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -155,7 +213,7 @@ export default function TransactionsPage() {
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-4 opacity-30">
                         <History className="h-12 w-12 text-slate-400" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No transactions recorded in the global ledger</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No records found for this asset</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -214,7 +272,7 @@ export default function TransactionsPage() {
 
                   <section className="space-y-4">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                      <UserIcon className="h-4 w-4" /> Institutional Identity
+                      <UserIcon className="h-4 w-4" /> Source Credentials
                     </h4>
                     <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-3 text-xs sm:text-sm">
                       <div className="flex flex-col sm:flex-row justify-between gap-1">
@@ -222,7 +280,7 @@ export default function TransactionsPage() {
                         <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction?.customerId || viewingTransaction?.userId}</span>
                       </div>
                       <div className="flex flex-col sm:flex-row justify-between gap-1">
-                        <span className="text-slate-500 font-bold shrink-0">Source Account:</span>
+                        <span className="text-slate-500 font-bold shrink-0">Source Asset:</span>
                         <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction?.accountId}</span>
                       </div>
                     </div>
@@ -232,7 +290,7 @@ export default function TransactionsPage() {
                 <div className="space-y-8">
                   <section className="space-y-4">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                      <Globe className="h-4 w-4" /> Routing & Metadata
+                      <Globe className="h-4 w-4" /> Counterparty Details
                     </h4>
                     <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
                       <div className="space-y-1">
@@ -247,8 +305,8 @@ export default function TransactionsPage() {
                           <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.bankName || 'Nexa International'}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Payment Method</p>
-                          <p className="font-bold text-slate-700">{viewingTransaction?.metadata?.paymentMethod || 'System Rail'}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
+                          <p className="font-bold text-slate-700">{viewingTransaction?.metadata?.paymentMethod || 'Internal Transfer'}</p>
                         </div>
                       </div>
                       {viewingTransaction?.metadata?.routingOrIban && (
