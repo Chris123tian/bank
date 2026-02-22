@@ -226,7 +226,7 @@ export default function AdminTransactionsAuditPage() {
         </CardContent>
       </Card>
 
-      {/* Transaction View Dialog - CRITICAL AUDIT INSPECTOR */}
+      {/* Audit Insight Dialog - FULLY SCROLLABLE */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none bg-slate-950 text-white rounded-3xl shadow-2xl">
           <DialogHeader className="p-8 bg-primary/20 border-b border-white/10 shrink-0">
@@ -241,10 +241,10 @@ export default function AdminTransactionsAuditPage() {
             </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 overflow-y-auto">
             <div className="p-8 space-y-8">
               {/* Core Settlement Data */}
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div className="space-y-1">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Asset Settlement</Label>
                   <p className={`text-3xl font-black ${viewingTransaction?.amount > 0 ? 'text-green-400' : 'text-white'}`}>
@@ -262,7 +262,7 @@ export default function AdminTransactionsAuditPage() {
               <Separator className="bg-white/10" />
 
               {/* Path & Identity Path */}
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-slate-400">
                     <User className="h-4 w-4" />
@@ -294,40 +294,47 @@ export default function AdminTransactionsAuditPage() {
                 </p>
               </div>
 
-              {/* INSTITUTIONAL METADATA - RECIPIENT & BANK DETAILS */}
-              <div className="space-y-6 pt-4 pb-4">
+              {/* INSTITUTIONAL METADATA - EXACT INPUT */}
+              <div className="space-y-6 pt-4">
                 <div className="flex items-center gap-2 text-accent">
                   <ShieldAlert className="h-5 w-5" />
                   <span className="text-[11px] font-black uppercase tracking-widest">Institutional Metadata (Verified Audit)</span>
                 </div>
                 
                 {viewingTransaction?.metadata ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-accent/5 p-8 rounded-3xl border border-accent/20">
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Recipient Legal Name</Label>
-                      <p className="text-sm font-black text-white">{viewingTransaction.metadata.recipientName || 'Unspecified'}</p>
+                  <div className="grid grid-cols-1 gap-6 bg-accent/5 p-8 rounded-3xl border border-accent/20">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Recipient Legal Name</Label>
+                        <p className="text-sm font-black text-white">{viewingTransaction.metadata.recipientName || 'Unspecified'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Recipient Account Number</Label>
+                        <p className="text-sm font-mono text-accent">{viewingTransaction.metadata.recipientAccount || 'Unspecified'}</p>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Recipient Account Number</Label>
-                      <p className="text-sm font-mono text-accent">{viewingTransaction.metadata.recipientAccount || 'Unspecified'}</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Routing / IBAN / SWIFT</Label>
+                        <p className="text-sm font-mono text-white">{viewingTransaction.metadata.routingOrIban || 'Unspecified'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Settlement Protocol</Label>
+                        <p className="text-sm font-black text-accent">{viewingTransaction.metadata.paymentMethod || 'Standard Transfer'}</p>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Routing / IBAN / SWIFT</Label>
-                      <p className="text-sm font-mono text-white">{viewingTransaction.metadata.routingOrIban || 'Unspecified'}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Settlement Protocol</Label>
-                      <p className="text-sm font-black text-accent">{viewingTransaction.metadata.paymentMethod || 'Standard Transfer'}</p>
-                    </div>
-                    <div className="space-y-2 md:col-span-2 pt-2 border-t border-white/5">
+
+                    <div className="space-y-2 pt-4 border-t border-white/5">
                       <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Receiving Institution</Label>
                       <p className="text-sm font-black text-white">{viewingTransaction.metadata.bankName || 'Unspecified'}</p>
                       <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
                         {viewingTransaction.metadata.bankAddress || 'No address metadata on file.'}
                       </p>
                     </div>
+
                     {viewingTransaction.metadata.note && (
-                      <div className="space-y-2 md:col-span-2 pt-2 border-t border-white/5">
+                      <div className="space-y-2 pt-4 border-t border-white/5">
                         <Label className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Internal Reference Note</Label>
                         <p className="text-xs text-slate-300 italic">"{viewingTransaction.metadata.note}"</p>
                       </div>
@@ -340,7 +347,7 @@ export default function AdminTransactionsAuditPage() {
                 )}
               </div>
 
-              <div className="pt-6 flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
+              <div className="pt-6 pb-6 flex justify-between items-center text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
                 <span>Security Level: Tier-1 Institutional</span>
                 <span>Verification: Nexa-Authenticated</span>
               </div>
@@ -355,10 +362,10 @@ export default function AdminTransactionsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Manual Edit Dialog - REFINED FOR AUDIT CORRECTION */}
+      {/* Manual Edit Dialog - FULLY SCROLLABLE */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl">
-          <DialogHeader className="p-6 bg-slate-50 border-b">
+        <DialogContent className="max-w-md max-h-[90vh] p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl flex flex-col">
+          <DialogHeader className="p-6 bg-slate-50 border-b shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-xl text-primary">
                 <Edit3 className="h-5 w-5" />
@@ -370,87 +377,106 @@ export default function AdminTransactionsAuditPage() {
             </div>
           </DialogHeader>
           
-          <div className="p-6 space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="p-6 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Execution Date</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                    <Input 
+                      type="datetime-local" 
+                      className="pl-8 text-xs h-10 rounded-xl"
+                      value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} 
+                      onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Settlement Type</Label>
+                  <Select 
+                    value={editingTransaction?.transactionType ?? "withdrawal"} 
+                    onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
+                  >
+                    <SelectTrigger className="h-10 text-xs rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deposit">Deposit</SelectItem>
+                      <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                      <SelectItem value="transfer">Transfer</SelectItem>
+                      <SelectItem value="bill_payment">Bill Payment</SelectItem>
+                      <SelectItem value="card_payment">Card Payment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Execution Date</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Public Memo</Label>
                 <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
                   <Input 
-                    type="datetime-local" 
                     className="pl-8 text-xs h-10 rounded-xl"
-                    value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} 
-                    onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})}
+                    value={editingTransaction?.description ?? ""} 
+                    onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Amount</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">$</span>
+                    <Input 
+                      type="number" 
+                      step="0.01"
+                      className="pl-8 text-xs h-10 rounded-xl font-bold"
+                      value={editingTransaction?.amount ?? ""} 
+                      onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Audit Status</Label>
+                  <Select 
+                    value={editingTransaction?.status ?? "pending"} 
+                    onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}
+                  >
+                    <SelectTrigger className="h-10 text-xs rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending Audit</SelectItem>
+                      <SelectItem value="completed">Settled</SelectItem>
+                      <SelectItem value="failed">Failed / Revoked</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Settlement Type</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Currency</Label>
                 <Select 
-                  value={editingTransaction?.transactionType ?? "withdrawal"} 
-                  onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
+                  value={editingTransaction?.currency ?? "USD"} 
+                  onValueChange={(v) => setEditingTransaction({...editingTransaction, currency: v})}
                 >
                   <SelectTrigger className="h-10 text-xs rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="deposit">Deposit</SelectItem>
-                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                    <SelectItem value="transfer">Transfer</SelectItem>
-                    <SelectItem value="bill_payment">Bill Payment</SelectItem>
-                    <SelectItem value="card_payment">Card Payment</SelectItem>
+                    <SelectItem value="USD">USD - US Dollar</SelectItem>
+                    <SelectItem value="EUR">EUR - Euro</SelectItem>
+                    <SelectItem value="GBP">GBP - British Pound</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+          </ScrollArea>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Public Memo</Label>
-              <div className="relative">
-                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
-                <Input 
-                  className="pl-8 text-xs h-10 rounded-xl"
-                  value={editingTransaction?.description ?? ""} 
-                  onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Amount</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">$</span>
-                  <Input 
-                    type="number" 
-                    step="0.01"
-                    className="pl-8 text-xs h-10 rounded-xl font-bold"
-                    value={editingTransaction?.amount ?? ""} 
-                    onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Audit Status</Label>
-                <Select 
-                  value={editingTransaction?.status ?? "pending"} 
-                  onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}
-                >
-                  <SelectTrigger className="h-10 text-xs rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending Audit</SelectItem>
-                    <SelectItem value="completed">Settled</SelectItem>
-                    <SelectItem value="failed">Failed / Revoked</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="p-6 bg-slate-50 border-t flex flex-col sm:flex-row gap-3">
+          <DialogFooter className="p-6 bg-slate-50 border-t flex flex-col sm:flex-row gap-3 shrink-0">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl h-11 flex-1">Cancel Audit</Button>
             <Button onClick={handleUpdateTransaction} className="bg-primary rounded-xl h-11 flex-1 font-bold">Apply Correction</Button>
           </DialogFooter>
