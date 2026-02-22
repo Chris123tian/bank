@@ -310,7 +310,12 @@ export default function AdminUsersPage() {
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
             <div className="max-w-md mx-auto space-y-10">
               <div className="relative inline-block">
-                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</h2>
+                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">
+                  Basic Information
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Detailed view of the client's institutional profile.
+                </DialogDescription>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               <div className="flex justify-center pt-2">
