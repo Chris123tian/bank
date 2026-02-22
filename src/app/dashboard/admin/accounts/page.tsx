@@ -151,6 +151,7 @@ export default function AdminAccountsAuditPage() {
     });
 
     // AUTO-INJECT AUDIT TRANSACTION RECORD for visibility in client history
+    // Standardizing on both customerId and userId for rule compatibility
     const txRef = collection(db, "users", clientUid, "accounts", editingAccount.id, "transactions");
     addDocumentNonBlocking(txRef, {
       accountId: editingAccount.id,
