@@ -42,28 +42,23 @@ export function useCollection<T = any>(
     let collectionGroupId = '';
     
     try {
+      // Safely determine path and group status
+      const q = memoizedTargetRefOrQuery as any;
       if ('path' in memoizedTargetRefOrQuery) {
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
-        // Handle Query objects (including collectionGroup)
-        const q = memoizedTargetRefOrQuery as any;
-        // The path in a collectionGroup query is typically empty relative to root
+        // Handle internal SDK query structure for path reporting
         pathString = q._query?.path?.canonicalString() || '';
-        
-        // If it's a collectionGroup query, the ID is stored in collectionGroup
-        if (q._query?.collectionGroup) {
+        if (q._query?.collectionGroup || !pathString.includes('/')) {
           isGroupQuery = true;
-          collectionGroupId = q._query.collectionGroup;
-        } else {
-          isGroupQuery = !pathString.includes('/');
+          collectionGroupId = q._query?.collectionGroup || pathString;
         }
       }
     } catch (e) {
       pathString = 'Unknown';
     }
 
-    // 2. NUCLEAR GUARD: Prevent root listing or undefined paths during initialization.
-    // Group queries are allowed to have empty paths as they target all segments.
+    // 2. NUCLEAR GUARD: Prevent root listing or malformed paths during initialization.
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);
@@ -71,12 +66,10 @@ export function useCollection<T = any>(
     }
 
     // 3. AUTH STABILITY GUARD:
-    // Firebase initialization is asynchronous. We must ensure the Auth SDK has settled 
-    // before sending queries, especially collection group queries which are highly sensitive.
+    // Ensure the Auth SDK has settled before sending queries. 
+    // This prevents transient "Missing Permissions" errors during page hydration.
     const auth = getAuth();
     if (!auth.currentUser) {
-      // If we're not signed in yet, wait for the Auth provider to signal readiness.
-      // This prevents transient "Missing Permissions" errors during page hydration.
       setData(null);
       setIsLoading(false);
       return;

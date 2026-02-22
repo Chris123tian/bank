@@ -11,12 +11,12 @@ service cloud.firestore {
     }
 
     function isMasterAdmin() {
-      // Unambiguous check for the primary administrative account via email
+      // Direct, high-priority check for the primary administrative account
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
     function isAdmin() {
-      // Master admin (fast check) or a user with a verified administrative role record (DB check)
+      // Master admin or a user with a verified administrative role record
       return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
     }
 
@@ -25,9 +25,9 @@ service cloud.firestore {
     }
 
     /**
-     * ADMINISTRATIVE OVERRIDE
-     * Explicitly grant the master administrator account full access to the entire root.
-     * The recursive wildcard is essential for all queries, including collection groups.
+     * ADMINISTRATIVE MASTER OVERRIDE
+     * Grant absolute root access to verified administrators. 
+     * This recursive wildcard is the most reliable way to permit global audits and collection groups.
      */
     match /{allPaths=**} {
       allow read, write: if isAdmin();
@@ -35,32 +35,24 @@ service cloud.firestore {
 
     /** 
      * COLLECTION GROUP RULES 
-     * Explicitly required for collectionGroup queries (e.g., Dashboard summaries and Admin Audit pages).
-     * These MUST match the collection ID and use the {path=**} wildcard.
+     * Explicit matches required for collectionGroup queries (e.g., Audit Ledger and Dashboard Aggregates).
      */
     
     match /{path=**}/accounts/{accountId} {
-      // Admins see all; Owners see only their own capital records
-      // Note: 'read' permission includes 'list' (queries)
-      allow read: if isAdmin();
-      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
     }
     
     match /{path=**}/transactions/{transactionId} {
-      // Admins see all; Owners see only their own settlement history
-      allow read: if isAdmin();
-      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
     }
     
     match /{path=**}/cards/{cardId} {
-      allow read: if isAdmin();
-      allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
+      allow read: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
     }
 
-    // --- User Profile & Private Data ---
+    // --- Standard Path-Based Access Control ---
 
     match /users/{userId} {
-      // Owners and Admins have full access to user profiles and nested collections
       allow read, write: if isOwner(userId) || isAdmin();
 
       match /accounts/{accountId} {
@@ -71,17 +63,14 @@ service cloud.firestore {
         }
       }
 
-      // Supplementary collections
       match /payees/{payeeId} { allow read, write: if isOwner(userId) || isAdmin(); }
       match /bills/{billId} { allow read, write: if isOwner(userId) || isAdmin(); }
       match /cards/{cardId} { allow read, write: if isOwner(userId) || isAdmin(); }
       match /supportTickets/{ticketId} { allow read, write: if isOwner(userId) || isAdmin(); }
     }
 
-    // Role-based access control metadata
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      // Only the Master Admin can assign or revoke administrative privileges
       allow write: if isMasterAdmin(); 
     }
   }
