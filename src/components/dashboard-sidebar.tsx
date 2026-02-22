@@ -6,7 +6,6 @@ import {
   ArrowLeftRight, 
   Receipt, 
   History, 
-  CreditCard, 
   Settings, 
   LogOut,
   Building2,
@@ -48,7 +47,6 @@ const adminItems = [
   { name: "User Management", href: "/dashboard/admin/users", icon: Users },
   { name: "Audit Accounts", href: "/dashboard/admin/accounts", icon: Landmark },
   { name: "Audit Transactions", href: "/dashboard/admin/transactions", icon: ShieldAlert },
-  { name: "Audit Cards", href: "/dashboard/admin/cards", icon: CreditCard },
 ];
 
 export function DashboardSidebar() {
@@ -65,14 +63,12 @@ export function DashboardSidebar() {
     }
   };
 
-  // Profile data fetch for Sidebar Basic Info
   const profileRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return doc(db, "users", user.uid);
   }, [db, user?.uid]);
   const { data: profile } = useDoc(profileRef);
 
-  // Accounts fetch for Sidebar Summary
   const accountsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return collection(db, "users", user.uid, "accounts");
@@ -111,7 +107,6 @@ export function DashboardSidebar() {
         </span>
       </SidebarHeader>
       <SidebarContent className="custom-scrollbar overflow-x-hidden">
-        {/* Basic Information Section */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50 font-black uppercase text-[10px] tracking-widest">Account Profile</SidebarGroupLabel>
           <Link href="/dashboard/settings" onClick={handleLinkClick} className="block outline-none">
@@ -136,7 +131,6 @@ export function DashboardSidebar() {
 
         <SidebarSeparator className="mx-2 opacity-10" />
 
-        {/* Account Summary Section */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50 font-black uppercase text-[10px] tracking-widest">Financial Summary</SidebarGroupLabel>
           <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2 shadow-inner">

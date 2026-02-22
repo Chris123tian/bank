@@ -154,7 +154,6 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
-      {/* Transaction Audit Insight Dossier */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
@@ -265,9 +264,9 @@ export default function TransactionsPage() {
               </div>
 
               <div className="pt-10 border-t border-slate-300">
-                <Button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
+                <button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-white text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
                   Dismiss Audit Insight
-                </Button>
+                </button>
               </div>
             </div>
           </div>

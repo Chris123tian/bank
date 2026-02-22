@@ -22,21 +22,14 @@ service cloud.firestore {
      * COLLECTION GROUP RULES (High Priority)
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isAdmin() || (isSignedIn() && (
+      allow read: if isMasterAdmin() || (isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.customerId == request.auth.uid
       ));
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isAdmin() || (isSignedIn() && (
-        resource.data.userId == request.auth.uid || 
-        resource.data.customerId == request.auth.uid
-      ));
-    }
-
-    match /{path=**}/cards/{cardId} {
-      allow read: if isAdmin() || (isSignedIn() && (
+      allow read: if isMasterAdmin() || (isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.customerId == request.auth.uid
       ));
@@ -62,7 +55,6 @@ service cloud.firestore {
         }
       }
 
-      match /cards/{cardId} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
       match /payees/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
       match /bills/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
     }
