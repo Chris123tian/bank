@@ -53,37 +53,28 @@ export function useCollection<T = any>(
       if ('path' in memoizedTargetRefOrQuery) {
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
-        // Identify collectionGroup queries via internal path structure
+        // Identify collectionGroup queries via internal structure check
+        // Group queries in Firestore usually have an internal query path that maps to the collection ID
         const internal = memoizedTargetRefOrQuery as unknown as InternalQuery;
-        pathString = internal._query?.path?.canonicalString() || '[Collection Group]';
-        // Group queries usually have a canonical path that is just the collection ID (no slashes)
-        isGroupQuery = !pathString.includes('/') || pathString === '[Collection Group]';
+        pathString = internal._query?.path?.canonicalString() || '';
+        // If the path is a simple string without slashes, it's likely a collectionGroup query
+        isGroupQuery = !pathString.includes('/');
       }
     } catch (e) {
-      pathString = '[Unknown Path]';
+      pathString = '';
     }
 
     // Defensive check: Block if path resolves to root or contains 'undefined' strings
-    // which indicate malformed session state during hydration/routing.
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);
       return;
     }
 
-    // Safety for group queries: if path contains 'undefined', the query is invalid.
-    if (pathString.includes('undefined')) {
-      setData(null);
-      setIsLoading(false);
-      return;
-    }
-
-    // Additional Layer: If this is an authenticated-only collection group query,
-    // we wait for the Auth SDK to have a stable user before sending the request.
+    // Extra Layer for Collection Group Queries: 
+    // Wait for the Auth SDK to have a stable user before sending the request to prevent transient 403s.
     const auth = getAuth();
     if (isGroupQuery && !auth.currentUser) {
-      // If we are in an admin context or expected dashboard context, 
-      // wait until auth.currentUser is populated to prevent 403 blocks.
       setData(null);
       setIsLoading(false);
       return;
@@ -105,7 +96,7 @@ export function useCollection<T = any>(
       },
       (firestoreError: FirestoreError) => {
         // Ensure pathString is descriptive for the contextual error report
-        const finalPath = isGroupQuery ? `[Collection Group: ${pathString}]` : pathString;
+        const finalPath = isGroupQuery ? `[Collection Group: ${pathString || 'Global'}]` : (pathString || '[Unknown Path]');
         
         const contextualError = new FirestorePermissionError({
           operation: 'list',
