@@ -10,46 +10,15 @@ service cloud.firestore {
     }
 
     function isMasterAdmin() {
-      // Primary administrative check via email for absolute priority
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
     function isAdmin() {
-      // Master admin or verified administrative role in roles_admin collection
       return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
-    }
-
-    /** 
-     * COLLECTION GROUP RULES (CRITICAL)
-     * These must be defined to allow collectionGroup() queries used in dashboards and audit views.
-     * We allow read if the user is an admin OR if they are the owner based on denormalized IDs.
-     * Using .get() ensures the rule doesn't fail if a document is missing a field.
-     */
-    
-    match /{path=**}/accounts/{id} {
-      allow read: if isAdmin() || (isSignedIn() && (
-        resource.data.get('customerId', '') == request.auth.uid || 
-        resource.data.get('userId', '') == request.auth.uid
-      ));
-    }
-    
-    match /{path=**}/transactions/{id} {
-      allow read: if isAdmin() || (isSignedIn() && (
-        resource.data.get('customerId', '') == request.auth.uid || 
-        resource.data.get('userId', '') == request.auth.uid
-      ));
-    }
-    
-    match /{path=**}/cards/{id} {
-      allow read: if isAdmin() || (isSignedIn() && (
-        resource.data.get('customerId', '') == request.auth.uid || 
-        resource.data.get('userId', '') == request.auth.uid
-      ));
     }
 
     /**
      * ADMINISTRATIVE MASTER OVERRIDE
-     * Grant absolute access across all paths for verified administrators.
      */
     match /{allPaths=**} {
       allow read, write: if isAdmin();
