@@ -291,6 +291,70 @@ export default function AdminAccountsAuditPage() {
         </CardContent>
       </Card>
 
+      {/* Account Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden">
+          <div className="p-6 bg-slate-50 border-b shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Edit Account Record</DialogTitle>
+                <DialogDescription>Modifying ledger for: {editingAccount?.accountNumber}</DialogDescription>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-8 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Account Type</Label>
+                <Select value={editingAccount?.accountType} onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}>
+                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Current Account">Current Account</SelectItem>
+                    <SelectItem value="Savings Account">Savings Account</SelectItem>
+                    <SelectItem value="Business Account">Business Account</SelectItem>
+                    <SelectItem value="Internet Banking">Internet Banking</SelectItem>
+                    <SelectItem value="Safety Deposits">Safety Deposits</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Operational Status</Label>
+                <Select value={editingAccount?.status} onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}>
+                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active / Unrestricted</SelectItem>
+                    <SelectItem value="Suspended">Suspended / Restricted</SelectItem>
+                    <SelectItem value="Locked">Locked / Administrative Hold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Balance Override</Label>
+                <Input type="number" step="0.01" className="h-11 font-bold" value={editingAccount?.balance ?? ""} onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <Select value={editingAccount?.currency} onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}>
+                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="p-6 bg-slate-50 border-t shrink-0 flex gap-3">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl">Cancel</Button>
+            <Button onClick={handleUpdateAccount} className="flex-1 h-12 bg-primary rounded-xl font-bold">Apply Corrections</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Institutional Information Dossier Dialog */}
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
         <DialogContent className="max-w-5xl p-0 border-none rounded-[2rem] overflow-hidden shadow-2xl bg-white max-h-[95vh] flex flex-col">
