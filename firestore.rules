@@ -11,12 +11,12 @@ service cloud.firestore {
     }
 
     function isMasterAdmin() {
-      // Direct, high-priority check for the primary administrative account
+      // Direct email check for the primary administrative account
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
     function isAdmin() {
-      // Master admin or a user with a verified administrative role record
+      // Master admin or verified administrative role
       return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
     }
 
@@ -26,8 +26,8 @@ service cloud.firestore {
 
     /**
      * ADMINISTRATIVE MASTER OVERRIDE
-     * Grant absolute root access to verified administrators. 
-     * This recursive wildcard is the most reliable way to permit global audits and collection groups.
+     * This recursive wildcard must be at the top level to grant absolute access
+     * to all documents and collection group queries for administrators.
      */
     match /{allPaths=**} {
       allow read, write: if isAdmin();
@@ -35,7 +35,7 @@ service cloud.firestore {
 
     /** 
      * COLLECTION GROUP RULES 
-     * Explicit matches required for collectionGroup queries (e.g., Audit Ledger and Dashboard Aggregates).
+     * Explicit matches required for collectionGroup queries (e.g., Audit Ledger).
      */
     
     match /{path=**}/accounts/{accountId} {
