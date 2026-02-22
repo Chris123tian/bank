@@ -22,15 +22,6 @@ export interface UseCollectionResult<T> {
   error: Error | null;
 }
 
-export interface InternalQuery extends Query<DocumentData> {
-  _query: {
-    path: {
-      canonicalString(): string;
-      toString(): string;
-    }
-  }
-}
-
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
 ): UseCollectionResult<T> {
@@ -53,14 +44,15 @@ export function useCollection<T = any>(
       if ('path' in memoizedTargetRefOrQuery) {
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
-        // Identify collectionGroup queries via internal structure check
-        const internal = memoizedTargetRefOrQuery as unknown as InternalQuery;
-        pathString = internal._query?.path?.canonicalString() || '';
-        // If the path is a simple string without slashes, it's likely a collectionGroup query
+        // Extract collection ID for collectionGroup queries from internal SDK structure
+        // This is primarily for descriptive error reporting.
+        const q = memoizedTargetRefOrQuery as any;
+        pathString = q._query?.path?.canonicalString() || 'Global';
+        // If path has no segments, it's a collectionGroup query
         isGroupQuery = !pathString.includes('/');
       }
     } catch (e) {
-      pathString = '';
+      pathString = 'Unknown';
     }
 
     // Defensive check: Block if path resolves to root or contains 'undefined' strings
@@ -98,7 +90,7 @@ export function useCollection<T = any>(
       },
       (firestoreError: FirestoreError) => {
         // Construct detailed audit path for error reporting
-        const finalPath = isGroupQuery ? `[Collection Group: ${pathString || 'Global'}]` : (pathString || '[Unknown Path]');
+        const finalPath = isGroupQuery ? `[Collection Group: ${pathString}]` : pathString;
         
         const contextualError = new FirestorePermissionError({
           operation: 'list',

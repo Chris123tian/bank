@@ -10,9 +10,14 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isMasterAdmin() {
+      // Unambiguous check for the primary administrative account
+      return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
+    }
+
     function isAdmin() {
-      // The master administrator account bypasses standard ownership rules
-      return isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
+      // Master admin or a user with a verified administrative role record
+      return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
     }
 
     function isOwner(userId) {
@@ -30,19 +35,25 @@ service cloud.firestore {
 
     /** 
      * COLLECTION GROUP RULES 
-     * Required for collectionGroup queries (e.g., Dashboard summaries and Admin Audit pages).
-     * These MUST use the {path=**} wildcard prefix to be effective.
+     * Explicitly required for collectionGroup queries (e.g., Dashboard summaries and Admin Audit pages).
+     * These MUST use the {path=**} wildcard prefix.
      */
+    
     match /{path=**}/accounts/{accountId} {
-      allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
+      // Admins see all; Owners see only their own capital records
+      allow read: if isAdmin();
+      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
     }
     
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
+      // Admins see all; Owners see only their own settlement history
+      allow read: if isAdmin();
+      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
     }
     
     match /{path=**}/cards/{cardId} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow read: if isAdmin();
+      allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
     }
 
     // --- User Profile & Private Data ---
@@ -69,7 +80,8 @@ service cloud.firestore {
     // Role-based access control metadata
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin(); 
+      // Only the Master Admin can assign or revoke administrative privileges
+      allow write: if isMasterAdmin(); 
     }
   }
 }
