@@ -15,7 +15,8 @@ import {
   Landmark,
   User as UserIcon,
   PieChart,
-  Wallet
+  Wallet,
+  ArrowDownCircle
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -41,6 +42,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Deposit", href: "/dashboard/deposit", icon: ArrowDownCircle },
   { name: "Transfers", href: "/dashboard/transfer", icon: ArrowLeftRight },
   { name: "Bill Payments", href: "/dashboard/bills", icon: Receipt },
   { name: "Transactions", href: "/dashboard/transactions", icon: History },

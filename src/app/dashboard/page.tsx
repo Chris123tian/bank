@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { 
   ArrowUpRight, 
@@ -15,37 +17,18 @@ import {
   Zap,
   ShieldCheck,
   History,
-  AlertTriangle
+  AlertTriangle,
+  Receipt,
+  CreditCard,
+  ArrowDownCircle
 } from "lucide-react";
-import { 
-  Bar, 
-  BarChart, 
-  XAxis, 
-  Tooltip,
-  ResponsiveContainer
-} from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collection } from "firebase/firestore";
+import { collection, collectionGroup, query, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-
-const chartData = [
-  { month: "Jan", income: 4500, expenses: 3200 },
-  { month: "Feb", income: 5200, expenses: 3800 },
-  { month: "Mar", income: 4800, expenses: 4100 },
-  { month: "Apr", income: 6100, expenses: 3900 },
-  { month: "May", income: 5900, expenses: 4400 },
-  { month: "Jun", income: 6300, expenses: 4100 },
-];
-
-const chartConfig = {
-  income: { label: "Income", color: "hsl(var(--primary))" },
-  expenses: { label: "Expenses", color: "hsl(var(--accent))" },
-};
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -58,15 +41,17 @@ export default function DashboardPage() {
 
   const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
 
-  const transactionsRef = useMemoFirebase(() => {
-    if (!db || !user?.uid || !accounts?.length || !accounts[0]?.id) return null;
-    return collection(db, "users", user.uid, "accounts", accounts[0].id, "transactions");
-  }, [db, user?.uid, accounts]);
+  // Global transactions query for totals
+  const allTransactionsRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return query(collectionGroup(db, "transactions"), where("customerId", "==", user.uid));
+  }, [db, user?.uid]);
 
-  const { data: recentTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
+  const { data: allTransactions, isLoading: transactionsLoading } = useCollection(allTransactionsRef);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
+      const symbol = currency === 'GBP' ? '£' : '$';
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: currency,
@@ -76,137 +61,193 @@ export default function DashboardPage() {
     }
   };
 
+  // Calculations for Institutional Summary
+  const stats = useMemo(() => {
+    if (!accounts || !allTransactions) return { total: 0, current: 0, deposits: 0, withdrawals: 0 };
+    
+    const total = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+    const current = accounts
+      .filter(acc => acc.accountType === "Current Account")
+      .reduce((sum, acc) => sum + (acc.balance || 0), 0);
+    
+    const deposits = allTransactions
+      .filter(t => t.amount > 0)
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const withdrawals = allTransactions
+      .filter(t => t.amount < 0)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    return { total, current, deposits, withdrawals };
+  }, [accounts, allTransactions]);
+
   if (isUserLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-[400px] w-full" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto text-foreground">
+    <div className="space-y-10 max-w-7xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div className="text-center md:text-left">
-          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary">Welcome, {user?.displayName || user?.email?.split('@')[0] || 'Client'}</h1>
-          <p className="text-sm text-muted-foreground mt-1">City International Bank • Personal Wealth Overview</p>
+        <div>
+          <h1 className="text-3xl font-headline font-black text-primary uppercase tracking-tight">Financial Overview</h1>
+          <p className="text-sm text-muted-foreground mt-1">Nexa International • Authorized Institutional Ledger</p>
         </div>
-        <Button asChild className="bg-accent hover:bg-accent/90 shadow-lg w-full md:w-auto">
-          <Link href="/dashboard/accounts/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Open New Account
-          </Link>
-        </Button>
+        <div className="flex gap-3">
+          <Button asChild variant="outline" className="border-primary text-primary h-12 px-6">
+            <Link href="/dashboard/deposit">
+              <ArrowDownCircle className="mr-2 h-4 w-4" /> Deposit
+            </Link>
+          </Button>
+          <Button asChild className="bg-accent hover:bg-accent/90 shadow-lg h-12 px-6 font-bold">
+            <Link href="/dashboard/accounts/new">
+              <PlusCircle className="mr-2 h-4 w-4" /> New Account
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {accountsLoading ? (
-          Array(3).fill(0).map((_, i) => <Card key={i} className="h-32 animate-pulse bg-slate-100" />)
-        ) : !accounts || accounts.length === 0 ? (
-          <Card className="col-span-full py-16 px-4 text-center bg-white border-2 border-dashed border-slate-200 shadow-sm">
-            <div className="bg-slate-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-              <Landmark className="h-8 w-8" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Account Summary Section - Mocking the requested image layout */}
+        <section className="space-y-4">
+          <div className="relative inline-block mb-4">
+            <h2 className="text-2xl font-black text-[#333] tracking-tight">Account Summary</h2>
+            <div className="absolute -bottom-2 left-0 h-1.5 w-full bg-[#E5E7EB]">
+              <div className="h-full w-1/3 bg-primary" />
             </div>
-            <h3 className="font-bold text-xl text-primary">Start Your Financial Journey</h3>
-            <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2">
-              You haven't opened any accounts yet. Create your first Checking or Savings account today.
-            </p>
-            <Button variant="default" className="mt-6 bg-accent w-full sm:w-auto" asChild>
-              <Link href="/dashboard/accounts/new">Open Your First Account</Link>
-            </Button>
-          </Card>
-        ) : accounts.map((acc) => (
-          <Card key={acc.id} className={`relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-l-4 ${acc.status === 'Suspended' ? 'border-l-red-500' : 'border-l-primary'}`}>
-            <CardHeader className="pb-2">
-              <CardDescription className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
-                {acc.accountType}
-                <span className="font-mono opacity-60">...{acc.accountNumber.slice(-8)}</span>
-              </CardDescription>
-              <CardTitle className="text-2xl sm:text-3xl font-bold font-headline mt-1">
-                {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {acc.status === 'Suspended' ? (
-                <div className="flex items-center gap-2 text-xs text-red-600 font-bold bg-red-50 w-fit px-2 py-1 rounded-full">
-                  <AlertTriangle className="h-3 w-3" />
-                  Suspended
+          </div>
+
+          <Card className="border-none shadow-2xl overflow-hidden rounded-xl bg-white">
+            <div className="bg-primary p-6 text-white flex justify-between items-center">
+              <span className="text-sm font-bold opacity-80 uppercase tracking-widest">Total Account Balance ($)</span>
+              <span className="text-2xl font-black">{formatCurrency(stats.total)}</span>
+            </div>
+            <CardContent className="p-0">
+              <div className="divide-y divide-slate-100">
+                <div className="p-6 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                  <span className="text-sm font-bold text-slate-700 max-w-[180px]">Total Current Account Balance</span>
+                  <span className="text-sm font-medium text-slate-500">{formatCurrency(stats.current)}</span>
                 </div>
-              ) : (
-                <div className="flex items-center gap-2 text-xs text-green-600 font-bold bg-green-50 w-fit px-2 py-1 rounded-full">
-                  <TrendingUp className="h-3 w-3" />
-                  {acc.status || "Active Account"}
+                <div className="p-6 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                  <span className="text-sm font-bold text-slate-700">Current Loans</span>
+                  <span className="text-sm font-medium text-slate-500">$ 0.00</span>
                 </div>
-              )}
+                <div className="p-6 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                  <span className="text-sm font-bold text-slate-700">Total Deposits</span>
+                  <span className="text-sm font-medium text-slate-500">{formatCurrency(stats.deposits)}</span>
+                </div>
+                <div className="bg-primary p-6 flex justify-between items-center text-white">
+                  <span className="text-sm font-bold uppercase tracking-widest">Total Withdrawals</span>
+                  <span className="text-sm font-bold">{formatCurrency(stats.withdrawals)}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+        </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-headline">Wealth Growth</CardTitle>
-            <CardDescription>Visualizing your financial trajectory over the last 6 months.</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[250px] sm:h-[300px] w-full">
-            <ChartContainer config={chartConfig}>
-              <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" fill="var(--color-expenses)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-headline">Live Activity</CardTitle>
-            <CardDescription>Real-time updates from your primary account.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 sm:space-y-6">
-              {transactionsLoading ? (
-                Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
-              ) : recentTransactions?.length ? recentTransactions.map((t) => (
-                <div key={t.id} className="flex items-center justify-between group border-b border-slate-50 pb-3 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-1.5 sm:p-2 rounded-xl ${t.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                      {t.amount > 0 ? <ArrowDownLeft className="h-3 w-3 sm:h-4 sm:w-4" /> : <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4" />}
-                    </div>
-                    <div className="max-w-[120px] sm:max-w-none">
-                      <p className="text-xs sm:text-sm font-bold leading-tight text-primary truncate">{t.description}</p>
-                      <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 font-mono">{t.transactionDate ? new Date(t.transactionDate).toLocaleDateString() : 'Today'}</p>
-                    </div>
-                  </div>
-                  <div className={`text-xs sm:text-sm font-black whitespace-nowrap ${t.amount > 0 ? 'text-green-600' : 'text-foreground'}`}>
-                    {t.amount > 0 ? `+${formatCurrency(t.amount, t.currency || 'USD')}` : `-${formatCurrency(Math.abs(t.amount), t.currency || 'USD')}`}
-                  </div>
-                </div>
-              )) : (
-                <div className="text-center py-10 sm:py-16 opacity-40">
-                  <div className="bg-slate-50 h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <History className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest">No recent records</p>
-                </div>
-              )}
+        {/* Checking Account Section - Mocking the requested image table */}
+        <section className="space-y-4">
+          <div className="relative inline-block mb-4">
+            <h2 className="text-2xl font-black text-[#333] tracking-tight">Checking Account</h2>
+            <div className="absolute -bottom-2 left-0 h-1.5 w-full bg-[#E5E7EB]">
+              <div className="h-full w-1/3 bg-primary" />
             </div>
-          </CardContent>
-          <CardFooter className="border-t bg-slate-50/50 flex justify-center py-2 sm:py-3 rounded-b-lg">
-             <div className="flex items-center gap-2 text-[8px] sm:text-[10px] text-muted-foreground uppercase font-black tracking-tighter">
-                <ShieldCheck className="h-3 w-3 text-green-500" />
-                SECURED BY CITY BANK CRYPTO-VAULT
-             </div>
-          </CardFooter>
-        </Card>
+          </div>
+
+          <Card className="border-none shadow-2xl overflow-hidden rounded-xl bg-white">
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-primary text-white border-none">
+                  <TableRow className="hover:bg-primary border-none">
+                    <TableHead className="text-white font-bold text-xs uppercase h-14 border-r border-white/10">Account Number</TableHead>
+                    <TableHead className="text-white font-bold text-xs uppercase h-14 border-r border-white/10">Account Name</TableHead>
+                    <TableHead className="text-white font-bold text-xs uppercase h-14 border-r border-white/10">Account Type</TableHead>
+                    <TableHead className="text-white font-bold text-xs uppercase h-14 border-r border-white/10">Currency</TableHead>
+                    <TableHead className="text-white font-bold text-xs uppercase h-14">Current Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {accountsLoading ? (
+                    <TableRow><TableCell colSpan={5} className="text-center py-10">Initializing ledger...</TableCell></TableRow>
+                  ) : accounts?.filter(a => a.accountType === "Current Account").map((acc) => (
+                    <TableRow key={acc.id} className="hover:bg-slate-50">
+                      <TableCell className="font-mono text-xs">{acc.accountNumber}</TableCell>
+                      <TableCell className="text-xs font-bold text-slate-700">{user?.displayName || user?.email?.split('@')[0]}</TableCell>
+                      <TableCell className="text-xs">{acc.accountType?.replace(" Account", "")}</TableCell>
+                      <TableCell className="text-xs font-medium text-center">{acc.currency || 'USD'}</TableCell>
+                      <TableCell className="text-xs font-black text-right text-primary">
+                        {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!accountsLoading && (!accounts || accounts.filter(a => a.accountType === "Current Account").length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">
+                        No active checking accounts found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </section>
       </div>
+
+      {/* Secondary Information: Live Activity */}
+      <Card className="shadow-2xl border-none rounded-xl overflow-hidden">
+        <CardHeader className="bg-slate-50 border-b">
+          <CardTitle className="text-lg font-headline flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            Institutional Activity Log
+          </CardTitle>
+          <CardDescription>Real-time transaction settlement status.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Settlement</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactionsLoading ? (
+                Array(5).fill(0).map((_, i) => <TableRow key={i}><TableCell colSpan={4}><Skeleton className="h-4 w-full" /></TableCell></TableRow>)
+              ) : allTransactions?.slice(0, 8).map((t) => (
+                <TableRow key={t.id} className="hover:bg-slate-50 transition-colors">
+                  <TableCell className="text-[10px] font-mono">{t.transactionDate ? new Date(t.transactionDate).toLocaleDateString() : 'Today'}</TableCell>
+                  <TableCell className="text-xs font-bold text-primary truncate max-w-[200px]">{t.description}</TableCell>
+                  <TableCell>
+                    <div className={`flex items-center gap-2 text-[10px] font-black uppercase ${t.amount > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                      {t.amount > 0 ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                      {t.amount > 0 ? 'Credit' : 'Debit'}
+                    </div>
+                  </TableCell>
+                  <TableCell className={`text-right font-black text-sm ${t.amount > 0 ? 'text-green-600' : 'text-slate-900'}`}>
+                    {t.amount > 0 ? '+' : '-'}{formatCurrency(Math.abs(t.amount), t.currency || 'USD')}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+        <CardFooter className="bg-slate-50/50 flex justify-center py-3 border-t">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <ShieldCheck className="h-3 w-3 text-green-500" />
+            End-to-End Encrypted Institutional Data
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
