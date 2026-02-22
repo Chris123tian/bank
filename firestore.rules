@@ -20,8 +20,7 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Specifically optimized for the Unified Ledger and Global Asset Audit.
-     * Note: Admin check is positioned first to allow global query bypass.
+     * Optimized for the Unified Ledger and Global Asset Audit.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (

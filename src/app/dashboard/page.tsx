@@ -1,10 +1,10 @@
+
 "use client";
 
 import { useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { 
   Wallet, 
-  PlusCircle, 
   Landmark,
   ShieldCheck,
   CreditCard,
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-center">
                     <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${acc.status !== 'Active' ? 'text-red-500' : 'text-slate-400'}`}>Status: {acc.status}</span>
                     <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-accent hover:text-accent hover:bg-accent/5" asChild>
-                      <Link href={`/dashboard/transactions?account=${acc.id}`}>
+                      <Link href="/dashboard/transactions">
                         View History <ArrowRight className="ml-1 h-3 w-3" />
                       </Link>
                     </Button>
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           ) : (
             <Card className="col-span-full py-16 border-dashed border-2 flex flex-col items-center justify-center text-center space-y-4 bg-slate-50/50 rounded-3xl">
               <Landmark className="h-12 w-12 text-slate-300" />
-              <p className="font-black text-primary uppercase tracking-tight">No accounts found in your registry</p>
+              <p className="font-black text-primary uppercase tracking-tight">No assets found in your registry</p>
               <p className="text-xs text-muted-foreground">Please contact administration to initialize your financial assets.</p>
             </Card>
           )}
