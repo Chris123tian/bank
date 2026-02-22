@@ -62,7 +62,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Profile View - Read Only */}
+        {/* Main Profile View - Overhauled to match requested image */}
         <div className="lg:col-span-8 space-y-8">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200">
             <div className="max-w-2xl mx-auto space-y-12">
@@ -71,93 +71,62 @@ export default function SettingsPage() {
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-8">
-                <div className="h-48 w-48 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-lg border-8 border-slate-100 shrink-0">
+              <div className="flex flex-col items-center gap-8">
+                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-lg border-8 border-slate-100 shrink-0">
                   {profile?.profilePictureUrl ? (
                     <img src={profile.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-white text-5xl font-bold">{profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}</span>
+                    <span className="text-white text-7xl font-bold">{profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}</span>
                   )}
                 </div>
-                <div className="space-y-4 text-center sm:text-left">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Client Name</span>
-                    <span className="text-2xl font-black text-primary">{profile?.firstName} {profile?.lastName}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email Identity</span>
-                    <span className="text-sm font-medium underline decoration-1 underline-offset-4">{profile?.email}</span>
-                  </div>
+                
+                <div className="text-center space-y-2">
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Username:</span> {profile?.username || user?.email?.split('@')[0]}
+                  </p>
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{profile?.email}</span>
+                  </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 pt-12 border-t border-slate-300">
-                <div className="space-y-6">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4" /> Identity & Contact
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="flex gap-2 text-base text-slate-700">
-                      <span className="font-bold min-w-[100px]">DOB:</span>
-                      <span className="font-medium">{profile?.dob || "—"}</span>
-                    </div>
-                    <div className="flex gap-2 text-base text-slate-700">
-                      <span className="font-bold min-w-[100px]">SSN/TIN:</span>
-                      <span className="font-medium">•••• •••• {profile?.ssn?.slice(-4) || "—"}</span>
-                    </div>
-                    <div className="flex gap-2 text-base text-slate-700">
-                      <span className="font-bold min-w-[100px]">Phone:</span>
-                      <span className="font-medium">{profile?.phoneNumber || "—"}</span>
-                    </div>
-                  </div>
+              <div className="space-y-6 pt-12 border-t border-slate-300 text-xl text-slate-700">
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Name :</span>
+                  <span className="font-medium">{profile?.firstName} {profile?.lastName}</span>
                 </div>
-
-                <div className="space-y-6">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <Briefcase className="h-4 w-4" /> Professional Profile
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="flex gap-2 text-base text-slate-700">
-                      <span className="font-bold min-w-[100px]">Status:</span>
-                      <span className="font-medium">{profile?.employmentStatus || "—"}</span>
-                    </div>
-                    <div className="flex gap-2 text-base text-slate-700">
-                      <span className="font-bold min-w-[100px]">Employer:</span>
-                      <span className="font-medium">{profile?.employerName || "—"}</span>
-                    </div>
-                    <div className="flex gap-2 text-base text-slate-700">
-                      <span className="font-bold min-w-[100px]">Title:</span>
-                      <span className="font-medium">{profile?.jobTitle || "—"}</span>
-                    </div>
-                  </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 1:</span>
+                  <span className="font-medium">{profile?.addressLine1 || "No address on file"}</span>
                 </div>
-
-                <div className="col-span-1 md:col-span-2 space-y-6 pt-4">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <MapPin className="h-4 w-4" /> Registered Address
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base text-slate-700">
-                    <p className="font-medium">{profile?.addressLine1 || "No address on file"}</p>
-                    <p className="font-medium">{profile?.city}{profile?.state ? `, ${profile.state}` : ''} {profile?.postalCode}</p>
-                    <p className="font-bold text-primary">{profile?.country || "United States"}</p>
-                  </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 2:</span>
+                  <span className="font-medium">—</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">City/State/Zip:</span>
+                  <span className="font-medium">{profile?.city ? `${profile.city}, ${profile.state || ''} ${profile.postalCode || ''}` : '—'}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Country:</span>
+                  <span className="font-medium">{profile?.country || "United States"}</span>
                 </div>
               </div>
 
               <div className="pt-16 pb-8">
-                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Authenticated Legal Signature</p>
+                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Authenticated Legal Signature</p>
                 <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100">
                   {profile?.signature ? (
-                    <img src={profile.signature} alt="Signature" className="h-20 object-contain mx-auto" />
+                    <img src={profile.signature} alt="Signature" className="h-24 object-contain mx-auto" />
                   ) : (
                     <div className="h-20 w-64 flex items-center justify-center border-2 border-dashed border-slate-200 text-slate-300 text-[10px] uppercase font-black">
                       No Signature Authorized
                     </div>
                   )}
                 </div>
-                <div className="mt-6 flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <div className="mt-10 flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   <ShieldCheck className="h-4 w-4 text-green-500" />
-                  Verified on {profile?.updatedAt ? new Date(profile.updatedAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                  Verified Institutional Record
                 </div>
               </div>
             </div>

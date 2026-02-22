@@ -247,9 +247,9 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* User Detail View Dialog */}
+      {/* User Detail View Dialog - Overhauled to match requested image */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent">
+        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
@@ -258,7 +258,7 @@ export default function AdminUsersPage() {
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
-              <div className="flex justify-center pt-2">
+              <div className="flex flex-col items-center gap-6 pt-2">
                 <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white">
                   {viewingUser?.profilePictureUrl ? (
                     <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
@@ -266,43 +266,42 @@ export default function AdminUsersPage() {
                     <span className="text-white text-7xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
                   )}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 pt-6 text-xl text-slate-700">
-                <div className="flex gap-2">
-                  <span className="font-bold min-w-[120px]">Email:</span>
-                  <span className="font-medium underline underline-offset-4">{viewingUser?.email}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold min-w-[120px]">DOB:</span>
-                  <span className="font-medium">{viewingUser?.dob || "N/A"}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold min-w-[120px]">SSN/TIN:</span>
-                  <span className="font-medium">{viewingUser?.ssn || "N/A"}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold min-w-[120px]">Phone:</span>
-                  <span className="font-medium">{viewingUser?.phoneNumber || "N/A"}</span>
+                
+                <div className="text-center space-y-2">
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Username:</span> {viewingUser?.username || viewingUser?.email?.split('@')[0]}
+                  </p>
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{viewingUser?.email}</span>
+                  </p>
                 </div>
               </div>
 
-              <div className="pt-8 space-y-5 border-t border-slate-300">
-                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Professional Records</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xl text-slate-700">
-                  <div className="flex gap-2">
-                    <span className="font-bold min-w-[160px]">Status:</span>
-                    <span className="font-medium">{viewingUser?.employmentStatus || "—"}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="font-bold min-w-[160px]">Income:</span>
-                    <span className="font-medium">${viewingUser?.annualIncome?.toLocaleString() || "0"}</span>
-                  </div>
+              <div className="space-y-6 pt-10 border-t border-slate-300 text-xl text-slate-700">
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Name :</span>
+                  <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 1:</span>
+                  <span className="font-medium">{viewingUser?.addressLine1 || "—"}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
+                  <span className="font-medium">—</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
+                  <span className="font-medium">{viewingUser?.city ? `${viewingUser.city}, ${viewingUser.state || ''} ${viewingUser.postalCode || ''}` : '—'}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
+                  <span className="font-medium">{viewingUser?.country || "United States"}</span>
                 </div>
               </div>
 
               <div className="pt-12">
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Authenticated Legal Signature</p>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Authenticated Legal Signature</p>
                 <div className="bg-white p-6 inline-block shadow-lg rounded-xl min-w-[250px] border border-slate-200">
                   {viewingUser?.signature ? (
                     <img src={viewingUser.signature} alt="Signature" className="h-24 object-contain mx-auto" />
@@ -310,6 +309,10 @@ export default function AdminUsersPage() {
                     <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-100 italic text-slate-300 text-sm">No signature authorized</div>
                   )}
                 </div>
+              </div>
+              
+              <div className="pt-8 border-t border-slate-300">
+                <Button onClick={() => setViewingUser(null)} className="w-full h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B]">Dismiss Profile</Button>
               </div>
             </div>
           </div>
