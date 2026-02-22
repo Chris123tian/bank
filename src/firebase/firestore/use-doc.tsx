@@ -28,6 +28,7 @@ export function useDoc<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
   const [authReady, setAuthReady] = useState<boolean>(false);
 
+  // Sync with Auth SDK to ensure token claims are ready
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, () => {

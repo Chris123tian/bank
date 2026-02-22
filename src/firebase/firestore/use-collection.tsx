@@ -33,7 +33,7 @@ export function useCollection<T = any>(
   const [error, setError] = useState<Error | null>(null);
   const [authReady, setAuthReady] = useState<boolean>(false);
 
-  // 1. AUTH STABILITY LISTENER: Wait for auth to be fully initialized
+  // Track when auth is fully initialized to avoid race conditions with custom claims
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, () => {
@@ -43,17 +43,17 @@ export function useCollection<T = any>(
   }, []);
 
   useEffect(() => {
-    // 2. INPUT GUARD: Prevent execution if ref is missing
+    // 1. INPUT GUARD: Prevent execution if ref is missing
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
       return;
     }
 
-    // 3. AUTH GUARD: Wait for auth session to settle
+    // 2. AUTH STABILITY GUARD: Wait for auth session to settle completely
     if (!authReady) {
       setData(null);
-      setIsLoading(true); // Keep loading state until auth is confirmed
+      setIsLoading(true);
       return;
     }
 
@@ -70,20 +70,28 @@ export function useCollection<T = any>(
     try {
       const q = memoizedTargetRefOrQuery as any;
       
+      // Extraction logic for different query types
+      if (typeof q.path === 'string') {
+        pathString = q.path;
+      } else if (q._query?.path) {
+        pathString = q._query.path.canonicalString();
+      }
+
       // Detection for collection groups
       if (q.type === 'query' && q._query?.collectionGroup) {
         isGroupQuery = true;
         pathString = q._query.collectionGroup;
-      } else if (typeof q.path === 'string') {
-        pathString = q.path;
-      } else if (q._query?.path) {
-        pathString = q._query.path.canonicalString();
+      } else if (!q.path && q._query?.path) {
+        const segments = q._query.path.segments;
+        if (segments && segments.length > 0) {
+          pathString = segments[segments.length - 1];
+        }
       }
     } catch (e) {
       pathString = 'Query';
     }
 
-    // 4. NUCLEAR GUARD: Prevent unauthorized root listing
+    // 3. NUCLEAR GUARD: Prevent unauthorized root listing
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);
