@@ -13,56 +13,52 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
-    function isAdmin() {
-      return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
-    }
-
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Specifically optimized for collectionGroup() queries used in aggregate history views.
+     * Specifically authorized for collectionGroup() queries used in aggregate history views.
+     * These must use wildcard paths and resource.data checks.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        isAdmin() || 
-        (resource.data.customerId == request.auth.uid) ||
-        (resource.data.userId == request.auth.uid)
+        resource.data.get('customerId', '') == request.auth.uid ||
+        resource.data.get('userId', '') == request.auth.uid
       );
-      allow write: if isAdmin();
+      // Writes are restricted to admins or handled by path-based rules below
+      allow write: if isMasterAdmin();
     }
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        isAdmin() || 
-        (resource.data.customerId == request.auth.uid) ||
-        (resource.data.userId == request.auth.uid)
+        resource.data.get('customerId', '') == request.auth.uid ||
+        resource.data.get('userId', '') == request.auth.uid
       );
-      allow write: if isAdmin();
+      allow write: if isMasterAdmin();
     }
 
     /**
      * ADMINISTRATIVE MASTER OVERRIDE
      */
     match /{allPaths=**} {
-      allow read, write: if isAdmin();
+      allow read, write: if isMasterAdmin();
     }
 
     // --- Standard Path-Based Access Control ---
 
     match /users/{userId} {
-      allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
 
       match /accounts/{accountId} {
-        allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+        allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
 
         match /transactions/{transactionId} {
-          allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+          allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
         }
       }
 
-      match /payees/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
-      match /bills/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
+      match /payees/{id} { allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId); }
+      match /bills/{id} { allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId); }
     }
 
     match /roles_admin/{uid} {
