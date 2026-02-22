@@ -249,7 +249,7 @@ export default function AdminUsersPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-slate-500">Temporary Password</Label>
-                <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" className="h-11" />
+                <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="••••••••" className="h-11" />
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-slate-500">Username</Label>
