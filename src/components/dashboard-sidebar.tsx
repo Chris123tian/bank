@@ -13,10 +13,7 @@ import {
   ShieldAlert,
   Users,
   Landmark,
-  User as UserIcon,
-  PieChart,
-  Wallet,
-  ArrowDownCircle
+  Wallet
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,7 +39,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Deposit", href: "/dashboard/deposit", icon: ArrowDownCircle },
   { name: "Transfers", href: "/dashboard/transfer", icon: ArrowLeftRight },
   { name: "Bill Payments", href: "/dashboard/bills", icon: Receipt },
   { name: "Transactions", href: "/dashboard/transactions", icon: History },
@@ -116,7 +112,7 @@ export function DashboardSidebar() {
         </span>
       </SidebarHeader>
       <SidebarContent>
-        {/* Basic Information Section - Clickable Link to Settings */}
+        {/* Basic Information Section */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50">Account Profile</SidebarGroupLabel>
           <Link href="/dashboard/settings" onClick={handleLinkClick} className="block outline-none">
@@ -141,28 +137,18 @@ export function DashboardSidebar() {
 
         <SidebarSeparator className="mx-2 opacity-10" />
 
-        {/* Account Summary Section - Clickable Link to Settings */}
+        {/* Account Summary Section */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel className="text-sidebar-foreground/50">Financial Summary</SidebarGroupLabel>
-          <Link href="/dashboard/settings" onClick={handleLinkClick} className="block outline-none">
-            <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2 hover:bg-accent/20 transition-colors cursor-pointer group">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] uppercase font-black tracking-widest text-accent">Total Capital</span>
-                <Wallet className="h-3 w-3 text-accent group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="text-lg font-black text-white">
-                ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-              <div className="space-y-1 mt-2">
-                {accounts?.slice(0, 2).map(acc => (
-                  <div key={acc.id} className="flex justify-between text-[10px] font-medium text-sidebar-foreground/70">
-                    <span>{acc.accountType}</span>
-                    <span className="text-white">${acc.balance?.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] uppercase font-black tracking-widest text-accent">Total Capital</span>
+              <Wallet className="h-3 w-3 text-accent" />
             </div>
-          </Link>
+            <div className="text-lg font-black text-white">
+              ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </div>
         </SidebarGroup>
 
         <SidebarSeparator className="mx-2 opacity-10" />
