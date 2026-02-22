@@ -66,7 +66,7 @@ export default function TransactionsPage() {
     if (!db || !user?.uid) return null;
 
     if (selectedAccountId === "all") {
-      // Aggregate view across all accounts
+      // Aggregate view across all accounts (Unified Ledger)
       return query(
         collectionGroup(db, "transactions"),
         where("customerId", "==", user.uid),
@@ -100,7 +100,8 @@ export default function TransactionsPage() {
     if (!transactions) return [];
     return transactions.filter(tx => 
       tx.description?.toLowerCase().includes(search.toLowerCase()) ||
-      tx.id?.toLowerCase().includes(search.toLowerCase())
+      tx.id?.toLowerCase().includes(search.toLowerCase()) ||
+      tx.metadata?.recipientName?.toLowerCase().includes(search.toLowerCase())
     );
   }, [transactions, search]);
 
@@ -180,7 +181,7 @@ export default function TransactionsPage() {
                           </div>
                           <div className="flex flex-col max-w-[140px] sm:max-w-none">
                             <span className="font-black text-primary text-xs sm:text-sm truncate uppercase tracking-tighter">{tx.description}</span>
-                            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">REF: {tx.id.slice(0, 12)}...</span>
+                            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">REF: {tx.id?.slice(0, 12)}...</span>
                           </div>
                         </div>
                       </TableCell>
