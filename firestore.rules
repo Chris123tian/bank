@@ -12,19 +12,19 @@ service cloud.firestore {
 
     function isMasterAdmin() {
       // Primary administrative check via email for absolute priority
+      // Master admin has absolute access across all paths
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
     function isAdmin() {
       // Master admin or verified administrative role in Firestore
-      // master check is token-based and doesn't require a document read
       return isMasterAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
     }
 
     /**
      * ADMINISTRATIVE MASTER OVERRIDE
-     * This recursive wildcard grants absolute access to all documents
-     * for administrators. Placing it at the root ensures it is checked first.
+     * This recursive wildcard grants absolute access to all documents for administrators.
+     * Placing it at the root ensures it is evaluated during global audits.
      */
     match /{allPaths=**} {
       allow read, write: if isAdmin();
@@ -32,9 +32,8 @@ service cloud.firestore {
 
     /** 
      * COLLECTION GROUP RULES 
-     * Required for collectionGroup queries.
-     * For 'list' operations to succeed without filters, the rule must NOT 
-     * rely solely on resource.data for administrators.
+     * Required for collectionGroup queries to succeed.
+     * We allow admins to list unfiltered, and users to list their own data.
      */
     
     match /{path=**}/accounts/{id} {

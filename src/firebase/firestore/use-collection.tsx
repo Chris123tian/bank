@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +9,7 @@ import {
   QuerySnapshot,
   CollectionReference,
 } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -32,10 +31,34 @@ export function useCollection<T = any>(
   const [data, setData] = useState<WithId<T>[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [authReady, setAuthReady] = useState<boolean>(false);
+
+  // Track when auth is fully initialized to avoid transient permission errors
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      setAuthReady(true);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // 1. INPUT GUARD: Prevent execution if ref is missing or null
     if (!memoizedTargetRefOrQuery) {
+      setData(null);
+      setIsLoading(false);
+      return;
+    }
+
+    // 2. AUTH STABILITY CHECK: Wait for auth to be fully initialized
+    if (!authReady) {
+      setData(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const auth = getAuth();
+    if (!auth.currentUser) {
       setData(null);
       setIsLoading(false);
       return;
@@ -47,7 +70,7 @@ export function useCollection<T = any>(
     try {
       const q = memoizedTargetRefOrQuery as any;
       
-      // Extract path or group information
+      // Extract path or group information for error reporting
       if (typeof q.path === 'string') {
         pathString = q.path;
       } else if (q._query?.path) {
@@ -59,7 +82,6 @@ export function useCollection<T = any>(
         isGroupQuery = true;
         pathString = q._query.collectionGroup;
       } else if (!q.path && q._query?.path) {
-        // Fallback for some query objects
         const segments = q._query.path.segments;
         if (segments && segments.length > 0) {
           pathString = segments[segments.length - 1];
@@ -69,17 +91,8 @@ export function useCollection<T = any>(
       pathString = 'Query';
     }
 
-    // 2. NUCLEAR GUARD: Prevent root listing or malformed paths
+    // 3. NUCLEAR GUARD: Prevent root listing or malformed paths
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
-      setData(null);
-      setIsLoading(false);
-      return;
-    }
-
-    // 3. AUTH STABILITY CHECK:
-    // Ensure Firebase Auth is settled before sending requests to Firestore.
-    const auth = getAuth();
-    if (!auth.currentUser) {
       setData(null);
       setIsLoading(false);
       return;
@@ -108,7 +121,7 @@ export function useCollection<T = any>(
           path: finalPath,
         });
 
-        // Do not throw or emit error if it's a known transient state
+        // Only emit if still authenticated to avoid reporting transient sign-out events
         if (auth.currentUser) {
           setError(contextualError);
           errorEmitter.emit('permission-error', contextualError);
@@ -120,10 +133,11 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery]);
+  }, [memoizedTargetRefOrQuery, authReady]);
 
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error('Target ref must be memoized with useMemoFirebase');
   }
+  
   return { data, isLoading, error };
 }
