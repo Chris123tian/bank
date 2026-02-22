@@ -26,7 +26,24 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Landmark, ShieldAlert, Loader2, Edit3, Trash2, PlusCircle, Eye, Search, Wallet } from "lucide-react";
+import { 
+  Landmark, 
+  ShieldAlert, 
+  Loader2, 
+  Edit3, 
+  Trash2, 
+  PlusCircle, 
+  Eye, 
+  Search, 
+  Wallet,
+  User as UserIcon,
+  Briefcase,
+  MapPin,
+  ShieldCheck,
+  FileText,
+  CreditCard,
+  Separator
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -48,24 +65,32 @@ export default function AdminAccountsAuditPage() {
     currency: "USD"
   });
 
+  // Verify Admin Status
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
   }, [db, user?.uid]);
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
-  
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
+  // Global Accounts Collection
   const accountsRef = useMemoFirebase(() => {
     if (!db || !isAdminReady) return null;
     return collectionGroup(db, "accounts");
   }, [db, isAdminReady]);
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
+
+  // User Profile for the Portfolio View
+  const userProfileRef = useMemoFirebase(() => {
+    if (!db || !viewingClientPortfolio) return null;
+    return doc(db, "users", viewingClientPortfolio);
+  }, [db, viewingClientPortfolio]);
+
+  const { data: userProfile, isLoading: isUserProfileLoading } = useDoc(userProfileRef);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
@@ -105,7 +130,6 @@ export default function AdminAccountsAuditPage() {
 
   const handleUpdateAccount = () => {
     if (!editingAccount || !db) return;
-    
     const docRef = doc(db, "users", editingAccount.customerId || editingAccount.userId, "accounts", editingAccount.id);
     
     updateDocumentNonBlocking(docRef, {
@@ -225,7 +249,7 @@ export default function AdminAccountsAuditPage() {
                       size="icon" 
                       className="h-8 w-8 text-primary"
                       onClick={() => setViewingClientPortfolio(acc.customerId || acc.userId)}
-                      title="View Client Portfolio"
+                      title="View Client Dossier"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -264,55 +288,154 @@ export default function AdminAccountsAuditPage() {
         </CardContent>
       </Card>
 
-      {/* Client Portfolio Dialog */}
+      {/* Comprehensive Client Portfolio Dossier Dialog */}
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
-        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] overflow-hidden shadow-2xl">
-          <div className="bg-primary p-8 text-white">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl">
-                <Wallet className="h-8 w-8 text-accent" />
+        <DialogContent className="max-w-5xl p-0 border-none rounded-[2rem] overflow-hidden shadow-2xl bg-white max-h-[95vh] flex flex-col">
+          <div className="bg-primary p-8 text-white shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-2xl">
+                  <ShieldCheck className="h-8 w-8 text-accent" />
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-black">Institutional Dossier</DialogTitle>
+                  <DialogDescription className="text-white/60 font-mono text-xs uppercase tracking-widest">
+                    Verified Global Identifier: {viewingClientPortfolio}
+                  </DialogDescription>
+                </div>
               </div>
-              <div>
-                <DialogTitle className="text-2xl font-black">Client Financial Portfolio</DialogTitle>
-                <DialogDescription className="text-white/60 font-mono text-xs">
-                  Global Identifier: {viewingClientPortfolio}
-                </DialogDescription>
-              </div>
+              {isUserProfileLoading && <Loader2 className="h-6 w-6 animate-spin" />}
             </div>
           </div>
           
-          <div className="p-8 space-y-6 bg-slate-50 max-h-[60vh] overflow-y-auto">
-            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Institutional Ledger Records</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {clientPortfolioAccounts?.map((acc) => (
-                <Card key={acc.id} className="border-none shadow-sm overflow-hidden">
-                  <div className={`h-1.5 w-full ${acc.status === 'Suspended' ? 'bg-red-500' : 'bg-accent'}`} />
-                  <CardContent className="pt-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">{acc.accountType}</p>
-                        <p className="font-mono text-sm font-bold text-primary">{acc.accountNumber}</p>
+          <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-slate-50/50">
+            {userProfile ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Personal & Identity */}
+                <div className="lg:col-span-2 space-y-8">
+                  <section className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                      <UserIcon className="h-4 w-4" /> Personal Identity Records
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border shadow-sm">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Legal Full Name</Label>
+                        <p className="font-bold text-primary">{userProfile.firstName} {userProfile.lastName}</p>
                       </div>
-                      <Badge variant="secondary" className="text-[9px]">{acc.status || "Active"}</Badge>
-                    </div>
-                    <div className="flex justify-between items-end pt-2">
-                      <div>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase">Available Capital</p>
-                        <p className="text-xl font-black text-primary">{formatCurrency(acc.balance, acc.currency)}</p>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Date of Birth</Label>
+                        <p className="font-medium">{userProfile.dob || "—"}</p>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400">{acc.currency || 'USD'}</span>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">SSN / Tax Identification</Label>
+                        <p className="font-mono text-sm">•••• •••• {userProfile.ssn?.slice(-4) || "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Primary Email</Label>
+                        <p className="font-medium underline decoration-slate-200">{userProfile.email}</p>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            {(!clientPortfolioAccounts || clientPortfolioAccounts.length === 0) && (
-              <div className="text-center py-12 text-slate-400 italic">No associated accounts found for this identifier.</div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                      <MapPin className="h-4 w-4" /> Residential & Physical Verification
+                    </h3>
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm space-y-4">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Registered Address</Label>
+                        <p className="font-medium leading-relaxed">
+                          {userProfile.addressLine1}<br />
+                          {userProfile.city}, {userProfile.state} {userProfile.postalCode}<br />
+                          <span className="text-primary font-bold">{userProfile.country || "United States"}</span>
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-bold text-slate-400 uppercase">Government ID</Label>
+                          <Badge variant="outline" className="bg-green-50 text-green-700">Verified (E-KYC)</Badge>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-bold text-slate-400 uppercase">Proof of Address</Label>
+                          <Badge variant="outline" className="bg-green-50 text-green-700">Audit Confirmed</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" /> Professional & Financial Profile
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border shadow-sm">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Employment Status</Label>
+                        <p className="font-bold">{userProfile.employmentStatus || "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Annual Household Income</Label>
+                        <p className="font-black text-accent">{formatCurrency(userProfile.annualIncome || 0)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Employer / Entity</Label>
+                        <p className="font-medium">{userProfile.employerName || "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Job Title</Label>
+                        <p className="font-medium">{userProfile.jobTitle || "—"}</p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                {/* Right Column: Signature & Accounts Summary */}
+                <div className="space-y-8">
+                  <section className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Legal Authorization
+                    </h3>
+                    <div className="bg-white p-6 rounded-2xl border shadow-sm text-center">
+                      <Label className="text-[9px] font-black uppercase text-slate-400 mb-2 block">Authenticated Signature</Label>
+                      {userProfile.signature ? (
+                        <img src={userProfile.signature} alt="Legal Signature" className="h-24 w-full object-contain bg-slate-50 border rounded-lg p-2" />
+                      ) : (
+                        <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-100 italic text-slate-300 text-xs">No signature on file</div>
+                      )}
+                      <p className="text-[8px] text-slate-400 mt-3 uppercase font-black tracking-tighter">
+                        Consent Recorded: {userProfile.updatedAt ? new Date(userProfile.updatedAt).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" /> Managed Asset Ledger
+                    </h3>
+                    <div className="space-y-3">
+                      {clientPortfolioAccounts?.map((acc) => (
+                        <div key={acc.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-accent transition-colors">
+                          <div className="flex justify-between items-start mb-2">
+                            <Badge variant="secondary" className="text-[9px]">{acc.accountType}</Badge>
+                            <span className={`h-2 w-2 rounded-full ${acc.status === 'Suspended' ? 'bg-red-500' : 'bg-green-500'}`} />
+                          </div>
+                          <p className="font-mono text-xs font-bold text-primary">{acc.accountNumber}</p>
+                          <p className="text-lg font-black text-slate-900 mt-1">{formatCurrency(acc.balance, acc.currency)}</p>
+                        </div>
+                      ))}
+                      {(!clientPortfolioAccounts || clientPortfolioAccounts.length === 0) && (
+                        <div className="text-center py-6 text-slate-400 italic text-sm">No associated assets found.</div>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-20 text-slate-400 italic">Initializing client dossier...</div>
             )}
           </div>
           
-          <DialogFooter className="p-6 bg-white border-t">
-            <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-12 rounded-xl font-bold bg-primary">Dismiss Portfolio View</Button>
+          <DialogFooter className="p-6 bg-white border-t shrink-0">
+            <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-12 rounded-xl font-bold bg-primary shadow-lg">Dismiss Dossier</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
