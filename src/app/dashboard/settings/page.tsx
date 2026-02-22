@@ -78,7 +78,7 @@ export default function SettingsPage() {
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200">
             <div className="max-w-md mx-auto space-y-12">
               <div className="relative inline-block">
-                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight">Basic Information</h2>
+                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</h2>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
 
@@ -109,7 +109,7 @@ export default function SettingsPage() {
                   <span className="font-medium underline decoration-1 underline-offset-4">{profileData.email}</span>
                 </div>
 
-                <div className="pt-12 space-y-5">
+                <div className="pt-12 space-y-5 border-t border-slate-300">
                   <div className="flex gap-2 text-xl text-slate-700">
                     <span className="font-bold min-w-[160px]">Name :</span>
                     <span className="font-medium">{profileData.firstName} {profileData.lastName}</span>
@@ -141,12 +141,13 @@ export default function SettingsPage() {
               </div>
 
               <div className="pt-16 pb-8">
+                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Authenticated Legal Signature</p>
                 <div className="bg-white p-4 inline-block shadow-md rounded-md">
                   {profileData.signature ? (
                     <img src={profileData.signature} alt="Signature" className="h-20 object-contain" />
                   ) : (
                     <div className="h-20 w-48 flex items-center justify-center border-2 border-dashed border-slate-200 text-slate-300 text-[10px] uppercase font-black">
-                      No Signature
+                      No Signature on File
                     </div>
                   )}
                 </div>
@@ -155,9 +156,10 @@ export default function SettingsPage() {
             </div>
           </div>
           
-          <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-center">
-            <p className="text-sm text-muted-foreground font-medium">
-              Profile information is managed by your assigned Banking Administrator. Please contact support for identity updates.
+          <div className="p-8 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-center">
+            <h4 className="text-lg font-bold text-primary mb-2">Institutional Management Only</h4>
+            <p className="text-sm text-muted-foreground font-medium max-w-lg mx-auto leading-relaxed">
+              Profile information is managed by your assigned Banking Administrator. Please contact Nexa Support or your Relationship Manager for identity or address updates.
             </p>
           </div>
         </div>

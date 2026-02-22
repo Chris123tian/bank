@@ -171,8 +171,8 @@ export default function AdminTransactionsAuditPage() {
 
       {/* Audit Insight Dialog - Wide One-Page Layout */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
-        <DialogContent className="max-w-4xl p-0 border-none bg-slate-950 text-white rounded-3xl overflow-hidden">
-          <div className="p-8 bg-primary/20 border-b border-white/10">
+        <DialogContent className="max-w-4xl p-0 border-none bg-slate-950 text-white rounded-3xl overflow-y-auto max-h-[95vh]">
+          <div className="p-8 bg-primary/20 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-2xl ${viewingTransaction?.amount > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                 <Receipt className="h-6 w-6" />
@@ -248,7 +248,7 @@ export default function AdminTransactionsAuditPage() {
             </div>
           </div>
           
-          <div className="p-6 bg-white/5 border-t border-white/10">
+          <div className="p-6 bg-slate-900 border-t border-white/10 sticky bottom-0 z-10 backdrop-blur-md">
             <Button onClick={() => setViewingTransaction(null)} className="bg-primary w-full h-12 font-black uppercase tracking-widest text-xs">Dismiss Audit Record</Button>
           </div>
         </DialogContent>
@@ -256,8 +256,8 @@ export default function AdminTransactionsAuditPage() {
 
       {/* Edit Dialog - Unified Wide Layout */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden">
-          <DialogHeader className="p-6 bg-slate-50 border-b">
+        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] shadow-2xl overflow-y-auto max-h-[95vh]">
+          <DialogHeader className="p-6 bg-slate-50 border-b sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
               <div>
@@ -318,7 +318,7 @@ export default function AdminTransactionsAuditPage() {
               </div>
             </div>
           </div>
-          <DialogFooter className="p-6 bg-slate-50 border-t gap-3">
+          <DialogFooter className="p-6 bg-slate-50 border-t gap-3 sticky bottom-0 z-10">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl h-12 flex-1">Cancel Audit</Button>
             <Button onClick={handleUpdateTransaction} className="bg-primary rounded-xl h-12 flex-1 font-bold">Apply Correction</Button>
           </DialogFooter>
