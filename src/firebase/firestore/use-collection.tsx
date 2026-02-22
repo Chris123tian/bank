@@ -54,11 +54,13 @@ export function useCollection<T = any>(
       } else {
         // Check if it's a collectionGroup query
         const internal = memoizedTargetRefOrQuery as unknown as InternalQuery;
-        pathString = internal._query?.path?.canonicalString() || '';
-        // If the query is a collectionGroup, internal path is often empty or just the group name
-        isGroupQuery = true;
+        // In the SDK, collectionGroup queries have a canonical path that is just the collection ID
+        pathString = internal._query?.path?.canonicalString() || '[Collection Group]';
+        isGroupQuery = pathString.split('/').length === 1 || pathString === '[Collection Group]';
       }
-    } catch (e) {}
+    } catch (e) {
+      pathString = '[Unknown Path]';
+    }
 
     // Firestore root path check. 
     // We allow isGroupQuery to bypass if it has a valid structure, 
@@ -93,7 +95,7 @@ export function useCollection<T = any>(
       (firestoreError: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: pathString || '[Collection Group]',
+          path: pathString,
         });
 
         setError(contextualError);
