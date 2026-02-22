@@ -38,6 +38,7 @@ export default function DashboardPage() {
   // Fetch Recent Transactions across ALL accounts using mandatory customerId filter for security compliance
   const recentTransactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
+    // Security Rule Alignment: The collectionGroup query MUST filter by customerId to satisfy permissions
     return query(
       collectionGroup(db, "transactions"),
       where("customerId", "==", user.uid),

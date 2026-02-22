@@ -151,7 +151,7 @@ export default function AdminAccountsAuditPage() {
     });
 
     // AUTO-INJECT AUDIT TRANSACTION RECORD for visibility in client history
-    // Standardizing on both customerId and userId for rule compatibility
+    // Standardizing on both customerId and userId for security rule compliance
     const txRef = collection(db, "users", clientUid, "accounts", editingAccount.id, "transactions");
     addDocumentNonBlocking(txRef, {
       accountId: editingAccount.id,
@@ -177,7 +177,7 @@ export default function AdminAccountsAuditPage() {
 
   const handleDeleteAccount = (acc: any) => {
     if (!db) return;
-    const docRef = doc(db, acc.customerId || acc.userId, "accounts", acc.id);
+    const docRef = doc(db, "users", acc.customerId || acc.userId, "accounts", acc.id);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Account Terminated", description: "The account record has been permanently removed from the ledger." });
   };

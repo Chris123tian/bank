@@ -20,29 +20,30 @@ service cloud.firestore {
     }
 
     /** 
-     * COLLECTION GROUP RULES 
+     * COLLECTION GROUP RULES (CRITICAL)
      * These must be defined to allow collectionGroup() queries used in dashboards and audit views.
-     * We allow read if the user is an admin OR if they are the owner of the document based on denormalized IDs.
+     * We allow read if the user is an admin OR if they are the owner based on denormalized IDs.
+     * Using .get() ensures the rule doesn't fail if a document is missing a field.
      */
     
     match /{path=**}/accounts/{id} {
       allow read: if isAdmin() || (isSignedIn() && (
-        resource.data.customerId == request.auth.uid || 
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid || 
+        resource.data.get('userId', '') == request.auth.uid
       ));
     }
     
     match /{path=**}/transactions/{id} {
       allow read: if isAdmin() || (isSignedIn() && (
-        resource.data.customerId == request.auth.uid || 
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid || 
+        resource.data.get('userId', '') == request.auth.uid
       ));
     }
     
     match /{path=**}/cards/{id} {
       allow read: if isAdmin() || (isSignedIn() && (
-        resource.data.customerId == request.auth.uid || 
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid || 
+        resource.data.get('userId', '') == request.auth.uid
       ));
     }
 
