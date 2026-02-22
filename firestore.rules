@@ -16,23 +16,21 @@ service cloud.firestore {
     /**
      * COLLECTION GROUP RULES (Highest Priority)
      * Specifically authorized for collectionGroup() queries used in aggregate history views.
-     * These must use wildcard paths and resource.data checks.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.get('customerId', '') == request.auth.uid ||
-        resource.data.get('userId', '') == request.auth.uid
+        resource.data.customerId == request.auth.uid ||
+        resource.data.userId == request.auth.uid
       );
-      // Writes are restricted to admins or handled by path-based rules below
       allow write: if isMasterAdmin();
     }
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.get('customerId', '') == request.auth.uid ||
-        resource.data.get('userId', '') == request.auth.uid
+        resource.data.customerId == request.auth.uid ||
+        resource.data.userId == request.auth.uid
       );
       allow write: if isMasterAdmin();
     }
