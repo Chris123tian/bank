@@ -24,7 +24,7 @@ service cloud.firestore {
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
-        request.auth.token.email == 'citybank@gmail.com' || 
+        isMasterAdmin() || 
         resource.data.get('userId', '') == request.auth.uid || 
         resource.data.get('customerId', '') == request.auth.uid
       );
@@ -33,7 +33,7 @@ service cloud.firestore {
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
-        request.auth.token.email == 'citybank@gmail.com' || 
+        isMasterAdmin() || 
         resource.data.get('userId', '') == request.auth.uid || 
         resource.data.get('customerId', '') == request.auth.uid
       );

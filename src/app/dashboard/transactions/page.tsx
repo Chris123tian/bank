@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   Table, 
   TableBody, 
@@ -12,6 +13,13 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { 
   Download, 
   Loader2,
@@ -23,7 +31,8 @@ import {
   Receipt,
   X,
   Info,
-  Landmark
+  Search,
+  Filter
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -35,23 +44,44 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { query, orderBy, limit, collectionGroup, where } from "firebase/firestore";
+import { query, orderBy, limit, collectionGroup, where, collection } from "firebase/firestore";
 
 export default function TransactionsPage() {
   const { user } = useUser();
   const db = useFirestore();
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
+  const [search, setSearch] = useState("");
 
-  // Secure collectionGroup query to aggregate all transactions across all accounts for the user
+  // Fetch Accounts for the filter dropdown
+  const accountsRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return collection(db, "users", user.uid, "accounts");
+  }, [db, user?.uid]);
+
+  const { data: accounts } = useCollection(accountsRef);
+
+  // Dynamic query based on filter
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return query(
-      collectionGroup(db, "transactions"),
-      where("customerId", "==", user.uid),
-      orderBy("transactionDate", "desc"),
-      limit(100)
-    );
-  }, [db, user?.uid]);
+
+    if (selectedAccountId === "all") {
+      // Aggregate view across all accounts
+      return query(
+        collectionGroup(db, "transactions"),
+        where("customerId", "==", user.uid),
+        orderBy("transactionDate", "desc"),
+        limit(100)
+      );
+    } else {
+      // Single account view
+      return query(
+        collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions"),
+        orderBy("transactionDate", "desc"),
+        limit(100)
+      );
+    }
+  }, [db, user?.uid, selectedAccountId]);
 
   const { data: transactions, isLoading: transactionsLoading } = useCollection(transactionsQuery);
 
@@ -66,16 +96,48 @@ export default function TransactionsPage() {
     }
   };
 
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
+    return transactions.filter(tx => 
+      tx.description?.toLowerCase().includes(search.toLowerCase()) ||
+      tx.id?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [transactions, search]);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Institutional Ledger</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive audit trail for all global capital movements.</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive audit trail for global capital movements.</p>
         </div>
-        <Button variant="outline" className="h-11 font-bold border-slate-200 shadow-sm shrink-0">
-          <Download className="mr-2 h-4 w-4" /> Export Full History
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search descriptions..." 
+              className="pl-10 h-11 border-slate-200" 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+            <SelectTrigger className="h-11 w-full sm:w-64 border-slate-200">
+              <SelectValue placeholder="All Assets" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Global History (All Assets)</SelectItem>
+              {accounts?.map(acc => (
+                <SelectItem key={acc.id} value={acc.id}>
+                  {acc.accountType} (...{acc.accountNumber?.slice(-4)})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" className="h-11 font-bold border-slate-200 shadow-sm shrink-0">
+            <Download className="mr-2 h-4 w-4" /> Export
+          </Button>
+        </div>
       </div>
 
       <Card className="shadow-sm overflow-hidden rounded-2xl border-none">
@@ -101,8 +163,8 @@ export default function TransactionsPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : transactions && transactions.length > 0 ? (
-                  transactions.map((tx) => (
+                ) : filteredTransactions && filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((tx) => (
                     <TableRow 
                       key={tx.id} 
                       className="group cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none"
