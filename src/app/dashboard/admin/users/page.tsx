@@ -2,9 +2,11 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
+import { useFirestore, useCollection, useUser, useDoc, useFirebaseApp } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collection, doc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { initializeApp, getApp, getApps } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, User as UserIcon, Lock, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { firebaseConfig } from "@/firebase/config";
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
@@ -31,6 +34,7 @@ export default function AdminUsersPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [viewingUser, setViewingUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   // Verify Admin Status
   const adminRoleRef = useMemoFirebase(() => {
@@ -42,7 +46,6 @@ export default function AdminUsersPage() {
   
   const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
-  
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   // Form state for Manual Creation
@@ -50,8 +53,15 @@ export default function AdminUsersPage() {
     firstName: "",
     lastName: "",
     email: "",
+    password: "",
     username: "",
     phoneNumber: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "United Kingdom",
     userRole: "client",
   });
 
@@ -62,32 +72,67 @@ export default function AdminUsersPage() {
 
   const { data: users, isLoading: isUsersLoading } = useCollection(usersRef);
 
-  const handleCreateUser = () => {
-    if (!db || !formData.email || !formData.firstName) {
-      toast({ variant: "destructive", title: "Error", description: "Email and First Name are required." });
+  const handleCreateUser = async () => {
+    if (!db || !formData.email || !formData.firstName || !formData.password) {
+      toast({ variant: "destructive", title: "Validation Error", description: "Email, Password, and First Name are required." });
       return;
     }
 
-    // Since we can't create Auth accounts from client-side, 
-    // we instruct the admin to use the same email they'll set in Firebase Console.
-    const newUserId = "user_" + Math.random().toString(36).substr(2, 9);
-    const userDocRef = doc(db, "users", newUserId);
-    
-    const newUserData = {
-      ...formData,
-      id: newUserId,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
+    setLoading(true);
+    try {
+      // 1. Initialize a secondary Firebase App to create the Auth user without signing out the admin
+      const secondaryAppName = `provisioning-${Date.now()}`;
+      const secondaryApp = getApps().find(app => app.name === secondaryAppName) || initializeApp(firebaseConfig, secondaryAppName);
+      const secondaryAuth = getAuth(secondaryApp);
 
-    setDocumentNonBlocking(userDocRef, newUserData, { merge: true });
-    
-    toast({ 
-      title: "Client Profile Provisioned", 
-      description: `User ${formData.firstName} has been added. Remember to create their Auth account in the Firebase Console with email: ${formData.email}` 
-    });
-    setIsCreating(false);
-    setFormData({ firstName: "", lastName: "", email: "", username: "", phoneNumber: "", userRole: "client" });
+      // 2. Create Auth Account
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.email, formData.password);
+      const newUid = userCredential.user.uid;
+
+      // 3. Create Firestore Profile
+      const userDocRef = doc(db, "users", newUid);
+      const newUserData = {
+        id: newUid,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        username: formData.username || formData.email.split('@')[0],
+        phoneNumber: formData.phoneNumber,
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2,
+        city: formData.city,
+        state: formData.state,
+        postalCode: formData.postalCode,
+        country: formData.country,
+        userRole: formData.userRole,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      await setDoc(userDocRef, newUserData, { merge: true });
+
+      // Clean up secondary app
+      await signOut(secondaryAuth);
+
+      toast({ 
+        title: "Client Provisioned", 
+        description: `Credentials for ${formData.firstName} successfully initialized.` 
+      });
+      setIsCreating(false);
+      setFormData({ 
+        firstName: "", lastName: "", email: "", password: "", username: "", 
+        phoneNumber: "", addressLine1: "", addressLine2: "", city: "", 
+        state: "", postalCode: "", country: "United Kingdom", userRole: "client" 
+      });
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "Provisioning Failed", 
+        description: error.message || "Could not create client account." 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdateUser = () => {
@@ -99,6 +144,12 @@ export default function AdminUsersPage() {
       firstName: editingUser.firstName || "",
       lastName: editingUser.lastName || "",
       phoneNumber: editingUser.phoneNumber || "",
+      addressLine1: editingUser.addressLine1 || "",
+      addressLine2: editingUser.addressLine2 || "",
+      city: editingUser.city || "",
+      state: editingUser.state || "",
+      postalCode: editingUser.postalCode || "",
+      country: editingUser.country || "United Kingdom",
       updatedAt: serverTimestamp(),
     });
     toast({ title: "Information Updated", description: `User profile modified successfully.` });
@@ -145,7 +196,7 @@ export default function AdminUsersPage() {
         <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2"><Key className="h-5 w-5 text-accent" /> Account Provisioning</CardTitle>
-            <CardDescription>Enter client details to initialize their institutional profile.</CardDescription>
+            <CardDescription>Enter client details to initialize their institutional profile and login credentials.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -161,6 +212,10 @@ export default function AdminUsersPage() {
               <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Regulatory Contact Email" />
             </div>
             <div className="space-y-2">
+              <Label>Temporary Password</Label>
+              <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" />
+            </div>
+            <div className="space-y-2">
               <Label>Username</Label>
               <Input value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} placeholder="Internal Handle" />
             </div>
@@ -168,12 +223,23 @@ export default function AdminUsersPage() {
               <Label>Phone Number</Label>
               <Input value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+1 (555) 000-0000" />
             </div>
+            <div className="space-y-2">
+              <Label>Address Line 1</Label>
+              <Input value={formData.addressLine1} onChange={(e) => setFormData({...formData, addressLine1: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>City</Label>
+              <Input value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Country</Label>
+              <Input value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} />
+            </div>
           </CardContent>
-          <CardFooter className="bg-slate-50/50 border-t p-6 flex flex-col items-start gap-4">
-            <p className="text-[10px] text-muted-foreground italic max-w-2xl">
-              Note: This action creates the Firestore data profile. You must manually create the login credentials in the Firebase Console using the same email address provided above.
-            </p>
-            <Button onClick={handleCreateUser} className="bg-primary w-full md:w-auto h-11 px-10">Initialize Client Profile</Button>
+          <CardFooter className="bg-slate-50/50 border-t p-6">
+            <Button onClick={handleCreateUser} className="bg-primary w-full md:w-auto h-11 px-10" disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Authorize & Initialize Client"}
+            </Button>
           </CardFooter>
         </Card>
       )}
@@ -217,7 +283,7 @@ export default function AdminUsersPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {u.ssn ? <Badge className="bg-green-100 text-green-700">KYC Complete</Badge> : <Badge variant="outline">Pending KYC</Badge>}
+                    {u.addressLine1 ? <Badge className="bg-green-100 text-green-700">KYC Complete</Badge> : <Badge variant="outline">Pending KYC</Badge>}
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingUser(u)}><Eye className="h-4 w-4" /></Button>
@@ -267,18 +333,21 @@ export default function AdminUsersPage() {
                    <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
                  </div>
                  <div className="space-y-2">
-                   <Label>Phone Number</Label>
-                   <Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} />
+                   <Label>Address 1</Label>
+                   <Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} />
                  </div>
-               </div>
-            </div>
-
-            <div className="pt-6 border-t space-y-4">
-               <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-4">
-                  <UserIcon className="h-4 w-4" /> Residential Records (Read Only)
-               </h4>
-               <div className="bg-slate-50/50 p-6 rounded-2xl border border-dashed text-xs text-muted-foreground">
-                  <p>Residential addresses and physical verification documents are locked for audit integrity. If a legal address change is required, please perform a manual database override.</p>
+                 <div className="space-y-2">
+                   <Label>Address 2</Label>
+                   <Input value={editingUser?.addressLine2 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine2: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>City</Label>
+                   <Input value={editingUser?.city || ""} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Country</Label>
+                   <Input value={editingUser?.country || ""} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} />
+                 </div>
                </div>
             </div>
           </div>
@@ -290,13 +359,13 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Detail View */}
+      {/* Detail View (Redesigned based on request image) */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
-                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Profile Information</DialogTitle>
+                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
@@ -325,13 +394,31 @@ export default function AdminUsersPage() {
                   <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Phone:</span>
-                  <span className="font-medium">{viewingUser?.phoneNumber || "—"}</span>
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 1:</span>
+                  <span className="font-medium">{viewingUser?.addressLine1 || "—"}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Created:</span>
-                  <span className="font-medium">{viewingUser?.createdAt ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</span>
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
+                  <span className="font-medium">{viewingUser?.addressLine2 || "—"}</span>
                 </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
+                  <span className="font-medium">{viewingUser?.city || viewingUser?.state || viewingUser?.postalCode ? `${viewingUser.city || ''} ${viewingUser.state || ''} ${viewingUser.postalCode || ''}` : "—"}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
+                  <span className="font-medium">{viewingUser?.country || "United Kingdom"}</span>
+                </div>
+              </div>
+
+              <div className="pt-10 border-t border-slate-300">
+                {viewingUser?.signature ? (
+                  <div className="bg-white p-4 inline-block shadow-lg rounded-lg border border-slate-200">
+                    <img src={viewingUser.signature} alt="Signature" className="h-24 object-contain" />
+                  </div>
+                ) : (
+                  <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm">No signature authorized</div>
+                )}
               </div>
 
               <div className="pt-8 border-t border-slate-300">

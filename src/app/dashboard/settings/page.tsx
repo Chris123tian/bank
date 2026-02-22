@@ -60,7 +60,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Profile View - "Basic Information" */}
+        {/* Main Profile View - Redesigned based on request image */}
         <div className="lg:col-span-8 space-y-8">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200 relative overflow-hidden">
             <div className="absolute top-4 right-4 text-slate-400">
@@ -102,7 +102,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[160px]">Address 2:</span>
-                  <span className="font-medium">—</span>
+                  <span className="font-medium">{profile?.addressLine2 || "—"}</span>
                 </div>
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[160px]">City/State/Zip:</span>
@@ -110,12 +110,11 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[160px]">Country:</span>
-                  <span className="font-medium">{profile?.country || "United States"}</span>
+                  <span className="font-medium">{profile?.country || "United Kingdom"}</span>
                 </div>
               </div>
 
               <div className="pt-16 pb-8">
-                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Authenticated Legal Signature</p>
                 <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100">
                   {profile?.signature ? (
                     <img src={profile.signature} alt="Signature" className="h-24 object-contain mx-auto" />

@@ -40,7 +40,8 @@ import {
   MapPin,
   ShieldCheck,
   FileText,
-  CreditCard
+  CreditCard,
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -355,135 +356,75 @@ export default function AdminAccountsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Institutional Information Dossier Dialog */}
+      {/* Institutional Information Dossier Dialog - Redesigned based on request image */}
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
-        <DialogContent className="max-w-5xl p-0 border-none rounded-[2rem] overflow-hidden shadow-2xl bg-white max-h-[95vh] flex flex-col">
-          <div className="bg-primary p-8 text-white shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/10 rounded-2xl">
-                  <ShieldCheck className="h-8 w-8 text-accent" />
+        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
+          <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
+            <div className="max-w-2xl mx-auto space-y-10">
+              <div className="relative inline-block">
+                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
+              </div>
+              
+              <div className="flex flex-col items-center gap-6 pt-2">
+                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white">
+                  {userProfile?.profilePictureUrl ? (
+                    <img src={userProfile.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-white text-7xl font-bold">{userProfile?.firstName?.charAt(0)}{userProfile?.lastName?.charAt(0)}</span>
+                  )}
                 </div>
-                <div>
-                  <DialogTitle className="text-2xl font-black">Institutional Information</DialogTitle>
-                  <DialogDescription className="text-white/60 font-mono text-xs uppercase tracking-widest">
-                    Verified Global Identifier: {viewingClientPortfolio}
-                  </DialogDescription>
+                
+                <div className="text-center space-y-2">
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Username:</span> {userProfile?.username || userProfile?.email?.split('@')[0]}
+                  </p>
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{userProfile?.email}</span>
+                  </p>
                 </div>
               </div>
-              {isUserProfileLoading && <Loader2 className="h-6 w-6 animate-spin" />}
+
+              <div className="space-y-6 pt-10 border-t border-slate-300 text-xl text-slate-700">
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Name :</span>
+                  <span className="font-medium">{userProfile?.firstName} {userProfile?.lastName}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 1:</span>
+                  <span className="font-medium">{userProfile?.addressLine1 || "—"}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
+                  <span className="font-medium">{userProfile?.addressLine2 || "—"}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
+                  <span className="font-medium">
+                    {userProfile?.city ? `${userProfile.city}, ${userProfile.state || ''} ${userProfile.postalCode || ''}` : '—'}
+                  </span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
+                  <span className="font-medium">{userProfile?.country || "United Kingdom"}</span>
+                </div>
+              </div>
+
+              <div className="pt-10 border-t border-slate-300">
+                {userProfile?.signature ? (
+                  <div className="bg-white p-4 inline-block shadow-lg rounded-lg border border-slate-200">
+                    <img src={userProfile.signature} alt="Signature" className="h-24 object-contain" />
+                  </div>
+                ) : (
+                  <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm">No signature authorized</div>
+                )}
+              </div>
+
+              <div className="pt-8 border-t border-slate-300">
+                <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B]">Dismiss Dossier</Button>
+              </div>
             </div>
           </div>
-          
-          <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-slate-50/50">
-            {userProfile ? (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Audit Sections */}
-                <div className="lg:col-span-2 space-y-8">
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                        <UserIcon className="h-4 w-4" /> Personal Identity Records
-                      </h3>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => setEditingProfileSection({ type: "Personal Identity", data: { firstName: userProfile.firstName, lastName: userProfile.lastName, dob: userProfile.dob, ssn: userProfile.ssn, phoneNumber: userProfile.phoneNumber } })}>
-                        <Edit3 className="h-3 w-3 mr-1" /> Edit Section
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border shadow-sm">
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">Legal Name</Label><p className="font-bold text-primary">{userProfile.firstName} {userProfile.lastName}</p></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">DOB</Label><p className="font-medium">{userProfile.dob || "—"}</p></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">SSN/TIN</Label><p className="font-medium">{userProfile.ssn || "—"}</p></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">Phone</Label><p className="font-medium">{userProfile.phoneNumber || "—"}</p></div>
-                    </div>
-                  </section>
-
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                        <MapPin className="h-4 w-4" /> Residential & Physical Verification
-                      </h3>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => setEditingProfileSection({ type: "Residential Verification", data: { addressLine1: userProfile.addressLine1, city: userProfile.city, state: userProfile.state, postalCode: userProfile.postalCode, country: userProfile.country } })}>
-                        <Edit3 className="h-3 w-3 mr-1" /> Edit Section
-                      </Button>
-                    </div>
-                    <div className="bg-white p-6 rounded-2xl border shadow-sm space-y-4">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase">Registered Address</Label>
-                        <p className="font-medium leading-relaxed">
-                          {userProfile.addressLine1}<br />
-                          {userProfile.city}, {userProfile.state} {userProfile.postalCode}<br />
-                          <span className="text-primary font-bold">{userProfile.country || "United States"}</span>
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                        <Briefcase className="h-4 w-4" /> Professional & Financial Profile
-                      </h3>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => setEditingProfileSection({ type: "Professional Profile", data: { employmentStatus: userProfile.employmentStatus, employerName: userProfile.employerName, jobTitle: userProfile.jobTitle, annualIncome: userProfile.annualIncome } })}>
-                        <Edit3 className="h-3 w-3 mr-1" /> Edit Section
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border shadow-sm">
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">Employment</Label><p className="font-medium">{userProfile.employmentStatus || "—"}</p></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">Employer</Label><p className="font-medium">{userProfile.employerName || "—"}</p></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">Role</Label><p className="font-medium">{userProfile.jobTitle || "—"}</p></div>
-                      <div className="space-y-1"><Label className="text-[10px] font-bold text-slate-400 uppercase">Annual Income</Label><p className="font-bold text-primary">{formatCurrency(userProfile.annualIncome || 0)}</p></div>
-                    </div>
-                  </section>
-                </div>
-
-                {/* Right Column: Signature & Asset Ledger */}
-                <div className="space-y-8">
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                        <FileText className="h-4 w-4" /> Legal Authorization
-                      </h3>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => setEditingProfileSection({ type: "Legal Authorization", data: { signature: userProfile.signature } })}>
-                        <Edit3 className="h-3 w-3 mr-1" /> Edit Section
-                      </Button>
-                    </div>
-                    <div className="bg-white p-6 rounded-2xl border shadow-sm text-center">
-                      <Label className="text-[9px] font-black uppercase text-slate-400 mb-2 block">Authenticated Signature</Label>
-                      {userProfile.signature ? (
-                        <img src={userProfile.signature} alt="Legal Signature" className="h-24 w-full object-contain bg-slate-50 border rounded-lg p-2" />
-                      ) : (
-                        <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-100 italic text-slate-300 text-xs">No signature on file</div>
-                      )}
-                    </div>
-                  </section>
-
-                  <section className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" /> Managed Asset Ledger
-                    </h3>
-                    <div className="space-y-3">
-                      {clientPortfolioAccounts?.map((acc) => (
-                        <div key={acc.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:border-accent transition-colors">
-                          <div className="flex justify-between items-start mb-2">
-                            <Badge variant="secondary" className="text-[9px]">{acc.accountType}</Badge>
-                            <span className={`h-2 w-2 rounded-full ${acc.status === 'Suspended' ? 'bg-red-500' : 'bg-green-500'}`} />
-                          </div>
-                          <p className="font-mono text-xs font-bold text-primary">{acc.accountNumber}</p>
-                          <p className="text-lg font-black text-slate-900 mt-1">{formatCurrency(acc.balance, acc.currency)}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-20 text-slate-400 italic">Initializing Dossier...</div>
-            )}
-          </div>
-          
-          <DialogFooter className="p-6 bg-white border-t shrink-0">
-            <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-12 rounded-xl font-bold bg-primary shadow-lg">Dismiss Dossier</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
