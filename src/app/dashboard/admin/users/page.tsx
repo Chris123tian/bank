@@ -552,7 +552,7 @@ export default function AdminUsersPage() {
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] mb-4">Authorized Identity Signature</p>
                   {viewingUser?.signature ? (
                     <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200 max-w-full overflow-hidden">
-                      <img viewingUser.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
+                      <img src={viewingUser.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
                     </div>
                   ) : (
                     <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm rounded-xl">No signature authorized</div>
