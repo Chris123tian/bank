@@ -38,7 +38,7 @@ export function useCollection<T = any>(
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // NUCLEAR GUARD: Prevent root listing or undefined paths.
+    // NUCLEAR GUARD: Prevent root listing or undefined paths during initialization.
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
@@ -52,26 +52,25 @@ export function useCollection<T = any>(
       if ('path' in memoizedTargetRefOrQuery) {
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
-        // Check if it's a collectionGroup query
+        // Identify collectionGroup queries via internal path structure
         const internal = memoizedTargetRefOrQuery as unknown as InternalQuery;
-        // In the SDK, collectionGroup queries have a canonical path that is just the collection ID
         pathString = internal._query?.path?.canonicalString() || '[Collection Group]';
+        // Group queries usually have a canonical path that is just the collection ID
         isGroupQuery = pathString.split('/').length === 1 || pathString === '[Collection Group]';
       }
     } catch (e) {
       pathString = '[Unknown Path]';
     }
 
-    // Firestore root path check. 
-    // We allow isGroupQuery to bypass if it has a valid structure, 
-    // but we block if path contains literal 'undefined'.
+    // Defensive check: Block if path resolves to root or contains 'undefined' strings
+    // which indicate malformed session state during hydration/routing.
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);
       return;
     }
 
-    // Extra safety for group queries: if path is 'undefined', it's likely a malformed session state.
+    // Safety for group queries: if path contains 'undefined', the query is invalid.
     if (pathString.includes('undefined')) {
       setData(null);
       setIsLoading(false);
@@ -93,9 +92,12 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (firestoreError: FirestoreError) => {
+        // Ensure pathString is descriptive for the contextual error report
+        const finalPath = pathString || '[Collection Group]';
+        
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path: pathString,
+          path: finalPath,
         });
 
         setError(contextualError);

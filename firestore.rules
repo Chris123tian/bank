@@ -11,6 +11,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      // The master administrator account bypasses standard ownership rules
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
@@ -21,40 +22,16 @@ service cloud.firestore {
     /**
      * ADMINISTRATIVE OVERRIDE
      * Explicitly grant the master administrator account full access to the entire root.
+     * This match pattern is effective for path-based queries.
      */
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
-    // --- User Profile & Private Data ---
-
-    match /users/{userId} {
-      // Owners have full access to their own profile and nested collections
-      allow read, write: if isOwner(userId);
-
-      match /accounts/{accountId} {
-        allow read, write: if isOwner(userId);
-
-        match /transactions/{transactionId} {
-          allow read, write: if isOwner(userId);
-        }
-      }
-
-      match /payees/{payeeId} { allow read, write: if isOwner(userId); }
-      match /bills/{billId} { allow read, write: if isOwner(userId); }
-      match /cards/{cardId} { allow read, write: if isOwner(userId); }
-      match /supportTickets/{ticketId} { allow read, write: if isOwner(userId); }
-    }
-
-    // Role-based access control metadata
-    match /roles_admin/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin(); 
-    }
-
     /** 
-     * Collection Group Rules 
-     * Required for collectionGroup queries (e.g., Dashboard summaries and Audit pages).
+     * COLLECTION GROUP RULES 
+     * Required for collectionGroup queries (e.g., Dashboard summaries and Admin Audit pages).
+     * These must be defined separately from path-based rules.
      */
     match /{path=**}/accounts/{accountId} {
       allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
@@ -64,6 +41,33 @@ service cloud.firestore {
     }
     match /{path=**}/cards/{cardId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+    }
+
+    // --- User Profile & Private Data ---
+
+    match /users/{userId} {
+      // Owners and Admins have full access to user profiles and nested collections
+      allow read, write: if isOwner(userId) || isAdmin();
+
+      match /accounts/{accountId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+
+        match /transactions/{transactionId} {
+          allow read, write: if isOwner(userId) || isAdmin();
+        }
+      }
+
+      // Supplementary collections
+      match /payees/{payeeId} { allow read, write: if isOwner(userId) || isAdmin(); }
+      match /bills/{billId} { allow read, write: if isOwner(userId) || isAdmin(); }
+      match /cards/{cardId} { allow read, write: if isOwner(userId) || isAdmin(); }
+      match /supportTickets/{ticketId} { allow read, write: if isOwner(userId) || isAdmin(); }
+    }
+
+    // Role-based access control metadata
+    match /roles_admin/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin(); 
     }
   }
 }
