@@ -251,12 +251,12 @@ export default function AdminUsersPage() {
 
       {/* Edit Profile Dialog - Admin Only */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Client Profile</DialogTitle>
             <DialogDescription>Administrative modification of identity and address records.</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
               <Label>First Name</Label>
               <Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} />
@@ -265,7 +265,7 @@ export default function AdminUsersPage() {
               <Label>Last Name</Label>
               <Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} />
             </div>
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2 md:col-span-2">
               <Label>Email</Label>
               <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
             </div>
@@ -277,7 +277,7 @@ export default function AdminUsersPage() {
               <Label>Phone Number</Label>
               <Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} />
             </div>
-            <div className="space-y-2 col-span-2 border-t pt-4">
+            <div className="space-y-2 md:col-span-2 border-t pt-4">
               <Label>Address Line 1</Label>
               <Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} />
             </div>
@@ -298,7 +298,7 @@ export default function AdminUsersPage() {
               <Input value={editingUser?.country || ""} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="sticky bottom-0 bg-background pt-4 border-t">
             <Button onClick={handleUpdateUser} className="w-full">Save Profile Updates</Button>
           </DialogFooter>
         </DialogContent>
