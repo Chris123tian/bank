@@ -69,7 +69,7 @@ export default function LandingPage() {
       </nav>
 
       <main className="flex-1">
-        {/* Cinematic Hero */}
+        {/* Cinematic Hero - Performance Optimized */}
         <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center pt-16 pb-24 sm:pb-32 overflow-hidden">
           <div className="absolute inset-0 z-0">
              <Image 
@@ -77,7 +77,8 @@ export default function LandingPage() {
                 alt="Institutional Banking"
                 fill
                 priority={true}
-                className="object-cover opacity-30 sm:opacity-40"
+                loading="eager"
+                className="object-cover opacity-30 sm:opacity-40 transition-opacity duration-1000"
                 data-ai-hint="modern banking"
              />
              <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
@@ -85,7 +86,7 @@ export default function LandingPage() {
           </div>
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-            <div className="max-w-2xl space-y-6 sm:space-y-10">
+            <div className="max-w-2xl space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-left-8 duration-700">
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-accent/20 border border-accent/30 text-accent text-[8px] sm:text-[10px] font-black tracking-widest uppercase">
                   <ShieldCheck className="h-3 w-3 sm:h-4 sm:w-4" />

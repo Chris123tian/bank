@@ -104,20 +104,20 @@ export function DashboardSidebar() {
   return (
     <Sidebar variant="sidebar" collapsible="icon" className="bg-sidebar border-r-0">
       <SidebarHeader className="p-4 flex flex-row items-center gap-2">
-        <div className="bg-accent p-2 rounded-lg">
+        <div className="bg-accent p-2 rounded-lg shrink-0 transition-transform hover:scale-110">
           <Building2 className="text-white h-6 w-6" />
         </div>
-        <span className="font-headline font-bold text-xl tracking-tight group-data-[collapsible=icon]:hidden text-white">
+        <span className="font-headline font-black text-xl tracking-tight group-data-[collapsible=icon]:hidden text-white truncate">
           CITY BANK
         </span>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="custom-scrollbar overflow-x-hidden">
         {/* Basic Information Section */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel className="text-sidebar-foreground/50">Account Profile</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 font-black uppercase text-[10px] tracking-widest">Account Profile</SidebarGroupLabel>
           <Link href="/dashboard/settings" onClick={handleLinkClick} className="block outline-none">
-            <div className="px-2 py-3 flex items-center gap-3 bg-white/5 rounded-xl border border-white/5 mb-2 hover:bg-white/10 transition-colors cursor-pointer group">
-              <Avatar className="h-10 w-10 border border-white/20 group-hover:border-accent/50 transition-colors">
+            <div className="px-2 py-3 flex items-center gap-3 bg-white/5 rounded-xl border border-white/5 mb-2 hover:bg-white/10 transition-all cursor-pointer group">
+              <Avatar className="h-10 w-10 border-2 border-white/20 group-hover:border-accent transition-colors shrink-0">
                 <AvatarImage src={profile?.profilePictureUrl || user?.photoURL || ""} className="object-cover" />
                 <AvatarFallback className="bg-accent text-white text-xs font-bold">
                   {profile?.firstName?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
@@ -127,7 +127,7 @@ export function DashboardSidebar() {
                 <span className="text-xs font-bold text-white truncate group-hover:text-accent transition-colors">
                   {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.displayName || "Member")}
                 </span>
-                <span className="text-[10px] text-sidebar-foreground/60 truncate font-mono">
+                <span className="text-[9px] text-sidebar-foreground/60 truncate font-mono uppercase tracking-tighter">
                   {profile?.username || user?.email?.split('@')[0]}
                 </span>
               </div>
@@ -139,13 +139,13 @@ export function DashboardSidebar() {
 
         {/* Account Summary Section */}
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel className="text-sidebar-foreground/50">Financial Summary</SidebarGroupLabel>
-          <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2">
+          <SidebarGroupLabel className="text-sidebar-foreground/50 font-black uppercase text-[10px] tracking-widest">Financial Summary</SidebarGroupLabel>
+          <div className="px-3 py-4 bg-accent/10 rounded-xl border border-accent/20 space-y-3 mb-2 shadow-inner">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] uppercase font-black tracking-widest text-accent">Total Capital</span>
+              <span className="text-[9px] uppercase font-black tracking-widest text-accent">Total Capital</span>
               <Wallet className="h-3 w-3 text-accent" />
             </div>
-            <div className="text-lg font-black text-white">
+            <div className="text-lg font-black text-white truncate">
               ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
@@ -154,7 +154,7 @@ export function DashboardSidebar() {
         <SidebarSeparator className="mx-2 opacity-10" />
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50">Banking</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 font-black uppercase text-[10px] tracking-widest">Banking</SidebarGroupLabel>
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.name}>
@@ -163,10 +163,11 @@ export function DashboardSidebar() {
                   isActive={pathname === item.href}
                   tooltip={item.name}
                   onClick={handleLinkClick}
+                  className="transition-all hover:pl-4"
                 >
                   <Link href={item.href}>
-                    <item.icon />
-                    <span>{item.name}</span>
+                    <item.icon className="shrink-0" />
+                    <span className="font-bold">{item.name}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -176,7 +177,7 @@ export function DashboardSidebar() {
 
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/50">Administration</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground/50 font-black uppercase text-[10px] tracking-widest">Administration</SidebarGroupLabel>
             <SidebarMenu>
               {adminItems.map((item) => (
                 <SidebarMenuItem key={item.name}>
@@ -184,12 +185,12 @@ export function DashboardSidebar() {
                     asChild 
                     isActive={pathname === item.href}
                     tooltip={item.name}
-                    className="text-accent hover:text-accent"
+                    className="text-accent hover:text-accent hover:bg-accent/10 transition-all hover:pl-4"
                     onClick={handleLinkClick}
                   >
                     <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.name}</span>
+                      <item.icon className="shrink-0" />
+                      <span className="font-black uppercase tracking-tighter text-[11px]">{item.name}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -198,12 +199,12 @@ export function DashboardSidebar() {
           </SidebarGroup>
         )}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-white/5 p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/dashboard/settings"} onClick={handleLinkClick}>
+            <SidebarMenuButton asChild tooltip="Settings" isActive={pathname === "/dashboard/settings"} onClick={handleLinkClick} className="font-bold">
               <Link href="/dashboard/settings">
-                <Settings />
+                <Settings className="shrink-0" />
                 <span>Settings</span>
               </Link>
             </SidebarMenuButton>
@@ -211,10 +212,10 @@ export function DashboardSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton 
               tooltip="Logout" 
-              className="text-red-400 hover:text-red-300"
+              className="text-red-400 hover:text-red-300 font-bold"
               onClick={handleLogout}
             >
-              <LogOut />
+              <LogOut className="shrink-0" />
               <span>Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

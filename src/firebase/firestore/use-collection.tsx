@@ -24,7 +24,7 @@ export interface UseCollectionResult<T> {
 
 /**
  * Custom hook to listen to a Firestore collection or query.
- * Optimized to use global auth readiness from context.
+ * Optimized to use global auth readiness from context for faster initialization.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
@@ -42,7 +42,7 @@ export function useCollection<T = any>(
       return;
     }
 
-    // 2. AUTH STABILITY GUARD: Wait for global auth readiness
+    // 2. AUTH STABILITY GUARD: Wait for global auth readiness from provider
     if (!isAuthReady) {
       setData(null);
       setIsLoading(true);
@@ -80,7 +80,7 @@ export function useCollection<T = any>(
       pathString = 'Query';
     }
 
-    // 3. NUCLEAR GUARD: Prevent unauthorized root listing
+    // 3. NUCLEAR GUARD: Prevent unauthorized root listing or malformed paths
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);

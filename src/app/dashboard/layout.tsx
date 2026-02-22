@@ -28,7 +28,10 @@ export default function DashboardLayout({
   if (!isAuthReady || (isUserLoading && !user)) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Initializing Institutional Core...</p>
+        </div>
       </div>
     );
   }
@@ -37,22 +40,22 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen w-full bg-background overflow-hidden">
+      <div className="flex h-screen w-full bg-background overflow-hidden relative">
         <DashboardSidebar />
-        <SidebarInset className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex h-16 items-center border-b bg-white px-6 gap-4">
+        <SidebarInset className="flex flex-col flex-1 overflow-hidden min-w-0">
+          <header className="flex h-16 shrink-0 items-center border-b bg-white px-4 sm:px-6 gap-4 sticky top-0 z-30 shadow-sm">
             <SidebarTrigger />
-            <div className="ml-auto flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-3 sm:gap-4">
               <LanguageSwitcher />
-              <div className="text-sm font-medium hidden sm:block">
-                Welcome, {user.displayName || user.email?.split('@')[0]}
+              <div className="text-[10px] sm:text-sm font-bold truncate max-w-[120px] sm:max-w-none text-primary">
+                {user.displayName || user.email?.split('@')[0]}
               </div>
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20">
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20 shrink-0">
                 {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase()}
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-y-auto p-6">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50/50">
             {children}
           </main>
         </SidebarInset>

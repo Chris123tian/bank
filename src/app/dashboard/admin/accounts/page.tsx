@@ -43,7 +43,8 @@ import {
   CreditCard,
   Lock,
   ArrowRightLeft,
-  TrendingUp
+  TrendingUp,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -177,141 +178,143 @@ export default function AdminAccountsAuditPage() {
 
   if (!isAdminConfirmed) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
         <ShieldAlert className="h-12 w-12 text-red-500" />
         <h2 className="text-2xl font-bold">Access Denied</h2>
-        <p className="text-muted-foreground">This terminal requires institutional administrator credentials.</p>
+        <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="max-w-7xl mx-auto space-y-6 px-1">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-xl text-primary">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary shrink-0">
             <Landmark className="h-8 w-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-headline font-bold text-primary uppercase tracking-tight">Global Asset Audit</h1>
-            <p className="text-muted-foreground">Full oversight and balance management across the Nexa network.</p>
+            <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Global Asset Audit</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">Full oversight and balance management across the network.</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <div className="relative w-full md:w-64">
+        <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+          <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search Client or Account..." 
-              className="pl-10 h-11" 
+              className="pl-10 h-11 border-slate-200" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent h-11 px-6 font-black uppercase tracking-tighter">
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent h-11 px-6 font-black uppercase tracking-tighter shadow-lg shrink-0">
             <PlusCircle className="mr-2 h-4 w-4" /> Open Account
           </Button>
         </div>
       </div>
 
-      <Card className="shadow-xl">
+      <Card className="shadow-xl rounded-2xl overflow-hidden border-none bg-white">
         <CardHeader className="bg-slate-50/50 border-b">
           <CardTitle className="text-lg">Institutional Asset Ledger</CardTitle>
           <CardDescription>Auditing all capital holdings within the City International Bank ecosystem.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead className="font-bold py-4">Account #</TableHead>
-                <TableHead className="font-bold">Client Identity</TableHead>
-                <TableHead className="font-bold">Type</TableHead>
-                <TableHead className="font-bold">Verified Balance</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
-                <TableHead className="text-right font-bold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isAccountsLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-300" /></TableCell></TableRow>
-              ) : filteredAccounts?.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">No accounts matching your search criteria were found.</TableCell></TableRow>
-              ) : filteredAccounts?.map((acc) => (
-                <TableRow key={acc.id} className="hover:bg-slate-50/50 transition-colors">
-                  <TableCell className="font-mono text-xs font-bold text-primary">{acc.accountNumber}</TableCell>
-                  <TableCell className="text-xs">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-slate-700 truncate max-w-[150px]">{acc.customerId || acc.userId}</span>
-                      <span className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Client Record</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px] font-black border-primary/20">{acc.accountType}</Badge>
-                  </TableCell>
-                  <TableCell className="font-black text-primary text-base">
-                    {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={acc.status === 'Suspended' ? 'bg-red-100 text-red-700 border-none' : 'bg-green-100 text-green-700 border-none'}>
-                      {acc.status || "Active"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-9 w-9 text-primary hover:bg-primary/5"
-                        onClick={() => setViewingClientPortfolio(acc.customerId || acc.userId)}
-                        title="View Institutional Dossier"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-9 w-9 text-accent hover:bg-accent/5"
-                        onClick={() => {
-                          setEditingAccount({
-                            ...acc,
-                            balance: acc.balance ?? 0,
-                            currency: acc.currency ?? "USD",
-                            accountType: acc.accountType ?? "Current Account",
-                            status: acc.status ?? "Active"
-                          });
-                          setIsEditDialogOpen(true);
-                        }}
-                        title="Adjust Capital / Edit"
-                      >
-                        <TrendingUp className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:bg-red-50" onClick={() => handleDeleteAccount(acc)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/80">
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Account #</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Client Identity</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Verified Balance</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
+                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isAccountsLoading ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-20"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Assets...</span></div></TableCell></TableRow>
+                ) : filteredAccounts?.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">No accounts matching your search criteria were found.</TableCell></TableRow>
+                ) : filteredAccounts?.map((acc) => (
+                  <TableRow key={acc.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
+                    <TableCell className="font-mono text-[10px] sm:text-xs font-bold text-primary py-4 px-6">{acc.accountNumber}</TableCell>
+                    <TableCell className="text-xs">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-700 truncate max-w-[120px] sm:max-w-[150px]">{acc.customerId || acc.userId}</span>
+                        <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Client Record</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[9px] font-black border-primary/20 uppercase tracking-tighter px-2">{acc.accountType}</Badge>
+                    </TableCell>
+                    <TableCell className="font-black text-primary text-sm sm:text-base whitespace-nowrap">
+                      {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={acc.status === 'Suspended' ? 'bg-red-100 text-red-700 border-none text-[9px] font-black uppercase' : 'bg-green-100 text-green-700 border-none text-[9px] font-black uppercase'}>
+                        {acc.status || "Active"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right px-6">
+                      <div className="flex justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 text-primary hover:bg-primary/5 shrink-0"
+                          onClick={() => setViewingClientPortfolio(acc.customerId || acc.userId)}
+                          title="View Institutional Dossier"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 text-accent hover:bg-accent/5 shrink-0"
+                          onClick={() => {
+                            setEditingAccount({
+                              ...acc,
+                              balance: acc.balance ?? 0,
+                              currency: acc.currency ?? "USD",
+                              accountType: acc.accountType ?? "Current Account",
+                              status: acc.status ?? "Active"
+                            });
+                            setIsEditDialogOpen(true);
+                          }}
+                          title="Adjust Capital / Edit"
+                        >
+                          <TrendingUp className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:bg-red-50 shrink-0" onClick={() => handleDeleteAccount(acc)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Account Edit / Balance Adjustment Dialog */}
+      {/* Account Edit / Balance Adjustment Dialog - Responsive Fixes */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-          <div className="p-8 bg-[#002B5B] text-white shrink-0">
+        <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[95vw] sm:w-full">
+          <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl"><TrendingUp className="h-6 w-6" /></div>
+              <div className="p-3 bg-white/10 rounded-2xl shrink-0"><TrendingUp className="h-6 w-6" /></div>
               <div>
-                <DialogTitle className="text-2xl font-black uppercase tracking-tight">Capital Adjustment</DialogTitle>
-                <DialogDescription className="text-white/60">Performing authorized correction for: {editingAccount?.accountNumber}</DialogDescription>
+                <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Capital Adjustment</DialogTitle>
+                <DialogDescription className="text-white/60 text-xs truncate max-w-[200px] sm:max-w-none">Authorized correction for: {editingAccount?.accountNumber}</DialogDescription>
               </div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
             <div className="space-y-4">
-              <Label className="text-xs font-black uppercase tracking-widest text-[#002B5B]">Asset Configuration</Label>
-              <div className="grid grid-cols-2 gap-4">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-[#002B5B]">Asset Configuration</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold uppercase text-slate-500">Account Type</Label>
                   <Select value={editingAccount?.accountType} onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}>
@@ -339,9 +342,9 @@ export default function AdminAccountsAuditPage() {
               </div>
             </div>
 
-            <div className="space-y-4 pt-6 border-t">
-              <Label className="text-xs font-black uppercase tracking-widest text-[#002B5B]">Financial Liquidity</Label>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 pt-6 border-t border-slate-100">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-[#002B5B]">Financial Liquidity</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold uppercase text-slate-500">Verified Balance (Override)</Label>
                   <div className="relative">
@@ -367,29 +370,29 @@ export default function AdminAccountsAuditPage() {
                   </Select>
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground italic font-medium">Manual balance overrides reflect instantly on the client's dashboard and are logged for internal audit.</p>
+              <p className="text-[9px] text-muted-foreground italic font-medium">Manual balance overrides reflect instantly on the client's dashboard and are logged for internal audit.</p>
             </div>
           </div>
-          <DialogFooter className="p-8 bg-slate-50 border-t flex gap-3 shrink-0">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold">Cancel</Button>
-            <Button onClick={handleUpdateAccount} className="flex-1 h-12 bg-[#002B5B] hover:bg-[#003B7B] rounded-xl font-black uppercase tracking-widest shadow-lg">Commit Corrections</Button>
+          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t flex flex-col sm:flex-row gap-3 shrink-0">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold order-2 sm:order-1">Cancel</Button>
+            <Button onClick={handleUpdateAccount} className="flex-1 h-12 bg-[#002B5B] hover:bg-[#003B7B] rounded-xl font-black uppercase tracking-widest shadow-lg order-1 sm:order-2">Commit Corrections</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Create Account Dialog */}
+      {/* Create Account Dialog - Responsive Fixes */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-          <div className="p-8 bg-primary text-white shrink-0">
+        <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[95vw] sm:w-full">
+          <div className="p-6 sm:p-8 bg-primary text-white shrink-0">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl"><PlusCircle className="h-6 w-6" /></div>
+              <div className="p-3 bg-white/10 rounded-2xl shrink-0"><PlusCircle className="h-6 w-6" /></div>
               <div>
-                <DialogTitle className="text-2xl font-black uppercase tracking-tight">Open Institutional Account</DialogTitle>
-                <DialogDescription className="text-white/60">Provisioning a new financial asset for a verified client.</DialogDescription>
+                <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Open Institutional Account</DialogTitle>
+                <DialogDescription className="text-white/60 text-xs sm:text-sm">Provisioning a new financial asset for a verified client.</DialogDescription>
               </div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-8 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar">
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase text-slate-500">Target Client</Label>
               <Select value={newAccount.userId} onValueChange={(val) => setNewAccount({...newAccount, userId: val})}>
@@ -399,9 +402,9 @@ export default function AdminAccountsAuditPage() {
                 <SelectContent className="max-h-[300px]">
                   {allUsers?.map(u => (
                     <SelectItem key={u.id} value={u.id}>
-                      <div className="flex flex-col items-start">
-                        <span className="font-bold">{u.firstName} {u.lastName}</span>
-                        <span className="text-[9px] font-mono text-muted-foreground">{u.email}</span>
+                      <div className="flex flex-col items-start overflow-hidden">
+                        <span className="font-bold truncate max-w-[250px]">{u.firstName} {u.lastName}</span>
+                        <span className="text-[9px] font-mono text-muted-foreground truncate max-w-[250px]">{u.email}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -409,7 +412,7 @@ export default function AdminAccountsAuditPage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-slate-500">Account Type</Label>
                 <Select value={newAccount.accountType} onValueChange={(v) => setNewAccount({...newAccount, accountType: v})}>
@@ -436,92 +439,96 @@ export default function AdminAccountsAuditPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 pt-2">
               <Label className="text-[10px] font-bold uppercase text-slate-500">Initial Capital Injection (Balance)</Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-primary">$</span>
                 <Input 
                   type="number" 
-                  className="h-14 font-black text-xl pl-8 border-primary/20 bg-primary/5 text-primary" 
+                  className="h-14 font-black text-xl pl-8 border-primary/20 bg-primary/5 text-primary focus-visible:ring-primary" 
                   value={newAccount.balance} 
                   onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})} 
                 />
               </div>
             </div>
           </div>
-          <DialogFooter className="p-8 bg-slate-50 border-t shrink-0">
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold">Cancel</Button>
-            <Button onClick={handleCreateAccount} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-black uppercase tracking-widest">Initialize Asset</Button>
+          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t shrink-0 flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold order-2 sm:order-1">Cancel</Button>
+            <Button onClick={handleCreateAccount} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-black uppercase tracking-widest shadow-lg order-1 sm:order-2">Initialize Asset</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Institutional Information Dossier Dialog */}
+      {/* Institutional Information Dossier Dialog - Responsive Optimization */}
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
-        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
-          <div className="bg-[#E5E7EB] rounded-[2.5rem] p-8 sm:p-12 shadow-2xl border border-slate-300">
+        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+          <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
+            <button onClick={() => setViewingClientPortfolio(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
+              <X className="h-6 w-6" />
+            </button>
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
-                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
               <div className="flex flex-col items-center gap-6 pt-2">
-                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white">
+                <div className="h-40 w-40 sm:h-56 sm:w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-4 sm:border-8 border-white shrink-0">
                   {userProfile?.profilePictureUrl ? (
                     <img src={userProfile.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-white text-7xl font-bold">{userProfile?.firstName?.charAt(0)}{userProfile?.lastName?.charAt(0)}</span>
+                    <span className="text-white text-5xl sm:text-7xl font-bold">{userProfile?.firstName?.charAt(0)}{userProfile?.lastName?.charAt(0)}</span>
                   )}
                 </div>
                 
                 <div className="text-center space-y-2">
-                  <p className="text-xl font-bold text-slate-700">
+                  <p className="text-lg sm:text-xl font-bold text-slate-700">
                     <span className="font-black text-[#002B5B]">Username:</span> {userProfile?.username || userProfile?.email?.split('@')[0]}
                   </p>
-                  <p className="text-xl font-bold text-slate-700">
+                  <p className="text-lg sm:text-xl font-bold text-slate-700 break-all">
                     <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{userProfile?.email}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-6 pt-10 border-t border-slate-300 text-xl text-slate-700">
-                <div className="flex gap-4">
+              <div className="space-y-6 pt-10 border-t border-slate-300 text-base sm:text-xl text-slate-700">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Name :</span>
                   <span className="font-medium">{userProfile?.firstName} {userProfile?.lastName}</span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Address 1:</span>
-                  <span className="font-medium">{userProfile?.addressLine1 || "—"}</span>
+                  <span className="font-medium break-words">{userProfile?.addressLine1 || "—"}</span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
                   <span className="font-medium">{userProfile?.addressLine2 || "—"}</span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
                   <span className="font-medium">
                     {userProfile?.city ? `${userProfile.city}, ${userProfile.state || ''} ${userProfile.postalCode || ''}` : '—'}
                   </span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
                   <span className="font-medium">{userProfile?.country || "United Kingdom"}</span>
                 </div>
               </div>
 
               <div className="pt-10 border-t border-slate-300">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#002B5B] mb-4">Identity Signature</p>
                 {userProfile?.signature ? (
-                  <div className="bg-white p-4 inline-block shadow-lg rounded-lg border border-slate-200">
-                    <img src={userProfile.signature} alt="Signature" className="h-24 object-contain" />
+                  <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200 max-w-full overflow-hidden">
+                    <img src={userProfile.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
                   </div>
                 ) : (
-                  <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm">No signature authorized</div>
+                  <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-xs sm:text-sm rounded-xl">No signature authorized</div>
                 )}
               </div>
 
               <div className="pt-8 border-t border-slate-300">
-                <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B]">Dismiss Dossier</Button>
+                <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-14 rounded-2xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss Dossier</Button>
               </div>
             </div>
           </div>

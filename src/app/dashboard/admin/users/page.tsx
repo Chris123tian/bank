@@ -203,87 +203,92 @@ export default function AdminUsersPage() {
   );
 
   if (isAdminRoleLoading && !isMasterAdmin) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Verifying Administrative Clearance...</p>
+      </div>
+    );
   }
 
   if (!isAdminConfirmed) {
-    return <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4"><ShieldAlert className="h-12 w-12 text-red-500" /><h2 className="text-2xl font-bold text-primary">Access Denied</h2></div>;
+    return <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6"><ShieldAlert className="h-12 w-12 text-red-500" /><h2 className="text-2xl font-bold text-primary">Access Denied</h2><p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p></div>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="max-w-7xl mx-auto space-y-6 px-1">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-headline font-bold text-primary uppercase tracking-tight">Global User Audit</h1>
-          <p className="text-muted-foreground">Managing client and administrative profiles across the Nexa network.</p>
+          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Global User Audit</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Managing client and administrative profiles across the Nexa network.</p>
         </div>
-        <Button onClick={() => setIsCreating(!isCreating)} className="bg-accent h-11 px-6 font-black uppercase tracking-tighter">
+        <Button onClick={() => setIsCreating(!isCreating)} className="bg-accent h-11 px-6 font-black uppercase tracking-tighter w-full md:w-auto shadow-lg">
           {isCreating ? "Cancel Creation" : <><UserPlus className="mr-2 h-4 w-4" /> Provision New Profile</>}
         </Button>
       </div>
 
       {isCreating && (
-        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-t-4 border-accent shadow-2xl">
-          <CardHeader>
+        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-t-4 border-accent shadow-2xl overflow-hidden rounded-3xl">
+          <CardHeader className="bg-slate-50/50">
             <CardTitle className="text-lg flex items-center gap-2"><Key className="h-5 w-5 text-accent" /> Account Provisioning</CardTitle>
             <CardDescription>Enter client details to initialize their institutional profile and login credentials.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CardContent className="space-y-8 pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">First Name</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">First Name</Label>
                 <Input value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="Legal First Name" className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Last Name</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Last Name</Label>
                 <Input value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} placeholder="Legal Last Name" className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Institutional Email</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Institutional Email</Label>
                 <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Regulatory Contact Email" className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Temporary Password</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Temporary Password</Label>
                 <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Username</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Username</Label>
                 <Input value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} placeholder="Internal Handle" className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Phone Number</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Phone Number</Label>
                 <Input value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+1 (555) 000-0000" className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Address Line 1</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Address Line 1</Label>
                 <Input value={formData.addressLine1} onChange={(e) => setFormData({...formData, addressLine1: e.target.value})} className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">City</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">City</Label>
                 <Input value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="h-11" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-slate-500">Country</Label>
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Country</Label>
                 <Input value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} className="h-11" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t">
               <div className="space-y-4">
                 <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" /> Profile Picture
                 </Label>
-                <div className="flex items-center gap-4">
-                  <div className="h-24 w-24 rounded-full bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden shrink-0 shadow-inner">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden shrink-0 shadow-inner">
                     {formData.profilePictureUrl ? (
                       <img src={formData.profilePictureUrl} className="h-full w-full object-cover" alt="Profile preview" />
                     ) : (
                       <ImageIcon className="h-8 w-8 text-slate-300" />
                     )}
                   </div>
-                  <div className="flex-1 space-y-2">
-                    <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl')} className="h-9 text-xs" />
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Standard identification format preferred.</p>
+                  <div className="flex-1 w-full space-y-2">
+                    <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl')} className="h-10 text-xs" />
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold text-center sm:text-left">Standard identification format preferred.</p>
                   </div>
                 </div>
               </div>
@@ -300,98 +305,100 @@ export default function AdminUsersPage() {
                       <p className="text-[10px] text-slate-400 font-bold uppercase">No signature uploaded</p>
                     )}
                   </div>
-                  <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature')} className="h-9 text-xs" />
+                  <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature')} className="h-10 text-xs" />
                 </div>
               </div>
             </div>
           </CardContent>
           <CardFooter className="bg-slate-50 border-t p-6">
-            <Button onClick={handleCreateUser} className="bg-primary w-full md:w-auto h-12 px-12 font-black uppercase tracking-widest" disabled={loading}>
+            <Button onClick={handleCreateUser} className="bg-primary w-full h-12 px-12 font-black uppercase tracking-widest shadow-xl" disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Authorize & Initialize Client"}
             </Button>
           </CardFooter>
         </Card>
       )}
 
-      <Card className="shadow-lg">
-        <CardHeader className="pb-0">
+      <Card className="shadow-lg rounded-2xl overflow-hidden border-none">
+        <CardHeader className="pb-0 bg-white">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search global index by name or email..." className="pl-10 h-12" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Search global index by name or email..." className="pl-10 h-12 border-slate-200 focus-visible:ring-primary" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead className="font-bold">Client Identity</TableHead>
-                <TableHead className="font-bold">Institutional Email</TableHead>
-                <TableHead className="font-bold">Role</TableHead>
-                <TableHead className="hidden md:table-cell font-bold">Verification</TableHead>
-                <TableHead className="text-right font-bold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isUsersLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-20"><Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-300" /></TableCell></TableRow>
-              ) : filteredUsers?.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">No client records found.</TableCell></TableRow>
-              ) : filteredUsers?.map((u) => (
-                <TableRow key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                  <TableCell className="font-bold text-primary">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 overflow-hidden border shadow-sm">
-                        {u.profilePictureUrl ? <img src={u.profilePictureUrl} className="h-full w-full object-cover" /> : u.firstName?.charAt(0)}
-                      </div>
-                      <span className="truncate max-w-[150px]">{u.firstName} {u.lastName}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="truncate max-w-[180px] font-medium text-slate-600 font-mono text-xs">{u.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={u.userRole === 'admin' ? 'destructive' : 'secondary'} className="capitalize text-[10px] font-black tracking-widest">
-                      {u.userRole === 'admin' && <ShieldCheck className="h-3 w-3 mr-1" />}
-                      {u.userRole || 'client'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {u.addressLine1 ? <Badge className="bg-green-100 text-green-700 border-none font-bold">KYC Verified</Badge> : <Badge variant="outline" className="text-orange-500 border-orange-200">Pending Identity</Badge>}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-primary hover:bg-primary/5" onClick={() => setViewingUser(u)} title="View Dossier"><Eye className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-accent hover:bg-accent/5" asChild title="Manage Assets">
-                        <Link href={`/dashboard/admin/accounts?search=${u.id}`}>
-                          <Landmark className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:bg-slate-100" onClick={() => setEditingUser(u)} title="Modify Records"><Edit3 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:bg-red-50" onClick={() => handleDeleteUser(u.id)} title="Purge Record"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </TableCell>
+        <CardContent className="pt-6 px-0">
+          <div className="overflow-x-auto w-full">
+            <Table>
+              <TableHeader className="bg-slate-50/80">
+                <TableRow>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Client Identity</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Institutional Email</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Role</TableHead>
+                  <TableHead className="hidden lg:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Verification</TableHead>
+                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isUsersLoading ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-20"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Registry...</span></div></TableCell></TableRow>
+                ) : filteredUsers?.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-20 text-muted-foreground italic">No client records matching your query were found in the global index.</TableCell></TableRow>
+                ) : filteredUsers?.map((u) => (
+                  <TableRow key={u.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
+                    <TableCell className="font-bold text-primary py-4 px-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 overflow-hidden border shadow-sm shrink-0">
+                          {u.profilePictureUrl ? <img src={u.profilePictureUrl} className="h-full w-full object-cover" /> : u.firstName?.charAt(0)}
+                        </div>
+                        <span className="truncate max-w-[140px] sm:max-w-[200px]">{u.firstName} {u.lastName}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="truncate max-w-[150px] sm:max-w-none font-medium text-slate-600 font-mono text-xs">{u.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={u.userRole === 'admin' ? 'destructive' : 'secondary'} className="capitalize text-[9px] font-black tracking-widest px-2">
+                        {u.userRole === 'admin' && <ShieldCheck className="h-3 w-3 mr-1" />}
+                        {u.userRole || 'client'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {u.addressLine1 ? <Badge className="bg-green-100 text-green-700 border-none font-black text-[9px] uppercase tracking-tighter">KYC Verified</Badge> : <Badge variant="outline" className="text-orange-500 border-orange-200 text-[9px] uppercase tracking-tighter font-black">Pending Identity</Badge>}
+                    </TableCell>
+                    <TableCell className="text-right px-6">
+                      <div className="flex justify-end gap-1 sm:gap-2">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-primary hover:bg-primary/5 shrink-0" onClick={() => setViewingUser(u)} title="View Dossier"><Eye className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-accent hover:bg-accent/5 shrink-0" asChild title="Manage Assets">
+                          <Link href={`/dashboard/admin/accounts?search=${u.id}`}>
+                            <Landmark className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:bg-slate-100 shrink-0" onClick={() => setEditingUser(u)} title="Modify Records"><Edit3 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:bg-red-50 shrink-0" onClick={() => handleDeleteUser(u.id)} title="Purge Record"><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Profile Modification Dialog */}
+      {/* Profile Modification Dialog - Responsive Optimization */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent className="max-w-3xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-          <div className="p-8 bg-[#002B5B] text-white shrink-0">
+        <DialogContent className="max-w-3xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[95vw] sm:w-full">
+          <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl"><Edit3 className="h-6 w-6" /></div>
+              <div className="p-3 bg-white/10 rounded-2xl shrink-0"><Edit3 className="h-6 w-6" /></div>
               <div>
-                <DialogTitle className="text-2xl font-black uppercase tracking-tight">Modify Institutional Profile</DialogTitle>
-                <DialogDescription className="text-white/60">Updating regulatory records for client UID: {editingUser?.id}</DialogDescription>
+                <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Institutional Profile</DialogTitle>
+                <DialogDescription className="text-white/60 text-xs sm:text-sm truncate max-w-[250px] sm:max-w-none">Updating regulatory records for client UID: {editingUser?.id}</DialogDescription>
               </div>
             </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-8 space-y-10">
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-10 custom-scrollbar">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
               <div className="space-y-6">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b pb-2">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
                   <ShieldCheck className="h-4 w-4" /> Legal Identification
                 </h4>
                 <div className="space-y-4">
@@ -406,7 +413,7 @@ export default function AdminUsersPage() {
               </div>
 
               <div className="space-y-6">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b pb-2">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
                   <Upload className="h-4 w-4" /> Identity Assets
                 </h4>
                 <div className="space-y-6">
@@ -416,7 +423,7 @@ export default function AdminUsersPage() {
                       <div className="h-20 w-20 rounded-full bg-slate-100 border overflow-hidden shrink-0 shadow-inner">
                         {editingUser?.profilePictureUrl ? <img src={editingUser.profilePictureUrl} className="h-full w-full object-cover" /> : <ImageIcon className="h-full w-full p-5 text-slate-300" />}
                       </div>
-                      <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl', true)} className="h-10 text-xs" />
+                      <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl', true)} className="h-10 text-xs shrink-0 w-full sm:w-auto" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -430,7 +437,7 @@ export default function AdminUsersPage() {
               </div>
 
               <div className="space-y-6 md:col-span-2 pt-4">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b pb-2">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
                   <MapPin className="h-4 w-4" /> Residential Verification (KYC)
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -446,65 +453,65 @@ export default function AdminUsersPage() {
             </div>
           </div>
           
-          <DialogFooter className="p-8 bg-slate-50 border-t shrink-0 flex gap-3">
-            <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1 h-12 font-bold rounded-xl">Cancel</Button>
-            <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black uppercase tracking-widest bg-[#002B5B] hover:bg-[#003B7B] text-white rounded-xl shadow-lg">Commit Registry Updates</Button>
+          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t shrink-0 flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1 h-12 font-bold rounded-xl order-2 sm:order-1">Cancel</Button>
+            <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black uppercase tracking-widest bg-[#002B5B] hover:bg-[#003B7B] text-white rounded-xl shadow-lg order-1 sm:order-2">Commit Registry Updates</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Institutional Dossier View */}
+      {/* Institutional Dossier View - Responsive Optimization */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
-        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
-          <div className="bg-[#E5E7EB] rounded-[2.5rem] p-8 sm:p-12 shadow-2xl border border-slate-300 relative">
-            <button onClick={() => setViewingUser(null)} className="absolute top-8 right-8 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500">
+        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+          <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
+            <button onClick={() => setViewingUser(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
               <X className="h-6 w-6" />
             </button>
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
-                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
               <div className="flex flex-col items-center gap-6 pt-2">
-                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-2xl border-8 border-white shrink-0">
+                <div className="h-40 w-40 sm:h-56 sm:w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-2xl border-4 sm:border-8 border-white shrink-0">
                   {viewingUser?.profilePictureUrl ? (
                     <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-white text-7xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
+                    <span className="text-white text-5xl sm:text-7xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
                   )}
                 </div>
                 
                 <div className="text-center space-y-2">
-                  <p className="text-xl font-bold text-slate-700">
+                  <p className="text-lg sm:text-xl font-bold text-slate-700">
                     <span className="font-black text-[#002B5B]">Username:</span> {viewingUser?.username || viewingUser?.email?.split('@')[0]}
                   </p>
-                  <p className="text-xl font-bold text-slate-700">
+                  <p className="text-lg sm:text-xl font-bold text-slate-700 break-all px-4">
                     <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{viewingUser?.email}</span>
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-6 pt-10 border-t border-slate-300 text-xl text-slate-700">
-                <div className="flex gap-4">
+              <div className="space-y-6 pt-10 border-t border-slate-300 text-base sm:text-xl text-slate-700">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Name :</span>
                   <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Address 1:</span>
-                  <span className="font-medium">{viewingUser?.addressLine1 || "—"}</span>
+                  <span className="font-medium break-words">{viewingUser?.addressLine1 || "—"}</span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
                   <span className="font-medium">{viewingUser?.addressLine2 || "—"}</span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
                   <span className="font-medium">
                     {viewingUser?.city ? `${viewingUser.city}${viewingUser.state ? `, ${viewingUser.state}` : ''} ${viewingUser.postalCode || ''}` : '—'}
                   </span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
                   <span className="font-medium">{viewingUser?.country || "United Kingdom"}</span>
                 </div>
@@ -514,21 +521,21 @@ export default function AdminUsersPage() {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] mb-4">Authorized Identity Signature</p>
                   {viewingUser?.signature ? (
-                    <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200">
-                      <img src={viewingUser.signature} alt="Signature" className="h-24 object-contain" />
+                    <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200 max-w-full overflow-hidden">
+                      <img src={viewingUser.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
                     </div>
                   ) : (
                     <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm rounded-xl">No signature authorized</div>
                   )}
                 </div>
                 
-                <div className="pt-4 flex gap-4">
-                  <Button variant="outline" asChild className="flex-1 h-12 rounded-xl font-bold border-slate-300">
+                <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                  <Button variant="outline" asChild className="flex-1 h-12 rounded-xl font-bold border-slate-300 shadow-sm">
                     <Link href={`/dashboard/admin/accounts?search=${viewingUser?.id}`}>
                       <Landmark className="mr-2 h-4 w-4" /> Financial Assets
                     </Link>
                   </Button>
-                  <Button onClick={() => setViewingUser(null)} className="flex-1 h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg">Dismiss Dossier</Button>
+                  <Button onClick={() => setViewingUser(null)} className="flex-1 h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss</Button>
                 </div>
               </div>
             </div>

@@ -21,15 +21,16 @@ function AuthPageContent() {
   const { toast } = useToast();
   const auth = useAuth();
   const db = useFirestore();
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, isAuthReady } = useUser();
   const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Faster redirect logic using isAuthReady
   useEffect(() => {
-    if (user && !isUserLoading) {
+    if (isAuthReady && user) {
       if (user.email === "citybank@gmail.com") {
         const adminRef = doc(db, "roles_admin", user.uid);
         setDoc(adminRef, { 
@@ -40,7 +41,7 @@ function AuthPageContent() {
       }
       router.replace("/dashboard");
     }
-  }, [user, isUserLoading, router, db]);
+  }, [user, isAuthReady, router, db]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,10 +73,13 @@ function AuthPageContent() {
     }
   };
 
-  if (isUserLoading) {
+  if (isUserLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Verifying Security Session...</p>
+        </div>
       </div>
     );
   }
@@ -86,8 +90,8 @@ function AuthPageContent() {
         <LanguageSwitcher />
       </div>
       
-      <Link href="/" className="mb-8 flex items-center gap-2">
-        <div className="bg-primary p-2 rounded-lg">
+      <Link href="/" className="mb-8 flex items-center gap-2 group">
+        <div className="bg-primary p-2 rounded-lg transition-transform group-hover:scale-110">
           <Building2 className="text-white h-5 w-5 sm:h-6 sm:w-6" />
         </div>
         <div className="flex flex-col -space-y-1">
@@ -96,7 +100,7 @@ function AuthPageContent() {
         </div>
       </Link>
 
-      <Card className="w-full max-w-[400px] shadow-xl border-t-4 border-t-accent overflow-hidden">
+      <Card className="w-full max-w-[400px] shadow-2xl border-t-4 border-t-accent overflow-hidden transition-all duration-500">
         <CardHeader className="space-y-1 text-center p-6 sm:p-8">
           <CardTitle className="text-xl sm:text-2xl font-bold">{t('auth_signin')}</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
@@ -130,12 +134,12 @@ function AuthPageContent() {
               />
             </div>
             {email === "citybank@gmail.com" && (
-              <div className="flex items-center gap-2 p-2 sm:p-3 bg-accent/10 border border-accent/20 rounded-lg text-[10px] sm:text-xs font-bold text-accent">
+              <div className="flex items-center gap-2 p-2 sm:p-3 bg-accent/10 border border-accent/20 rounded-lg text-[10px] sm:text-xs font-bold text-accent animate-pulse">
                 <ShieldCheck className="h-3 w-3 sm:h-4 sm:w-4" />
                 Administrator Login Detected
               </div>
             )}
-            <Button className="w-full bg-primary hover:bg-primary/90 h-11 sm:h-12" disabled={loading}>
+            <Button className="w-full bg-primary hover:bg-primary/90 h-11 sm:h-12 shadow-lg" disabled={loading}>
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -152,13 +156,13 @@ function AuthPageContent() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-[10px] uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Internal Access Only</span>
+              <span className="bg-background px-2 text-muted-foreground font-black tracking-widest">Internal Access Only</span>
             </div>
           </div>
 
           <Button 
             variant="outline" 
-            className="w-full h-11 sm:h-12 flex items-center justify-center gap-2 text-xs sm:text-sm" 
+            className="w-full h-11 sm:h-12 flex items-center justify-center gap-2 text-xs sm:text-sm border-slate-200" 
             onClick={handleGoogleSignIn}
             disabled={loading}
           >
@@ -186,7 +190,7 @@ function AuthPageContent() {
         <CardFooter className="flex flex-col space-y-4 pt-0 p-6 sm:p-8 border-t bg-slate-50/50">
           <div className="text-center text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-2">
             <Lock className="h-3 w-3" /> 
-            <span>Accounts are provisioned by Banking Administrators.</span>
+            <span className="font-medium">Accounts are provisioned by Banking Administrators.</span>
           </div>
         </CardFooter>
       </Card>
@@ -195,7 +199,7 @@ function AuthPageContent() {
         <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-widest font-black">
           Global Security Standards • 256-bit Encryption
         </p>
-        <p className="text-[10px] sm:text-xs text-muted-foreground">
+        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
           © 2024 City International Bank. Member FDIC. Equal Housing Lender.
         </p>
       </div>

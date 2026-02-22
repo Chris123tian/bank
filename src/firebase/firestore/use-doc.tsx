@@ -36,6 +36,7 @@ export function useDoc<T = any>(
       return;
     }
 
+    // Wait for global auth readiness
     if (!isAuthReady) {
       setData(null);
       setIsLoading(true);
