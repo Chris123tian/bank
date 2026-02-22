@@ -74,7 +74,7 @@ export default function TransactionsPage() {
     if (!db || !user?.uid) return null;
 
     if (selectedAccountId === "all") {
-      // Secure collectionGroup query requiring customerId filter
+      // Secure collectionGroup query requiring customerId filter to match high-priority rules
       return query(
         collectionGroup(db, "transactions"),
         where("customerId", "==", user.uid),
