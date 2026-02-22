@@ -1,3 +1,4 @@
+
 'use client';
     
 import { useState, useEffect } from 'react';
@@ -8,9 +9,9 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useFirebase } from '@/firebase/provider';
 
 type WithId<T> = T & { id: string };
 
@@ -23,19 +24,10 @@ export interface UseDocResult<T> {
 export function useDoc<T = any>(
   memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
 ): UseDocResult<T> {
+  const { isAuthReady, user } = useFirebase();
   const [data, setData] = useState<WithId<T> | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
-  const [authReady, setAuthReady] = useState<boolean>(false);
-
-  // Sync with Auth SDK to ensure token claims are ready
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, () => {
-      setAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     if (!memoizedDocRef) {
@@ -44,7 +36,7 @@ export function useDoc<T = any>(
       return;
     }
 
-    if (!authReady) {
+    if (!isAuthReady) {
       setData(null);
       setIsLoading(true);
       return;
@@ -57,8 +49,7 @@ export function useDoc<T = any>(
       return;
     }
 
-    const auth = getAuth();
-    if (!auth.currentUser) {
+    if (!user) {
       setData(null);
       setIsLoading(false);
       return;
@@ -84,7 +75,7 @@ export function useDoc<T = any>(
           path: memoizedDocRef.path,
         });
 
-        if (auth.currentUser) {
+        if (user) {
           setError(contextualError);
           errorEmitter.emit('permission-error', contextualError);
         }
@@ -95,7 +86,7 @@ export function useDoc<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef, authReady]);
+  }, [memoizedDocRef, isAuthReady, user]);
 
   return { data, isLoading, error };
 }

@@ -16,17 +16,16 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading } = useUser();
+  const { user, isUserLoading, isAuthReady } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    // Optimization: Use replace for faster navigation and clean history
-    if (!isUserLoading && !user) {
-      router.replace("/");
+    if (isAuthReady && !user) {
+      router.replace("/auth");
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isAuthReady, router]);
 
-  if (isUserLoading) {
+  if (!isAuthReady || (isUserLoading && !user)) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -34,7 +33,6 @@ export default function DashboardLayout({
     );
   }
 
-  // Handle flash of unauthenticated content
   if (!user) return null;
 
   return (

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,9 +10,9 @@ import {
   QuerySnapshot,
   CollectionReference,
 } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useFirebase } from '@/firebase/provider';
 
 export type WithId<T> = T & { id: string };
 
@@ -23,24 +24,15 @@ export interface UseCollectionResult<T> {
 
 /**
  * Custom hook to listen to a Firestore collection or query.
- * Includes "Nuclear Guard" logic to prevent unauthorized requests during hydration.
+ * Optimized to use global auth readiness from context.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
 ): UseCollectionResult<T> {
+  const { isAuthReady, user } = useFirebase();
   const [data, setData] = useState<WithId<T>[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
-  const [authReady, setAuthReady] = useState<boolean>(false);
-
-  // Track when auth is fully initialized to avoid race conditions with custom claims
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, () => {
-      setAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     // 1. INPUT GUARD: Prevent execution if ref is missing
@@ -50,15 +42,14 @@ export function useCollection<T = any>(
       return;
     }
 
-    // 2. AUTH STABILITY GUARD: Wait for auth session to settle completely
-    if (!authReady) {
+    // 2. AUTH STABILITY GUARD: Wait for global auth readiness
+    if (!isAuthReady) {
       setData(null);
       setIsLoading(true);
       return;
     }
 
-    const auth = getAuth();
-    if (!auth.currentUser) {
+    if (!user) {
       setData(null);
       setIsLoading(false);
       return;
@@ -70,14 +61,12 @@ export function useCollection<T = any>(
     try {
       const q = memoizedTargetRefOrQuery as any;
       
-      // Extraction logic for different query types
       if (typeof q.path === 'string') {
         pathString = q.path;
       } else if (q._query?.path) {
         pathString = q._query.path.canonicalString();
       }
 
-      // Detection for collection groups
       if (q.type === 'query' && q._query?.collectionGroup) {
         isGroupQuery = true;
         pathString = q._query.collectionGroup;
@@ -120,8 +109,7 @@ export function useCollection<T = any>(
           path: finalPath,
         });
 
-        // Only report if still authenticated to avoid transient logout errors
-        if (auth.currentUser) {
+        if (user) {
           setError(contextualError);
           errorEmitter.emit('permission-error', contextualError);
         }
@@ -132,7 +120,7 @@ export function useCollection<T = any>(
     );
 
     return () => unsubscribe();
-  }, [memoizedTargetRefOrQuery, authReady]);
+  }, [memoizedTargetRefOrQuery, isAuthReady, user]);
 
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error('Target ref must be memoized with useMemoFirebase');
