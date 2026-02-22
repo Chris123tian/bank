@@ -281,7 +281,7 @@ export default function AdminAccountsAuditPage() {
             </div>
           </div>
           
-          <div className="p-8 space-y-6 bg-slate-50">
+          <div className="p-8 space-y-6 bg-slate-50 max-h-[60vh] overflow-y-auto">
             <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Institutional Ledger Records</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {clientPortfolioAccounts?.map((acc) => (
