@@ -42,7 +42,8 @@ import {
   ShieldCheck,
   FileText,
   CreditCard,
-  Separator
+  Separator,
+  Upload
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -53,8 +54,10 @@ export default function AdminAccountsAuditPage() {
   const { user } = useUser();
   const [editingAccount, setEditingAccount] = useState<any>(null);
   const [viewingClientPortfolio, setViewingClientPortfolio] = useState<string | null>(null);
+  const [editingProfile, setEditingProfile] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
   // Create Form State
@@ -143,6 +146,29 @@ export default function AdminAccountsAuditPage() {
     toast({ title: "Account Updated", description: `Record for ${editingAccount.accountNumber} has been modified.` });
     setEditingAccount(null);
     setIsEditDialogOpen(false);
+  };
+
+  const handleUpdateProfile = () => {
+    if (!db || !editingProfile) return;
+    const profileRef = doc(db, "users", editingProfile.id);
+    updateDocumentNonBlocking(profileRef, {
+      ...editingProfile,
+      updatedAt: serverTimestamp(),
+    });
+    toast({ title: "Dossier Updated", description: "Institutional identity record has been modified." });
+    setIsEditProfileOpen(false);
+    setEditingProfile(null);
+  };
+
+  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingProfile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingProfile({ ...editingProfile, signature: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDeleteAccount = (acc: any) => {
@@ -314,9 +340,14 @@ export default function AdminAccountsAuditPage() {
                 {/* Left Column: Personal & Identity */}
                 <div className="lg:col-span-2 space-y-8">
                   <section className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                      <UserIcon className="h-4 w-4" /> Personal Identity Records
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                        <UserIcon className="h-4 w-4" /> Personal Identity Records
+                      </h3>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => { setEditingProfile({...userProfile}); setIsEditProfileOpen(true); }}>
+                        <Edit3 className="h-3 w-3 mr-1" /> Edit Section
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border shadow-sm">
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold text-slate-400 uppercase">Legal Full Name</Label>
@@ -338,9 +369,14 @@ export default function AdminAccountsAuditPage() {
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                      <MapPin className="h-4 w-4" /> Residential & Physical Verification
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                        <MapPin className="h-4 w-4" /> Residential & Physical Verification
+                      </h3>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => { setEditingProfile({...userProfile}); setIsEditProfileOpen(true); }}>
+                        <Edit3 className="h-3 w-3 mr-1" /> Edit Section
+                      </Button>
+                    </div>
                     <div className="bg-white p-6 rounded-2xl border shadow-sm space-y-4">
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold text-slate-400 uppercase">Registered Address</Label>
@@ -364,9 +400,14 @@ export default function AdminAccountsAuditPage() {
                   </section>
 
                   <section className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                      <Briefcase className="h-4 w-4" /> Professional & Financial Profile
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                        <Briefcase className="h-4 w-4" /> Professional & Financial Profile
+                      </h3>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => { setEditingProfile({...userProfile}); setIsEditProfileOpen(true); }}>
+                        <Edit3 className="h-3 w-3 mr-1" /> Edit Section
+                      </Button>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-2xl border shadow-sm">
                       <div className="space-y-1">
                         <Label className="text-[10px] font-bold text-slate-400 uppercase">Employment Status</Label>
@@ -391,9 +432,14 @@ export default function AdminAccountsAuditPage() {
                 {/* Right Column: Signature & Accounts Summary */}
                 <div className="space-y-8">
                   <section className="space-y-4">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                      <FileText className="h-4 w-4" /> Legal Authorization
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                        <FileText className="h-4 w-4" /> Legal Authorization
+                      </h3>
+                      <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold" onClick={() => { setEditingProfile({...userProfile}); setIsEditProfileOpen(true); }}>
+                        <Edit3 className="h-3 w-3 mr-1" /> Edit
+                      </Button>
+                    </div>
                     <div className="bg-white p-6 rounded-2xl border shadow-sm text-center">
                       <Label className="text-[9px] font-black uppercase text-slate-400 mb-2 block">Authenticated Signature</Label>
                       {userProfile.signature ? (
@@ -436,6 +482,111 @@ export default function AdminAccountsAuditPage() {
           
           <DialogFooter className="p-6 bg-white border-t shrink-0">
             <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-12 rounded-xl font-bold bg-primary shadow-lg">Dismiss Dossier</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Modification Dialog (Administrative Override) */}
+      <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
+          <div className="p-6 bg-slate-50 border-b shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Institutional Dossier Modification</DialogTitle>
+                <DialogDescription>Administrative override for client UID: {editingProfile?.id}</DialogDescription>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-8 space-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Personal Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <UserIcon className="h-3 w-3" /> Personal Identity
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2"><Label>First Name</Label><Input value={editingProfile?.firstName || ""} onChange={(e) => setEditingProfile({...editingProfile, firstName: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Last Name</Label><Input value={editingProfile?.lastName || ""} onChange={(e) => setEditingProfile({...editingProfile, lastName: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Date of Birth</Label><Input type="date" value={editingProfile?.dob || ""} onChange={(e) => setEditingProfile({...editingProfile, dob: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>SSN / Tax ID</Label><Input value={editingProfile?.ssn || ""} onChange={(e) => setEditingProfile({...editingProfile, ssn: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Phone Number</Label><Input value={editingProfile?.phoneNumber || ""} onChange={(e) => setEditingProfile({...editingProfile, phoneNumber: e.target.value})} /></div>
+                </div>
+              </div>
+
+              {/* Residential Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <MapPin className="h-3 w-3" /> Residential Verification
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2"><Label>Street Address</Label><Input value={editingProfile?.addressLine1 || ""} onChange={(e) => setEditingProfile({...editingProfile, addressLine1: e.target.value})} /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label>City</Label><Input value={editingProfile?.city || ""} onChange={(e) => setEditingProfile({...editingProfile, city: e.target.value})} /></div>
+                    <div className="space-y-2"><Label>State</Label><Input value={editingProfile?.state || ""} onChange={(e) => setEditingProfile({...editingProfile, state: e.target.value})} /></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label>Zip Code</Label><Input value={editingProfile?.postalCode || ""} onChange={(e) => setEditingProfile({...editingProfile, postalCode: e.target.value})} /></div>
+                    <div className="space-y-2"><Label>Country</Label><Input value={editingProfile?.country || "USA"} onChange={(e) => setEditingProfile({...editingProfile, country: e.target.value})} /></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <Briefcase className="h-3 w-3" /> Financial Profile
+                </h4>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Employment Status</Label>
+                    <Select value={editingProfile?.employmentStatus || "Full-Time"} onValueChange={(v) => setEditingProfile({...editingProfile, employmentStatus: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Full-Time">Full-Time</SelectItem>
+                        <SelectItem value="Part-Time">Part-Time</SelectItem>
+                        <SelectItem value="Self-Employed">Self-Employed</SelectItem>
+                        <SelectItem value="Student">Student</SelectItem>
+                        <SelectItem value="Retired">Retired</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2"><Label>Employer Entity</Label><Input value={editingProfile?.employerName || ""} onChange={(e) => setEditingProfile({...editingProfile, employerName: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Job Title</Label><Input value={editingProfile?.jobTitle || ""} onChange={(e) => setEditingProfile({...editingProfile, jobTitle: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Annual Household Income</Label><Input type="number" value={editingProfile?.annualIncome || ""} onChange={(e) => setEditingProfile({...editingProfile, annualIncome: Number(e.target.value)})} /></div>
+                </div>
+              </div>
+
+              {/* Authorization Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <FileText className="h-3 w-3" /> Signature Vault
+                </h4>
+                <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl space-y-4">
+                  {editingProfile?.signature ? (
+                    <div className="relative group">
+                      <img src={editingProfile.signature} alt="Signature" className="h-24 w-full object-contain bg-white border rounded p-2" />
+                      <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setEditingProfile({...editingProfile, signature: ""})}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-slate-200 rounded-lg hover:border-primary cursor-pointer transition-all bg-white">
+                      <Upload className="h-5 w-5 text-slate-400 mb-2" />
+                      <span className="text-[10px] font-bold text-slate-500">Upload New Signature</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleSignatureUpload} />
+                    </label>
+                  )}
+                  <p className="text-[9px] text-muted-foreground uppercase font-black text-center">Administrative Overwrite Warning</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="p-6 bg-slate-50 border-t shrink-0 flex gap-3">
+            <Button variant="outline" onClick={() => setIsEditProfileOpen(false)} className="flex-1 h-12 font-bold">Cancel Modification</Button>
+            <Button onClick={handleUpdateProfile} className="flex-1 h-12 font-black bg-primary">Commit Institutional Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -499,54 +650,75 @@ export default function AdminAccountsAuditPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modify Account: {editingAccount?.accountNumber}</DialogTitle>
-            <DialogDescription>Adjust financial parameters and operational status.</DialogDescription>
+        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] shadow-2xl overflow-y-auto max-h-[95vh]">
+          <DialogHeader className="p-6 bg-slate-50 border-b sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Operational Adjustment</DialogTitle>
+                <DialogDescription>Modifying financial parameters for: {editingAccount?.accountNumber}</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Account Type</Label>
-              <Select 
-                value={editingAccount?.accountType ?? "Current Account"} 
-                onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Current Account">Current Account</SelectItem>
-                  <SelectItem value="Savings Account">Savings Account</SelectItem>
-                  <SelectItem value="Business Account">Business Account</SelectItem>
-                  <SelectItem value="Internet Banking">Internet Banking</SelectItem>
-                  <SelectItem value="Safety Deposits">Safety Deposits</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Account Type</Label>
+                <Select 
+                  value={editingAccount?.accountType ?? "Current Account"} 
+                  onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Current Account">Current Account</SelectItem>
+                    <SelectItem value="Savings Account">Savings Account</SelectItem>
+                    <SelectItem value="Business Account">Business Account</SelectItem>
+                    <SelectItem value="Internet Banking">Internet Banking</SelectItem>
+                    <SelectItem value="Safety Deposits">Safety Deposits</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Account Balance</Label>
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  value={editingAccount?.balance ?? ""} 
+                  onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Account Balance</Label>
-              <Input 
-                type="number" 
-                step="0.01"
-                value={editingAccount?.balance ?? ""} 
-                onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Operational Status</Label>
-              <Select 
-                value={editingAccount?.status ?? "Active"} 
-                onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Suspended">Suspended</SelectItem>
-                  <SelectItem value="Review Required">Review Required</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Operational Status</Label>
+                <Select 
+                  value={editingAccount?.status ?? "Active"} 
+                  onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Suspended">Suspended</SelectItem>
+                    <SelectItem value="Review Required">Review Required</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <Select value={editingAccount?.currency ?? "USD"} onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleUpdateAccount} className="w-full">Apply Ledger Update</Button>
+          <DialogFooter className="p-6 bg-slate-50 border-t sticky bottom-0 z-10 flex gap-3">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 font-bold">Cancel Audit</Button>
+            <Button onClick={handleUpdateAccount} className="bg-primary flex-1 h-12 font-black">Apply Ledger Update</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
