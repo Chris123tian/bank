@@ -2,10 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { useFirestore, useCollection, useUser, useDoc, useFirebaseApp } from "@/firebase";
+import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { initializeApp, getApp, getApps } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,21 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, User as UserIcon, Lock, Key } from "lucide-react";
+import { 
+  UserPlus, 
+  Search, 
+  ShieldCheck, 
+  ShieldAlert, 
+  Loader2, 
+  Trash2, 
+  Eye, 
+  Edit3, 
+  Key, 
+  Upload,
+  Image as ImageIcon,
+  FileSignature,
+  X
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { firebaseConfig } from "@/firebase/config";
@@ -35,18 +49,6 @@ export default function AdminUsersPage() {
   const [viewingUser, setViewingUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-
-  // Verify Admin Status
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !currentUser?.uid) return null;
-    return doc(db, "roles_admin", currentUser.uid);
-  }, [db, currentUser?.uid]);
-
-  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  
-  const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
-  const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
-  const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   // Form state for Manual Creation
   const [formData, setFormData] = useState({
@@ -63,7 +65,21 @@ export default function AdminUsersPage() {
     postalCode: "",
     country: "United Kingdom",
     userRole: "client",
+    profilePictureUrl: "",
+    signature: "",
   });
+
+  // Verify Admin Status
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !currentUser?.uid) return null;
+    return doc(db, "roles_admin", currentUser.uid);
+  }, [db, currentUser?.uid]);
+
+  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
+  
+  const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
+  const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
+  const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   const usersRef = useMemoFirebase(() => {
     if (!db || !isAdminReady) return null;
@@ -71,6 +87,21 @@ export default function AdminUsersPage() {
   }, [db, isAdminReady]);
 
   const { data: users, isLoading: isUsersLoading } = useCollection(usersRef);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'profilePictureUrl' | 'signature', isEdit: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (isEdit) {
+          setEditingUser({ ...editingUser, [field]: reader.result as string });
+        } else {
+          setFormData(prev => ({ ...prev, [field]: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleCreateUser = async () => {
     if (!db || !formData.email || !formData.firstName || !formData.password) {
@@ -80,16 +111,13 @@ export default function AdminUsersPage() {
 
     setLoading(true);
     try {
-      // 1. Initialize a secondary Firebase App to create the Auth user without signing out the admin
       const secondaryAppName = `provisioning-${Date.now()}`;
       const secondaryApp = getApps().find(app => app.name === secondaryAppName) || initializeApp(firebaseConfig, secondaryAppName);
       const secondaryAuth = getAuth(secondaryApp);
 
-      // 2. Create Auth Account
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, formData.email, formData.password);
       const newUid = userCredential.user.uid;
 
-      // 3. Create Firestore Profile
       const userDocRef = doc(db, "users", newUid);
       const newUserData = {
         id: newUid,
@@ -105,13 +133,13 @@ export default function AdminUsersPage() {
         postalCode: formData.postalCode,
         country: formData.country,
         userRole: formData.userRole,
+        profilePictureUrl: formData.profilePictureUrl,
+        signature: formData.signature,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
       await setDoc(userDocRef, newUserData, { merge: true });
-
-      // Clean up secondary app
       await signOut(secondaryAuth);
 
       toast({ 
@@ -122,14 +150,11 @@ export default function AdminUsersPage() {
       setFormData({ 
         firstName: "", lastName: "", email: "", password: "", username: "", 
         phoneNumber: "", addressLine1: "", addressLine2: "", city: "", 
-        state: "", postalCode: "", country: "United Kingdom", userRole: "client" 
+        state: "", postalCode: "", country: "United Kingdom", userRole: "client",
+        profilePictureUrl: "", signature: ""
       });
     } catch (error: any) {
-      toast({ 
-        variant: "destructive", 
-        title: "Provisioning Failed", 
-        description: error.message || "Could not create client account." 
-      });
+      toast({ variant: "destructive", title: "Provisioning Failed", description: error.message || "Could not create client account." });
     } finally {
       setLoading(false);
     }
@@ -150,6 +175,8 @@ export default function AdminUsersPage() {
       state: editingUser.state || "",
       postalCode: editingUser.postalCode || "",
       country: editingUser.country || "United Kingdom",
+      profilePictureUrl: editingUser.profilePictureUrl || "",
+      signature: editingUser.signature || "",
       updatedAt: serverTimestamp(),
     });
     toast({ title: "Information Updated", description: `User profile modified successfully.` });
@@ -198,42 +225,81 @@ export default function AdminUsersPage() {
             <CardTitle className="text-lg flex items-center gap-2"><Key className="h-5 w-5 text-accent" /> Account Provisioning</CardTitle>
             <CardDescription>Enter client details to initialize their institutional profile and login credentials.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label>First Name</Label>
-              <Input value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="Legal First Name" />
+          <CardContent className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label>First Name</Label>
+                <Input value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="Legal First Name" />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name</Label>
+                <Input value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} placeholder="Legal Last Name" />
+              </div>
+              <div className="space-y-2">
+                <Label>Institutional Email</Label>
+                <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Regulatory Contact Email" />
+              </div>
+              <div className="space-y-2">
+                <Label>Temporary Password</Label>
+                <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" />
+              </div>
+              <div className="space-y-2">
+                <Label>Username</Label>
+                <Input value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} placeholder="Internal Handle" />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Input value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+1 (555) 000-0000" />
+              </div>
+              <div className="space-y-2">
+                <Label>Address Line 1</Label>
+                <Input value={formData.addressLine1} onChange={(e) => setFormData({...formData, addressLine1: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>City</Label>
+                <Input value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Country</Label>
+                <Input value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Last Name</Label>
-              <Input value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} placeholder="Legal Last Name" />
-            </div>
-            <div className="space-y-2">
-              <Label>Institutional Email</Label>
-              <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Regulatory Contact Email" />
-            </div>
-            <div className="space-y-2">
-              <Label>Temporary Password</Label>
-              <Input type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} placeholder="Min 6 characters" />
-            </div>
-            <div className="space-y-2">
-              <Label>Username</Label>
-              <Input value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} placeholder="Internal Handle" />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone Number</Label>
-              <Input value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+1 (555) 000-0000" />
-            </div>
-            <div className="space-y-2">
-              <Label>Address Line 1</Label>
-              <Input value={formData.addressLine1} onChange={(e) => setFormData({...formData, addressLine1: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>City</Label>
-              <Input value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Country</Label>
-              <Input value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t">
+              <div className="space-y-4">
+                <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" /> Profile Picture
+                </Label>
+                <div className="flex items-center gap-4">
+                  <div className="h-24 w-24 rounded-full bg-slate-100 flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden shrink-0">
+                    {formData.profilePictureUrl ? (
+                      <img src={formData.profilePictureUrl} className="h-full w-full object-cover" alt="Profile preview" />
+                    ) : (
+                      <ImageIcon className="h-8 w-8 text-slate-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl')} className="h-9 text-xs" />
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">Standard identification format preferred.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <FileSignature className="h-4 w-4" /> Authorized Signature
+                </Label>
+                <div className="flex flex-col gap-3">
+                  <div className="h-24 w-full bg-white rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                    {formData.signature ? (
+                      <img src={formData.signature} className="h-20 object-contain" alt="Signature preview" />
+                    ) : (
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">No signature uploaded</p>
+                    )}
+                  </div>
+                  <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature')} className="h-9 text-xs" />
+                </div>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="bg-slate-50/50 border-t p-6">
@@ -269,13 +335,13 @@ export default function AdminUsersPage() {
                 <TableRow key={u.id}>
                   <TableCell className="font-bold text-primary">
                     <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 overflow-hidden">
+                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 overflow-hidden border">
                         {u.profilePictureUrl ? <img src={u.profilePictureUrl} className="h-full w-full object-cover" /> : u.firstName?.charAt(0)}
                       </div>
                       <span className="truncate max-w-[120px]">{u.firstName} {u.lastName}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="truncate max-w-[150px]">{u.email}</TableCell>
+                  <TableCell className="truncate max-w-[150px] font-medium text-slate-600">{u.email}</TableCell>
                   <TableCell>
                     <Badge variant={u.userRole === 'admin' ? 'destructive' : 'secondary'} className="capitalize text-[10px]">
                       {u.userRole === 'admin' && <ShieldCheck className="h-3 w-3 mr-1" />}
@@ -286,9 +352,9 @@ export default function AdminUsersPage() {
                     {u.addressLine1 ? <Badge className="bg-green-100 text-green-700">KYC Complete</Badge> : <Badge variant="outline">Pending KYC</Badge>}
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingUser(u)}><Eye className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-accent" onClick={() => setEditingUser(u)}><Edit3 className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400" onClick={() => handleDeleteUser(u.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingUser(u)} title="View Dossier"><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-accent" onClick={() => setEditingUser(u)} title="Modify Records"><Edit3 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400" onClick={() => handleDeleteUser(u.id)} title="Purge Record"><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -297,9 +363,9 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Profile Modification Form */}
+      {/* Profile Modification Dialog */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent className="max-w-2xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-3xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           <div className="p-6 bg-slate-50 border-b shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
@@ -311,58 +377,72 @@ export default function AdminUsersPage() {
           </div>
           
           <div className="flex-1 overflow-y-auto p-8 space-y-8">
-            <div className="space-y-4">
-               <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-4">
-                  <ShieldCheck className="h-4 w-4" /> Personal & Account Information
-               </h4>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div className="space-y-2">
-                   <Label>First Name</Label>
-                   <Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Last Name</Label>
-                   <Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Username</Label>
-                   <Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Primary Email</Label>
-                   <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Address 1</Label>
-                   <Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Address 2</Label>
-                   <Input value={editingUser?.addressLine2 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine2: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>City</Label>
-                   <Input value={editingUser?.city || ""} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Country</Label>
-                   <Input value={editingUser?.country || ""} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} />
-                 </div>
-               </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-4">
+                  <ShieldCheck className="h-4 w-4" /> Legal Information
+                </h4>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>First Name</Label><Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} /></div>
+                    <div className="space-y-2"><Label>Last Name</Label><Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} /></div>
+                  </div>
+                  <div className="space-y-2"><Label>Username</Label><Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Institutional Email</Label><Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Phone Number</Label><Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} /></div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-4">
+                  <Upload className="h-4 w-4" /> Identity Assets
+                </h4>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-bold">Profile Picture</Label>
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-full bg-slate-100 border overflow-hidden shrink-0">
+                        {editingUser?.profilePictureUrl ? <img src={editingUser.profilePictureUrl} className="h-full w-full object-cover" /> : <ImageIcon className="h-full w-full p-4 text-slate-300" />}
+                      </div>
+                      <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl', true)} className="h-9 text-xs" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] uppercase font-bold">Authorized Signature</Label>
+                    <div className="h-20 w-full bg-white border rounded-lg flex items-center justify-center overflow-hidden mb-2">
+                      {editingUser?.signature ? <img src={editingUser.signature} className="h-16 object-contain" /> : <p className="text-[10px] text-slate-300 italic">No signature</p>}
+                    </div>
+                    <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature', true)} className="h-9 text-xs" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 md:col-span-2 pt-4 border-t">
+                <h4 className="text-xs font-black uppercase tracking-widest text-primary mb-4">Residential Verification</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2"><Label>Address 1</Label><Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Address 2</Label><Input value={editingUser?.addressLine2 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine2: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>City</Label><Input value={editingUser?.city || ""} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Country</Label><Input value={editingUser?.country || ""} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} /></div>
+                </div>
+              </div>
             </div>
           </div>
           
           <DialogFooter className="p-6 bg-slate-50 border-t shrink-0 flex gap-3">
             <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1 h-12 font-bold rounded-xl">Cancel</Button>
-            <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black bg-primary rounded-xl">Save Changes</Button>
+            <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black bg-primary rounded-xl">Commit Updates</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Detail View (Redesigned based on request image) */}
+      {/* Institutional Dossier View */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
-          <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
+          <div className="bg-[#E5E7EB] rounded-[2.5rem] p-8 sm:p-12 shadow-2xl border border-slate-300 relative">
+            <button onClick={() => setViewingUser(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500">
+              <X className="h-5 w-5" />
+            </button>
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
                 <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
@@ -370,7 +450,7 @@ export default function AdminUsersPage() {
               </div>
               
               <div className="flex flex-col items-center gap-6 pt-2">
-                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white">
+                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white shrink-0">
                   {viewingUser?.profilePictureUrl ? (
                     <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
@@ -403,7 +483,9 @@ export default function AdminUsersPage() {
                 </div>
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
-                  <span className="font-medium">{viewingUser?.city || viewingUser?.state || viewingUser?.postalCode ? `${viewingUser.city || ''} ${viewingUser.state || ''} ${viewingUser.postalCode || ''}` : "—"}</span>
+                  <span className="font-medium">
+                    {viewingUser?.city ? `${viewingUser.city}${viewingUser.state ? `, ${viewingUser.state}` : ''} ${viewingUser.postalCode || ''}` : '—'}
+                  </span>
                 </div>
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
@@ -412,17 +494,18 @@ export default function AdminUsersPage() {
               </div>
 
               <div className="pt-10 border-t border-slate-300">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] mb-4">Authorized Identity Signature</p>
                 {viewingUser?.signature ? (
-                  <div className="bg-white p-4 inline-block shadow-lg rounded-lg border border-slate-200">
+                  <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200">
                     <img src={viewingUser.signature} alt="Signature" className="h-24 object-contain" />
                   </div>
                 ) : (
-                  <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm">No signature authorized</div>
+                  <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm rounded-xl">No signature authorized</div>
                 )}
               </div>
 
               <div className="pt-8 border-t border-slate-300">
-                <Button onClick={() => setViewingUser(null)} className="w-full h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B]">Dismiss Dossier</Button>
+                <Button onClick={() => setViewingUser(null)} className="w-full h-14 rounded-2xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg">Dismiss Dossier</Button>
               </div>
             </div>
           </div>
