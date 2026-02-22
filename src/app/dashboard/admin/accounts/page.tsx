@@ -150,8 +150,7 @@ export default function AdminAccountsAuditPage() {
       updatedAt: serverTimestamp(),
     });
 
-    // AUTO-INJECT AUDIT TRANSACTION RECORD for visibility in client history
-    // Standardizing on both customerId and userId for security rule compliance
+    // AUTO-INJECT AUDIT TRANSACTION RECORD
     const txRef = collection(db, "users", clientUid, "accounts", editingAccount.id, "transactions");
     addDocumentNonBlocking(txRef, {
       accountId: editingAccount.id,
@@ -256,7 +255,7 @@ export default function AdminAccountsAuditPage() {
                 {isAccountsLoading ? (
                   <TableRow><TableCell colSpan={6} className="text-center py-20"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Assets...</span></div></TableCell></TableRow>
                 ) : filteredAccounts?.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">No accounts matching your search criteria were found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">No accounts found.</TableCell></TableRow>
                 ) : filteredAccounts?.map((acc) => (
                   <TableRow key={acc.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
                     <TableCell className="font-mono text-[10px] sm:text-xs font-bold text-primary py-4 px-6">{acc.accountNumber}</TableCell>
@@ -321,13 +320,13 @@ export default function AdminAccountsAuditPage() {
 
       {/* Account Edit / Balance Adjustment Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[95vw] sm:w-full">
+        <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/10 rounded-2xl shrink-0"><TrendingUp className="h-6 w-6" /></div>
               <div>
                 <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Capital Adjustment</DialogTitle>
-                <DialogDescription className="text-white/60 text-xs truncate max-w-[200px] sm:max-w-none">Authorized correction for: {editingAccount?.accountNumber}</DialogDescription>
+                <DialogDescription className="text-white/60 text-xs">Authorized correction for: {editingAccount?.accountNumber}</DialogDescription>
               </div>
             </div>
           </div>
@@ -390,10 +389,9 @@ export default function AdminAccountsAuditPage() {
                   </Select>
                 </div>
               </div>
-              <p className="text-[9px] text-muted-foreground italic font-medium">Manual balance overrides reflect instantly on the client's dashboard and generate an automated audit transaction record.</p>
             </div>
           </div>
-          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t flex flex-col sm:flex-row gap-3 shrink-0">
+          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold order-2 sm:order-1">Cancel</Button>
             <Button onClick={handleUpdateAccount} className="flex-1 h-12 bg-[#002B5B] hover:bg-[#003B7B] rounded-xl font-black uppercase tracking-widest shadow-lg order-1 sm:order-2">Commit Corrections</Button>
           </DialogFooter>
@@ -402,13 +400,13 @@ export default function AdminAccountsAuditPage() {
 
       {/* Create Account Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[95vw] sm:w-full">
+        <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-primary text-white shrink-0">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/10 rounded-2xl shrink-0"><PlusCircle className="h-6 w-6" /></div>
               <div>
                 <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Open Institutional Account</DialogTitle>
-                <DialogDescription className="text-white/60 text-xs sm:text-sm">Provisioning a new financial asset for a verified client.</DialogDescription>
+                <DialogDescription className="text-white/60 text-xs">Provisioning a new financial asset for a verified client.</DialogDescription>
               </div>
             </div>
           </div>
@@ -417,7 +415,7 @@ export default function AdminAccountsAuditPage() {
               <Label className="text-[10px] font-bold uppercase text-slate-500">Target Client</Label>
               <Select value={newAccount.userId} onValueChange={(val) => setNewAccount({...newAccount, userId: val})}>
                 <SelectTrigger className="h-12 border-slate-200">
-                  <SelectValue placeholder={isUsersLoading ? "Syncing client index..." : "Select verified client"} />
+                  <SelectValue placeholder="Select verified client" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   {allUsers?.map(u => (
@@ -465,14 +463,14 @@ export default function AdminAccountsAuditPage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-primary">$</span>
                 <Input 
                   type="number" 
-                  className="h-14 font-black text-xl pl-8 border-primary/20 bg-primary/5 text-primary focus-visible:ring-primary" 
+                  className="h-14 font-black text-xl pl-8 border-primary/20 bg-primary/5 text-primary" 
                   value={newAccount.balance} 
                   onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})} 
                 />
               </div>
             </div>
           </div>
-          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t shrink-0 flex flex-col sm:flex-row gap-3">
+          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold order-2 sm:order-1">Cancel</Button>
             <Button onClick={handleCreateAccount} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-black uppercase tracking-widest shadow-lg order-1 sm:order-2">Initialize Asset</Button>
           </DialogFooter>
@@ -489,6 +487,7 @@ export default function AdminAccountsAuditPage() {
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
                 <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                <DialogDescription className="hidden">Detailed client profile information.</DialogDescription>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
@@ -521,10 +520,6 @@ export default function AdminAccountsAuditPage() {
                   <span className="font-medium break-words">{userProfile?.addressLine1 || "—"}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
-                  <span className="font-medium">{userProfile?.addressLine2 || "—"}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:gap-4">
                   <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
                   <span className="font-medium">
                     {userProfile?.city ? `${userProfile.city}, ${userProfile.state || ''} ${userProfile.postalCode || ''}` : '—'}
@@ -534,17 +529,6 @@ export default function AdminAccountsAuditPage() {
                   <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
                   <span className="font-medium">{userProfile?.country || "United Kingdom"}</span>
                 </div>
-              </div>
-
-              <div className="pt-10 border-t border-slate-300">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#002B5B] mb-4">Identity Signature</p>
-                {userProfile?.signature ? (
-                  <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200 max-w-full overflow-hidden">
-                    <img src={userProfile.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
-                  </div>
-                ) : (
-                  <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-xs sm:text-sm rounded-xl">No signature authorized</div>
-                )}
               </div>
 
               <div className="pt-8 border-t border-slate-300">
