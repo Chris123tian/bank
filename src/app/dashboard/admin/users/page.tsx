@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
         email: formData.email,
         username: formData.username || formData.email.split('@')[0],
         phoneNumber: formData.phoneNumber,
-        temporaryPassword: formData.password, // Store password for admin visibility
+        temporaryPassword: formData.password, 
         addressLine1: formData.addressLine1,
         addressLine2: formData.addressLine2,
         city: formData.city,
@@ -217,7 +217,13 @@ export default function AdminUsersPage() {
   }
 
   if (!isAdminConfirmed) {
-    return <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6"><ShieldAlert className="h-12 w-12 text-red-500" /><h2 className="text-2xl font-bold text-primary">Access Denied</h2><p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p></div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
+        <ShieldAlert className="h-12 w-12 text-red-500" />
+        <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
+        <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p>
+      </div>
+    );
   }
 
   return (
