@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,17 +17,28 @@ import {
   Search, 
   Filter, 
   Download, 
-  MoreHorizontal,
   Calendar as CalendarIcon,
   Loader2,
   History,
   Landmark,
   TrendingUp,
-  ArrowDownRight
+  ArrowDownRight,
+  Info,
+  User as UserIcon,
+  Globe,
+  Receipt,
+  X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
@@ -36,9 +48,11 @@ import { collection, query, orderBy, limit } from "firebase/firestore";
 export default function TransactionsPage() {
   const { user } = useUser();
   const db = useFirestore();
+  const searchParams = useSearchParams();
   const [date, setDate] = useState<Date>();
   const [search, setSearch] = useState("");
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [viewingTransaction, setViewingTransaction] = useState<any>(null);
 
   const accountsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
@@ -46,6 +60,15 @@ export default function TransactionsPage() {
   }, [db, user?.uid]);
 
   const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
+
+  useEffect(() => {
+    const accountFromUrl = searchParams.get("account");
+    if (accountFromUrl) {
+      setSelectedAccountId(accountFromUrl);
+    } else if (accounts && accounts.length > 0 && !selectedAccountId) {
+      setSelectedAccountId(accounts[0].id);
+    }
+  }, [searchParams, accounts, selectedAccountId]);
 
   const activeAccountId = selectedAccountId || (accounts?.[0]?.id || null);
 
@@ -163,7 +186,11 @@ export default function TransactionsPage() {
                   </TableRow>
                 ) : filteredTransactions && filteredTransactions.length > 0 ? (
                   filteredTransactions.map((tx) => (
-                    <TableRow key={tx.id} className="group cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
+                    <TableRow 
+                      key={tx.id} 
+                      className="group cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none"
+                      onClick={() => setViewingTransaction(tx)}
+                    >
                       <TableCell className="text-[10px] sm:text-xs font-bold text-slate-500 py-4 px-6 whitespace-nowrap uppercase">
                         {tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy") : 'N/A'}
                       </TableCell>
@@ -209,6 +236,126 @@ export default function TransactionsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Transaction Audit Insight Dossier */}
+      <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+          <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
+            <button onClick={() => setViewingTransaction(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
+              <X className="h-6 w-6" />
+            </button>
+            <div className="space-y-10">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div className="relative inline-block">
+                  <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Audit Insight</DialogTitle>
+                  <div className="absolute -bottom-2 left-0 h-1.5 w-24 bg-[#2563EB]" />
+                </div>
+                <div className="text-left sm:text-right">
+                  <Badge className="bg-[#002B5B] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">{viewingTransaction?.status || 'Completed'}</Badge>
+                  <p className="text-[10px] font-mono text-slate-500 mt-2 break-all">REF: {viewingTransaction?.id}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                <div className="space-y-8">
+                  <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                      <Receipt className="h-4 w-4" /> Settlement Overview
+                    </h4>
+                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
+                        <span className="text-[10px] font-black uppercase text-slate-500">Amount</span>
+                        <span className={`text-2xl sm:text-3xl font-black break-all ${viewingTransaction?.amount > 0 ? 'text-green-600' : 'text-[#002B5B]'}`}>
+                          {viewingTransaction?.amount > 0 ? '+' : '-'}{formatCurrency(viewingTransaction?.amount || 0, viewingTransaction?.currency)}
+                        </span>
+                      </div>
+                      <div className="h-px bg-slate-200" />
+                      <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Execution Date</p>
+                          <p className="font-bold text-slate-700">{viewingTransaction?.transactionDate ? new Date(viewingTransaction.transactionDate).toLocaleString() : 'N/A'}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Settlement Type</p>
+                          <p className="font-bold text-slate-700 capitalize">{viewingTransaction?.transactionType}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                      <UserIcon className="h-4 w-4" /> Client Record
+                    </h4>
+                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-3 text-xs sm:text-sm">
+                      <div className="flex flex-col sm:flex-row justify-between gap-1">
+                        <span className="text-slate-500 font-bold shrink-0">Source Account:</span>
+                        <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction?.accountId}</span>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <div className="space-y-8">
+                  <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                      <Globe className="h-4 w-4" /> Routing & Metadata
+                    </h4>
+                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase">{viewingTransaction?.amount > 0 ? 'Sender Identification' : 'Recipient Identity'}</p>
+                        <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.recipientName || 'Institutional Internal'}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-500 font-mono break-all">{viewingTransaction?.metadata?.recipientAccount || '—'}</p>
+                      </div>
+                      <div className="h-px bg-slate-200" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Bank / Institution</p>
+                          <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.bankName || 'Nexa International'}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Payment Method</p>
+                          <p className="font-bold text-slate-700">{viewingTransaction?.metadata?.paymentMethod || 'System Rail'}</p>
+                        </div>
+                      </div>
+                      {viewingTransaction?.metadata?.routingOrIban && (
+                        <div className="space-y-1 pt-2 border-t border-slate-200/50">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Routing / IBAN</p>
+                          <p className="font-mono text-[10px] sm:text-xs font-bold text-slate-700 break-all">{viewingTransaction.metadata.routingOrIban}</p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                      <Info className="h-4 w-4" /> Regulatory Memos
+                    </h4>
+                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Public Description</p>
+                        <p className="italic text-slate-600 break-words">"{viewingTransaction?.description}"</p>
+                      </div>
+                      {viewingTransaction?.metadata?.note && (
+                        <div className="space-y-1 pt-2 border-t border-slate-200">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Personal Note</p>
+                          <p className="text-slate-600 break-words">{viewingTransaction.metadata.note}</p>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <div className="pt-10 border-t border-slate-300">
+                <Button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
+                  Dismiss Audit Insight
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
