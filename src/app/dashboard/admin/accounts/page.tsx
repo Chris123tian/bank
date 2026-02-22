@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -133,13 +132,6 @@ export default function AdminAccountsAuditPage() {
     };
 
     addDocumentNonBlocking(colRef, accountData);
-    
-    // Create initial capital injection transaction
-    const txRef = collection(db, "users", newAccount.userId, "accounts", "initial_setup", "transactions");
-    // Note: Since we don't have the generated doc ID for the account yet in addDocumentNonBlocking return (it returns a promise), 
-    // we would usually wait. But for the MVP, let's inject it into a placeholder or rely on the Audit Transactions page for precise link.
-    // Better: We just notify the admin.
-    
     toast({ title: "Account Initialized", description: "Capital has been successfully injected into the new client account." });
     setIsCreateDialogOpen(false);
     setNewAccount({ userId: "", accountType: "Current Account", balance: "1000", currency: "USD" });
@@ -158,7 +150,7 @@ export default function AdminAccountsAuditPage() {
       updatedAt: serverTimestamp(),
     });
 
-    // AUTO-INJECT AUDIT TRANSACTION RECORD
+    // AUTO-INJECT AUDIT TRANSACTION RECORD for visibility in client history
     const txRef = collection(db, "users", clientUid, "accounts", editingAccount.id, "transactions");
     addDocumentNonBlocking(txRef, {
       accountId: editingAccount.id,
@@ -184,7 +176,7 @@ export default function AdminAccountsAuditPage() {
 
   const handleDeleteAccount = (acc: any) => {
     if (!db) return;
-    const docRef = doc(db, "users", acc.customerId || acc.userId, "accounts", acc.id);
+    const docRef = doc(db, acc.customerId || acc.userId, "accounts", acc.id);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Account Terminated", description: "The account record has been permanently removed from the ledger." });
   };

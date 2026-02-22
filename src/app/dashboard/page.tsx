@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from "react";
@@ -36,7 +35,7 @@ export default function DashboardPage() {
 
   const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
 
-  // Fetch Recent Transactions across ALL accounts
+  // Fetch Recent Transactions across ALL accounts using mandatory customerId filter for security compliance
   const recentTransactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return query(
