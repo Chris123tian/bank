@@ -1,4 +1,3 @@
-
 'use client';
     
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -27,11 +26,26 @@ export function useDoc<T = any>(
   const [data, setData] = useState<WithId<T> | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
+  const [authReady, setAuthReady] = useState<boolean>(false);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, () => {
+      setAuthReady(true);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!memoizedDocRef) {
       setData(null);
       setIsLoading(false);
+      return;
+    }
+
+    if (!authReady) {
+      setData(null);
+      setIsLoading(true);
       return;
     }
 
@@ -42,7 +56,6 @@ export function useDoc<T = any>(
       return;
     }
 
-    // AUTH STABILITY GUARD
     const auth = getAuth();
     if (!auth.currentUser) {
       setData(null);
@@ -64,21 +77,24 @@ export function useDoc<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
+      (firestoreError: FirestoreError) => {
         const contextualError = new FirestorePermissionError({
           operation: 'get',
           path: memoizedDocRef.path,
         });
 
-        setError(contextualError);
+        if (auth.currentUser) {
+          setError(contextualError);
+          errorEmitter.emit('permission-error', contextualError);
+        }
+        
         setData(null);
         setIsLoading(false);
-        errorEmitter.emit('permission-error', contextualError);
       }
     );
 
     return () => unsubscribe();
-  }, [memoizedDocRef]);
+  }, [memoizedDocRef, authReady]);
 
   return { data, isLoading, error };
 }

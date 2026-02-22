@@ -33,7 +33,7 @@ export function useCollection<T = any>(
   const [error, setError] = useState<Error | null>(null);
   const [authReady, setAuthReady] = useState<boolean>(false);
 
-  // Track when auth is fully initialized to avoid transient permission errors
+  // 1. AUTH STABILITY LISTENER: Wait for auth to be fully initialized
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, () => {
@@ -43,17 +43,17 @@ export function useCollection<T = any>(
   }, []);
 
   useEffect(() => {
-    // 1. INPUT GUARD: Prevent execution if ref is missing or null
+    // 2. INPUT GUARD: Prevent execution if ref is missing
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
       return;
     }
 
-    // 2. AUTH STABILITY CHECK: Wait for auth to be fully initialized
+    // 3. AUTH GUARD: Wait for auth session to settle
     if (!authReady) {
       setData(null);
-      setIsLoading(false);
+      setIsLoading(true); // Keep loading state until auth is confirmed
       return;
     }
 
@@ -70,28 +70,20 @@ export function useCollection<T = any>(
     try {
       const q = memoizedTargetRefOrQuery as any;
       
-      // Extract path or group information for error reporting
-      if (typeof q.path === 'string') {
-        pathString = q.path;
-      } else if (q._query?.path) {
-        pathString = q._query.path.canonicalString();
-      }
-
       // Detection for collection groups
       if (q.type === 'query' && q._query?.collectionGroup) {
         isGroupQuery = true;
         pathString = q._query.collectionGroup;
-      } else if (!q.path && q._query?.path) {
-        const segments = q._query.path.segments;
-        if (segments && segments.length > 0) {
-          pathString = segments[segments.length - 1];
-        }
+      } else if (typeof q.path === 'string') {
+        pathString = q.path;
+      } else if (q._query?.path) {
+        pathString = q._query.path.canonicalString();
       }
     } catch (e) {
       pathString = 'Query';
     }
 
-    // 3. NUCLEAR GUARD: Prevent root listing or malformed paths
+    // 4. NUCLEAR GUARD: Prevent unauthorized root listing
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);
@@ -113,7 +105,6 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (firestoreError: FirestoreError) => {
-        // Construct detailed path for error reporting
         const finalPath = isGroupQuery ? `[Collection Group: ${pathString}]` : (pathString || '[Unknown Path]');
         
         const contextualError = new FirestorePermissionError({
@@ -121,7 +112,7 @@ export function useCollection<T = any>(
           path: finalPath,
         });
 
-        // Only emit if still authenticated to avoid reporting transient sign-out events
+        // Only report if still authenticated to avoid transient logout errors
         if (auth.currentUser) {
           setError(contextualError);
           errorEmitter.emit('permission-error', contextualError);
