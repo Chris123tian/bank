@@ -42,7 +42,6 @@ const navItems = [
   { name: "Transfers", href: "/dashboard/transfer", icon: ArrowLeftRight },
   { name: "Bill Payments", href: "/dashboard/bills", icon: Receipt },
   { name: "Transactions", href: "/dashboard/transactions", icon: History },
-  { name: "Cards", href: "/dashboard/cards", icon: CreditCard },
 ];
 
 const adminItems = [

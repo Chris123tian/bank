@@ -1,9 +1,8 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Table, 
@@ -14,13 +13,9 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { 
-  Search, 
-  Filter, 
   Download, 
-  Calendar as CalendarIcon,
   Loader2,
   History,
-  Landmark,
   TrendingUp,
   ArrowDownRight,
   Info,
@@ -30,56 +25,31 @@ import {
   X
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogDescription 
 } from "@/components/ui/dialog";
-import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { query, orderBy, limit, collectionGroup, where } from "firebase/firestore";
 
 export default function TransactionsPage() {
   const { user } = useUser();
   const db = useFirestore();
-  const searchParams = useSearchParams();
-  const [date, setDate] = useState<Date>();
-  const [search, setSearch] = useState("");
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
 
-  const accountsRef = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
-    return collection(db, "users", user.uid, "accounts");
-  }, [db, user?.uid]);
-
-  const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
-
-  useEffect(() => {
-    const accountFromUrl = searchParams.get("account");
-    if (accountFromUrl) {
-      setSelectedAccountId(accountFromUrl);
-    } else if (accounts && accounts.length > 0 && !selectedAccountId) {
-      setSelectedAccountId(accounts[0].id);
-    }
-  }, [searchParams, accounts, selectedAccountId]);
-
-  const activeAccountId = selectedAccountId || (accounts?.[0]?.id || null);
-
   const transactionsQuery = useMemoFirebase(() => {
-    if (!db || !user?.uid || !activeAccountId) return null;
+    if (!db || !user?.uid) return null;
     return query(
-      collection(db, "users", user.uid, "accounts", activeAccountId, "transactions"),
+      collectionGroup(db, "transactions"),
+      where("userId", "==", user.uid),
       orderBy("transactionDate", "desc"),
-      limit(50)
+      limit(100)
     );
-  }, [db, user?.uid, activeAccountId]);
+  }, [db, user?.uid]);
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
@@ -94,17 +64,12 @@ export default function TransactionsPage() {
     }
   };
 
-  const filteredTransactions = transactions?.filter(t => 
-    t.description?.toLowerCase().includes(search.toLowerCase()) || 
-    t.id.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1 text-center md:text-left">
-          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Transaction History</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">A detailed regulatory log of your financial movements.</p>
+          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Unified Ledger</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive regulatory history across all institutional assets.</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
           <Button variant="outline" size="sm" className="w-full md:w-auto font-bold border-slate-200 shadow-sm h-10">
@@ -114,78 +79,30 @@ export default function TransactionsPage() {
       </div>
 
       <Card className="shadow-sm overflow-hidden rounded-2xl border-none">
-        <CardHeader className="pb-0 pt-6 px-4 sm:px-6">
-          <div className="flex flex-col xl:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search merchant, ID, or amount..." 
-                className="pl-10 h-11 border-slate-200"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-wrap sm:flex-nowrap gap-2">
-              <Select 
-                value={activeAccountId || ""} 
-                onValueChange={setSelectedAccountId}
-                disabled={accountsLoading}
-              >
-                <SelectTrigger className="w-full sm:w-[220px] h-11 border-slate-200">
-                  <Landmark className="mr-2 h-4 w-4 opacity-50" />
-                  <SelectValue placeholder="Select Account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts?.map(acc => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      {acc.accountType} (...{acc.accountNumber.slice(-4)})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex-1 sm:w-[160px] justify-start text-left font-normal h-11 border-slate-200">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    <span className="truncate">{date ? format(date, "PPP") : "Date Range"}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-                </PopoverContent>
-              </Popover>
-
-              <Button variant="secondary" className="w-full sm:w-auto h-11 px-4">
-                <Filter className="mr-2 h-4 w-4" /> Filters
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-6 px-0">
+        <CardContent className="p-0">
           <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader className="bg-slate-50/80">
                 <TableRow>
                   <TableHead className="w-[110px] sm:w-[140px] font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Date</TableHead>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Merchant / Description</TableHead>
-                  <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Category</TableHead>
+                  <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
                   <TableHead className="hidden md:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
                   <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading || accountsLoading ? (
+                {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Settlement Records...</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Global Ledger...</span>
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredTransactions && filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((tx) => (
+                ) : transactions && transactions.length > 0 ? (
+                  transactions.map((tx) => (
                     <TableRow 
                       key={tx.id} 
                       className="group cursor-pointer hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none"
@@ -201,7 +118,7 @@ export default function TransactionsPage() {
                           </div>
                           <div className="flex flex-col max-w-[140px] sm:max-w-none">
                             <span className="font-black text-primary text-xs sm:text-sm truncate uppercase tracking-tighter">{tx.description}</span>
-                            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">ID: {tx.id.slice(0, 12)}...</span>
+                            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">REF: {tx.id.slice(0, 12)}...</span>
                           </div>
                         </div>
                       </TableCell>
@@ -226,7 +143,7 @@ export default function TransactionsPage() {
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-4 opacity-30">
                         <History className="h-12 w-12 text-slate-400" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No transactions recorded for this asset</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No unified transactions recorded</p>
                       </div>
                     </TableCell>
                   </TableRow>
