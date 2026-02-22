@@ -69,11 +69,6 @@ export default function DashboardPage() {
           <h1 className="text-2xl sm:text-3xl font-headline font-black text-primary uppercase tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Welcome back to your institutional command center.</p>
         </div>
-        <Button asChild className="bg-accent hover:bg-accent/90 shadow-lg h-11 sm:h-12 px-6 font-bold w-full sm:w-auto">
-          <Link href="/dashboard/accounts/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Open New Account
-          </Link>
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -155,9 +150,7 @@ export default function DashboardPage() {
             <Card className="col-span-full py-16 border-dashed border-2 flex flex-col items-center justify-center text-center space-y-4 bg-slate-50/50 rounded-3xl">
               <Landmark className="h-12 w-12 text-slate-300" />
               <p className="font-black text-primary uppercase tracking-tight">No accounts found in your registry</p>
-              <Button asChild className="bg-accent font-black h-11 px-8 rounded-full shadow-lg">
-                <Link href="/dashboard/accounts/new">Initialize Asset</Link>
-              </Button>
+              <p className="text-xs text-muted-foreground">Please contact administration to initialize your financial assets.</p>
             </Card>
           )}
         </div>
