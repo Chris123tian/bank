@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -21,7 +20,9 @@ import {
   Calendar as CalendarIcon,
   Loader2,
   History,
-  Landmark
+  Landmark,
+  TrendingUp,
+  ArrowDownRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -147,14 +148,13 @@ export default function TransactionsPage() {
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Merchant / Description</TableHead>
                   <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Category</TableHead>
                   <TableHead className="hidden md:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
-                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500">Amount</TableHead>
-                  <TableHead className="w-[50px] px-6"></TableHead>
+                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading || accountsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-24">
+                    <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Settlement Records...</span>
@@ -168,13 +168,20 @@ export default function TransactionsPage() {
                         {tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy") : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col max-w-[140px] sm:max-w-none">
-                          <span className="font-black text-primary text-xs sm:text-sm truncate uppercase tracking-tighter">{tx.description}</span>
-                          <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">ID: {tx.id.slice(0, 12)}...</span>
+                        <div className="flex items-center gap-3">
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${tx.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                            {tx.amount > 0 ? <TrendingUp className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                          </div>
+                          <div className="flex flex-col max-w-[140px] sm:max-w-none">
+                            <span className="font-black text-primary text-xs sm:text-sm truncate uppercase tracking-tighter">{tx.description}</span>
+                            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">ID: {tx.id.slice(0, 12)}...</span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant="outline" className="font-black capitalize text-[9px] border-slate-200 px-2">{tx.transactionType || "Other"}</Badge>
+                        <Badge variant="outline" className={`font-black capitalize text-[9px] px-2 ${tx.amount > 0 ? 'border-green-200 text-green-700 bg-green-50' : 'border-slate-200'}`}>
+                          {tx.transactionType || "Other"}
+                        </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2">
@@ -182,19 +189,14 @@ export default function TransactionsPage() {
                           <span className="text-[10px] font-black uppercase tracking-tighter">{tx.status}</span>
                         </div>
                       </TableCell>
-                      <TableCell className={`text-right font-black text-xs sm:text-base whitespace-nowrap ${tx.amount > 0 ? 'text-green-600' : 'text-slate-900'}`}>
+                      <TableCell className={`text-right font-black text-sm sm:text-lg whitespace-nowrap px-6 ${tx.amount > 0 ? 'text-green-600' : 'text-slate-900'}`}>
                         {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
-                      </TableCell>
-                      <TableCell className="px-6">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-24">
+                    <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-4 opacity-30">
                         <History className="h-12 w-12 text-slate-400" />
                         <p className="text-[10px] font-black uppercase tracking-[0.2em]">No transactions recorded for this asset</p>

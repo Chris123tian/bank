@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from "react";
@@ -10,7 +9,8 @@ import {
   ShieldCheck,
   History,
   CreditCard,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle
 } from "lucide-react";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -131,10 +131,17 @@ export default function DashboardPage() {
             Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-2xl" />)
           ) : accounts && accounts.length > 0 ? (
             accounts.map((acc) => (
-              <Card key={acc.id} className="group hover:border-accent transition-all duration-300 shadow-md hover:shadow-xl rounded-2xl overflow-hidden bg-white">
+              <Card key={acc.id} className={`group hover:border-accent transition-all duration-300 shadow-md hover:shadow-xl rounded-2xl overflow-hidden bg-white ${acc.status !== 'Active' ? 'border-red-200' : ''}`}>
                 <CardHeader className="bg-slate-50/50 border-b p-6">
                   <div className="flex justify-between items-start">
-                    <Badge variant="outline" className="bg-white text-[9px] sm:text-[10px] uppercase font-black px-2">{acc.accountType}</Badge>
+                    <div className="flex flex-col gap-1">
+                      <Badge variant="outline" className="bg-white text-[9px] sm:text-[10px] uppercase font-black px-2 w-fit">{acc.accountType}</Badge>
+                      {acc.status !== 'Active' && (
+                        <Badge variant="destructive" className="text-[8px] uppercase font-black px-2 flex items-center gap-1">
+                          <AlertTriangle className="h-2 w-2" /> {acc.status}
+                        </Badge>
+                      )}
+                    </div>
                     <CreditCard className="h-5 w-5 text-slate-300 group-hover:text-accent transition-colors" />
                   </div>
                   <CardTitle className="text-xl sm:text-2xl font-black mt-4 text-primary">{formatCurrency(acc.balance, acc.currency)}</CardTitle>
@@ -142,7 +149,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center">
-                    <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">Status: {acc.status}</span>
+                    <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${acc.status !== 'Active' ? 'text-red-500' : 'text-slate-400'}`}>Status: {acc.status}</span>
                     <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-accent hover:text-accent hover:bg-accent/5" asChild>
                       <Link href="/dashboard/transactions">
                         Details <ArrowRight className="ml-1 h-3 w-3" />

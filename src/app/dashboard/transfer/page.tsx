@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History } from "lucide-react";
+import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -50,6 +50,16 @@ export default function TransferPage() {
 
     const selectedAccount = accounts?.find(a => a.id === fromAccountId);
     if (!selectedAccount) return;
+
+    // ACCOUNT SUSPENSION CHECK
+    if (selectedAccount.status === 'Suspended' || selectedAccount.status === 'Locked') {
+      toast({
+        variant: "destructive",
+        title: "Account Restricted",
+        description: "This account has been suspended or restricted by administration. Outgoing transfers are currently disabled.",
+      });
+      return;
+    }
 
     if (selectedAccount.balance < Number(amount)) {
       toast({
@@ -142,11 +152,17 @@ export default function TransferPage() {
                   <SelectContent>
                     {accounts?.map(acc => (
                       <SelectItem key={acc.id} value={acc.id}>
-                        {acc.accountType} (...{acc.accountNumber.slice(-4)}) — Balance: {acc.currency || '$'}{acc.balance?.toLocaleString()}
+                        {acc.accountType} (...{acc.accountNumber.slice(-4)}) — Balance: {acc.currency || '$'}{acc.balance?.toLocaleString()} {acc.status !== 'Active' ? `(${acc.status})` : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {accounts?.find(a => a.id === fromAccountId)?.status !== 'Active' && fromAccountId && (
+                  <div className="flex items-center gap-2 mt-2 p-3 bg-red-50 border border-red-100 rounded-lg text-[10px] font-bold text-red-600 uppercase tracking-widest">
+                    <AlertCircle className="h-4 w-4" />
+                    Administrative hold active. Outgoing transfers blocked.
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -251,7 +267,7 @@ export default function TransferPage() {
                 <Button variant="outline" className="flex-1 sm:flex-none">Cancel</Button>
                 <Button 
                   onClick={handleTransfer} 
-                  disabled={loading || accountsLoading} 
+                  disabled={loading || accountsLoading || (accounts?.find(a => a.id === fromAccountId)?.status !== 'Active' && fromAccountId !== "")} 
                   className="flex-1 sm:flex-none bg-accent hover:bg-accent/90 min-w-[180px] h-11"
                 >
                   {loading ? (
