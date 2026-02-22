@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Building2, 
   Globe, 
-  TrendingUp,
   Zap,
   ShieldCheck,
   LayoutDashboard,
@@ -61,14 +60,9 @@ export default function LandingPage() {
                 </LinkNext>
               </Button>
             ) : (
-              <>
-                <Button variant="ghost" className="hidden sm:inline-flex text-white font-black uppercase tracking-widest text-[10px] hover:bg-white/5" asChild>
-                  <LinkNext href="/auth">{t('nav_login')}</LinkNext>
-                </Button>
-                <Button className="bg-accent hover:bg-accent/90 rounded-full px-4 sm:px-6 h-9 sm:h-10 font-bold text-[10px] sm:text-xs shadow-lg shadow-accent/20" asChild>
-                  <LinkNext href="/auth?mode=signup">{t('nav_open_account')}</LinkNext>
-                </Button>
-              </>
+              <Button variant="ghost" className="text-white font-black uppercase tracking-widest text-[10px] hover:bg-white/5 border border-white/10 rounded-full px-6" asChild>
+                <LinkNext href="/auth">{t('nav_login')}</LinkNext>
+              </Button>
             )}
           </div>
         </div>
@@ -83,7 +77,6 @@ export default function LandingPage() {
                 alt="Institutional Banking"
                 fill
                 priority={true}
-                loading="eager"
                 className="object-cover opacity-30 sm:opacity-40"
                 data-ai-hint="modern banking"
              />
@@ -111,8 +104,8 @@ export default function LandingPage() {
               
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-xs sm:text-sm px-6 sm:px-10 h-14 sm:h-16 rounded-xl sm:rounded-2xl group shadow-2xl shadow-primary/40 w-full sm:w-auto" asChild>
-                  <LinkNext href={user ? "/dashboard" : "/auth?mode=signup"}>
-                    {t('hero_cta_primary')} <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
+                  <LinkNext href="/auth">
+                    Access Portal <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
                   </LinkNext>
                 </Button>
                 <Button size="lg" variant="outline" className="border-white/20 bg-white/5 hover:bg-white/10 text-xs sm:text-sm px-6 sm:px-10 h-14 sm:h-16 rounded-xl sm:rounded-2xl w-full sm:w-auto" asChild>

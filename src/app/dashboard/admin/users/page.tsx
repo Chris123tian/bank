@@ -9,7 +9,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -20,7 +19,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, User as UserIcon, MapPin } from "lucide-react";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, User as UserIcon, Lock, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -51,6 +50,7 @@ export default function AdminUsersPage() {
     firstName: "",
     lastName: "",
     email: "",
+    username: "",
     phoneNumber: "",
     userRole: "client",
   });
@@ -68,6 +68,8 @@ export default function AdminUsersPage() {
       return;
     }
 
+    // Since we can't create Auth accounts from client-side, 
+    // we instruct the admin to use the same email they'll set in Firebase Console.
     const newUserId = "user_" + Math.random().toString(36).substr(2, 9);
     const userDocRef = doc(db, "users", newUserId);
     
@@ -80,9 +82,12 @@ export default function AdminUsersPage() {
 
     setDocumentNonBlocking(userDocRef, newUserData, { merge: true });
     
-    toast({ title: "User Profile Created", description: `Profile for ${formData.firstName} has been added.` });
+    toast({ 
+      title: "Client Profile Provisioned", 
+      description: `User ${formData.firstName} has been added. Remember to create their Auth account in the Firebase Console with email: ${formData.email}` 
+    });
     setIsCreating(false);
-    setFormData({ firstName: "", lastName: "", email: "", phoneNumber: "", userRole: "client" });
+    setFormData({ firstName: "", lastName: "", email: "", username: "", phoneNumber: "", userRole: "client" });
   };
 
   const handleUpdateUser = () => {
@@ -91,9 +96,12 @@ export default function AdminUsersPage() {
     updateDocumentNonBlocking(userRef, {
       username: editingUser.username || "",
       email: editingUser.email || "",
+      firstName: editingUser.firstName || "",
+      lastName: editingUser.lastName || "",
+      phoneNumber: editingUser.phoneNumber || "",
       updatedAt: serverTimestamp(),
     });
-    toast({ title: "Basic Information Updated", description: `User ${editingUser.firstName} profile modified.` });
+    toast({ title: "Information Updated", description: `User profile modified successfully.` });
     setEditingUser(null);
   };
 
@@ -129,15 +137,52 @@ export default function AdminUsersPage() {
           <p className="text-muted-foreground">Managing client and administrative profiles across the Nexa network.</p>
         </div>
         <Button onClick={() => setIsCreating(!isCreating)} className="bg-accent">
-          {isCreating ? "Cancel" : <><UserPlus className="mr-2 h-4 w-4" /> New Profile</>}
+          {isCreating ? "Cancel" : <><UserPlus className="mr-2 h-4 w-4" /> Provision New Profile</>}
         </Button>
       </div>
+
+      {isCreating && (
+        <Card className="animate-in fade-in slide-in-from-top-4 duration-300">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2"><Key className="h-5 w-5 text-accent" /> Account Provisioning</CardTitle>
+            <CardDescription>Enter client details to initialize their institutional profile.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label>First Name</Label>
+              <Input value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="Legal First Name" />
+            </div>
+            <div className="space-y-2">
+              <Label>Last Name</Label>
+              <Input value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} placeholder="Legal Last Name" />
+            </div>
+            <div className="space-y-2">
+              <Label>Institutional Email</Label>
+              <Input value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="Regulatory Contact Email" />
+            </div>
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <Input value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} placeholder="Internal Handle" />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} placeholder="+1 (555) 000-0000" />
+            </div>
+          </CardContent>
+          <CardFooter className="bg-slate-50/50 border-t p-6 flex flex-col items-start gap-4">
+            <p className="text-[10px] text-muted-foreground italic max-w-2xl">
+              Note: This action creates the Firestore data profile. You must manually create the login credentials in the Firebase Console using the same email address provided above.
+            </p>
+            <Button onClick={handleCreateUser} className="bg-primary w-full md:w-auto h-11 px-10">Initialize Client Profile</Button>
+          </CardFooter>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search global index..." className="pl-10 h-11" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Search global index by name or email..." className="pl-10 h-11" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent>
@@ -186,15 +231,15 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Basic Information Modification Form */}
+      {/* Profile Modification Form */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent className="max-w-2xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           <div className="p-6 bg-slate-50 border-b shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
               <div>
-                <DialogTitle className="text-xl font-bold">Edit Basic Information</DialogTitle>
-                <DialogDescription>Updating credentials for client UID: {editingUser?.id}</DialogDescription>
+                <DialogTitle className="text-xl font-bold">Modify Client Profile</DialogTitle>
+                <DialogDescription>Updating records for client UID: {editingUser?.id}</DialogDescription>
               </div>
             </div>
           </div>
@@ -202,59 +247,56 @@ export default function AdminUsersPage() {
           <div className="flex-1 overflow-y-auto p-8 space-y-8">
             <div className="space-y-4">
                <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-4">
-                  <ShieldCheck className="h-4 w-4" /> Account Credentials (Editable)
+                  <ShieldCheck className="h-4 w-4" /> Personal & Account Information
                </h4>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
+                   <Label>First Name</Label>
+                   <Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Last Name</Label>
+                   <Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
                    <Label>Username</Label>
-                   <Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} placeholder="Account handle" />
+                   <Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} />
                  </div>
                  <div className="space-y-2">
                    <Label>Primary Email</Label>
-                   <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} placeholder="Regulatory contact" />
+                   <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Phone Number</Label>
+                   <Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} />
                  </div>
                </div>
             </div>
 
             <div className="pt-6 border-t space-y-4">
                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-4">
-                  <UserIcon className="h-4 w-4" /> Institutional Records (Read Only)
+                  <UserIcon className="h-4 w-4" /> Residential Records (Read Only)
                </h4>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50 p-6 rounded-2xl border border-dashed">
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase">Legal Name</Label>
-                    <p className="text-sm font-medium">{editingUser?.firstName} {editingUser?.lastName}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase">Residential Address</Label>
-                    <p className="text-sm font-medium leading-relaxed">
-                      {editingUser?.addressLine1 || "—"}<br />
-                      {editingUser?.city ? `${editingUser.city}, ${editingUser.state || ""} ${editingUser.postalCode || ""}` : "—"}<br />
-                      <span className="text-[10px] font-bold text-primary">{editingUser?.country || "United States"}</span>
-                    </p>
-                  </div>
+               <div className="bg-slate-50/50 p-6 rounded-2xl border border-dashed text-xs text-muted-foreground">
+                  <p>Residential addresses and physical verification documents are locked for audit integrity. If a legal address change is required, please perform a manual database override.</p>
                </div>
-               <p className="text-[9px] text-center text-muted-foreground uppercase font-black tracking-widest leading-tight">
-                  Personal Identity, Residential Verification, Financial Profiles, and Legal Authorizations are locked for audit integrity.
-               </p>
             </div>
           </div>
           
           <DialogFooter className="p-6 bg-slate-50 border-t shrink-0 flex gap-3">
             <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1 h-12 font-bold rounded-xl">Cancel</Button>
-            <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black bg-primary rounded-xl">Commit Basic Changes</Button>
+            <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black bg-primary rounded-xl">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Basic Information Detail View */}
+      {/* Detail View */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
-                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
-                <DialogDescription className="sr-only">Detailed view of the client's global institutional profile.</DialogDescription>
+                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Profile Information</DialogTitle>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
@@ -283,36 +325,17 @@ export default function AdminUsersPage() {
                   <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 1:</span>
-                  <span className="font-medium">{viewingUser?.addressLine1 || "—"}</span>
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Phone:</span>
+                  <span className="font-medium">{viewingUser?.phoneNumber || "—"}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
-                  <span className="font-medium">—</span>
-                </div>
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
-                  <span className="font-medium">{viewingUser?.city ? `${viewingUser.city}, ${viewingUser.state || ''} ${viewingUser.postalCode || ''}` : '—'}</span>
-                </div>
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
-                  <span className="font-medium">{viewingUser?.country || "United States"}</span>
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Created:</span>
+                  <span className="font-medium">{viewingUser?.createdAt ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
 
-              <div className="pt-12">
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Authenticated Legal Signature</p>
-                <div className="bg-white p-6 inline-block shadow-lg rounded-xl min-w-[250px] border border-slate-200">
-                  {viewingUser?.signature ? (
-                    <img src={viewingUser.signature} alt="Signature" className="h-24 object-contain mx-auto" />
-                  ) : (
-                    <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-100 italic text-slate-300 text-sm">No signature authorized</div>
-                  )}
-                </div>
-              </div>
-              
               <div className="pt-8 border-t border-slate-300">
-                <Button onClick={() => setViewingUser(null)} className="w-full h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B]">Dismiss Profile</Button>
+                <Button onClick={() => setViewingUser(null)} className="w-full h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B]">Dismiss Dossier</Button>
               </div>
             </div>
           </div>

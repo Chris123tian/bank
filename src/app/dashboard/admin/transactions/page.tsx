@@ -4,8 +4,8 @@
 import { useState } from "react";
 import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, doc } from "firebase/firestore";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { collectionGroup, doc, collection, serverTimestamp, query, getDocs } from "firebase/firestore";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -26,9 +26,9 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
-import { Trash2, Edit3, ShieldAlert, Loader2, Eye, Receipt, User, Landmark, Send, Search, Clock, FileText, Separator } from "lucide-react";
+import { Trash2, Edit3, ShieldAlert, Loader2, Eye, Receipt, PlusCircle, Search, Clock, FileText, Send, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminTransactionsAuditPage() {
   const { toast } = useToast();
@@ -37,7 +37,23 @@ export default function AdminTransactionsAuditPage() {
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  // New Transaction Form State
+  const [newTx, setNewTx] = useState({
+    userId: "",
+    accountId: "",
+    description: "",
+    amount: "",
+    type: "deposit",
+    status: "completed",
+    currency: "USD",
+    date: new Date().toISOString().slice(0, 16)
+  });
+
+  const [userAccounts, setUserAccounts] = useState<any[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
 
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
@@ -48,7 +64,6 @@ export default function AdminTransactionsAuditPage() {
   
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
-  
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   const transactionsRef = useMemoFirebase(() => {
@@ -57,6 +72,69 @@ export default function AdminTransactionsAuditPage() {
   }, [db, isAdminReady]);
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
+
+  const { data: allUsers } = useCollection(useMemoFirebase(() => {
+    if (!db || !isAdminReady) return null;
+    return collection(db, "users");
+  }, [db, isAdminReady]));
+
+  const fetchAccountsForUser = async (userId: string) => {
+    if (!db || !userId) return;
+    setLoadingAccounts(true);
+    try {
+      const q = query(collection(db, "users", userId, "accounts"));
+      const snapshot = await getDocs(q);
+      const accounts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setUserAccounts(accounts);
+      if (accounts.length > 0) {
+        setNewTx(prev => ({ ...prev, accountId: accounts[0].id }));
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "Fetch Error", description: "Could not retrieve accounts for this user." });
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
+  const handleCreateTransaction = () => {
+    if (!db || !newTx.userId || !newTx.accountId || !newTx.amount) {
+      toast({ variant: "destructive", title: "Validation Error", description: "Please fill all required fields." });
+      return;
+    }
+
+    const txRef = collection(db, "users", newTx.userId, "accounts", newTx.accountId, "transactions");
+    const amountVal = Number(newTx.amount);
+    
+    const transactionData = {
+      accountId: newTx.accountId,
+      customerId: newTx.userId,
+      userId: newTx.userId,
+      transactionType: newTx.type,
+      amount: newTx.type === 'withdrawal' || newTx.type === 'transfer' ? -Math.abs(amountVal) : Math.abs(amountVal),
+      currency: newTx.currency,
+      description: newTx.description,
+      status: newTx.status,
+      transactionDate: new Date(newTx.date).toISOString(),
+      createdAt: serverTimestamp(),
+    };
+
+    addDocumentNonBlocking(txRef, transactionData);
+    
+    // Also update account balance logic would normally go here, but for manual auditing 
+    // we often just want to inject the record. We'll update the balance for consistency.
+    const accountRef = doc(db, "users", newTx.userId, "accounts", newTx.accountId);
+    const selectedAccount = userAccounts.find(a => a.id === newTx.accountId);
+    if (selectedAccount) {
+      updateDocumentNonBlocking(accountRef, {
+        balance: selectedAccount.balance + (newTx.type === 'withdrawal' || newTx.type === 'transfer' ? -Math.abs(amountVal) : Math.abs(amountVal)),
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    toast({ title: "Transaction Injected", description: "Audit trail record has been manually added." });
+    setIsCreateDialogOpen(false);
+    setNewTx({ userId: "", accountId: "", description: "", amount: "", type: "deposit", status: "completed", currency: "USD", date: new Date().toISOString().slice(0, 16) });
+  };
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
@@ -86,18 +164,17 @@ export default function AdminTransactionsAuditPage() {
     setIsEditDialogOpen(false);
   };
 
-  const handleDelete = (transaction: any) => {
+  const handleDelete = (tx: any) => {
     if (!db) return;
-    const path = `users/${transaction.customerId || transaction.userId}/accounts/${transaction.accountId}/transactions/${transaction.id}`;
+    const path = `users/${tx.customerId || tx.userId}/accounts/${tx.accountId}/transactions/${tx.id}`;
     const docRef = doc(db, path);
     deleteDocumentNonBlocking(docRef);
-    toast({ title: "Transaction Deleted", description: "Audit trail updated." });
+    toast({ title: "Transaction Removed", description: "Record has been purged from the ledger." });
   };
 
   const filteredTransactions = transactions?.filter(tx => 
     tx.description?.toLowerCase().includes(search.toLowerCase()) || 
-    (tx.customerId || tx.userId)?.toLowerCase().includes(search.toLowerCase()) ||
-    tx.id.toLowerCase().includes(search.toLowerCase())
+    (tx.customerId || tx.userId)?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isAdminRoleLoading && !isMasterAdmin) {
@@ -117,19 +194,24 @@ export default function AdminTransactionsAuditPage() {
           </div>
           <div>
             <h1 className="text-3xl font-headline font-bold text-primary">Global Transaction Audit</h1>
-            <p className="text-muted-foreground">Institutional oversight and metadata analysis for all financial movements.</p>
+            <p className="text-muted-foreground">Full authority to view, edit, and inject institutional financial movements.</p>
           </div>
         </div>
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search audit trail..." className="pl-10 h-11" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="flex gap-2">
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Filter trail..." className="pl-10 h-11" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent h-11">
+            <PlusCircle className="mr-2 h-4 w-4" /> Manual Entry
+          </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Global Settlement Ledger</CardTitle>
-          <CardDescription>Auditing transactions and cross-border metadata across City International Bank.</CardDescription>
+          <CardTitle>Institutional Settlement Ledger</CardTitle>
+          <CardDescription>Auditing all financial movements across the network.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -138,7 +220,7 @@ export default function AdminTransactionsAuditPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Client ID</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Settlement</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -152,8 +234,10 @@ export default function AdminTransactionsAuditPage() {
                   <TableCell className="text-xs font-mono">{tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell className="text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
                   <TableCell className="font-medium truncate max-w-[200px]">{tx.description}</TableCell>
-                  <TableCell><Badge variant="secondary" className="capitalize text-[10px]">{tx.transactionType || "Other"}</Badge></TableCell>
-                  <TableCell><Badge variant="outline" className="text-[10px]">{tx.status}</Badge></TableCell>
+                  <TableCell><Badge variant="secondary" className="capitalize text-[10px]">{tx.transactionType}</Badge></TableCell>
+                  <TableCell>
+                    <Badge variant={tx.status === 'completed' ? 'default' : 'outline'} className="text-[10px]">{tx.status}</Badge>
+                  </TableCell>
                   <TableCell className={`font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
                   </TableCell>
@@ -169,159 +253,156 @@ export default function AdminTransactionsAuditPage() {
         </CardContent>
       </Card>
 
-      {/* Audit Insight Dialog - Wide One-Page Layout */}
-      <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
-        <DialogContent className="max-w-4xl p-0 border-none bg-slate-950 text-white rounded-3xl overflow-y-auto max-h-[95vh]">
-          <div className="p-8 bg-primary/20 border-b border-white/10 sticky top-0 z-10 backdrop-blur-md">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-2xl ${viewingTransaction?.amount > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                <Receipt className="h-6 w-6" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl font-black">Audit Insight</DialogTitle>
-                <DialogDescription className="text-slate-400 text-xs font-mono">Reference ID: {viewingTransaction?.id}</DialogDescription>
-              </div>
+      {/* Manual Entry Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl rounded-[2rem] p-8">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Manual Ledger Entry</DialogTitle>
+            <DialogDescription>Inject a new transaction record into a client account.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
+            <div className="space-y-2">
+              <Label>Target Client</Label>
+              <Select value={newTx.userId} onValueChange={(val) => {
+                setNewTx({...newTx, userId: val});
+                fetchAccountsForUser(val);
+              }}>
+                <SelectTrigger><SelectValue placeholder="Select Client" /></SelectTrigger>
+                <SelectContent>
+                  {allUsers?.map(u => (
+                    <SelectItem key={u.id} value={u.id}>{u.firstName} {u.lastName} ({u.email})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Account Ledger</Label>
+              <Select value={newTx.accountId} onValueChange={(val) => setNewTx({...newTx, accountId: val})} disabled={!newTx.userId || loadingAccounts}>
+                <SelectTrigger><SelectValue placeholder={loadingAccounts ? "Loading..." : "Select Account"} /></SelectTrigger>
+                <SelectContent>
+                  {userAccounts.map(acc => (
+                    <SelectItem key={acc.id} value={acc.id}>{acc.accountType} (...{acc.accountNumber.slice(-4)})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Transaction Type</Label>
+              <Select value={newTx.type} onValueChange={(val) => setNewTx({...newTx, type: val})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deposit">Institutional Deposit</SelectItem>
+                  <SelectItem value="withdrawal">Regulatory Withdrawal</SelectItem>
+                  <SelectItem value="transfer">System Transfer</SelectItem>
+                  <SelectItem value="fee">Service Fee</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Settlement Date</Label>
+              <Input type="datetime-local" value={newTx.date} onChange={(e) => setNewTx({...newTx, date: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Amount</Label>
+              <Input type="number" placeholder="0.00" value={newTx.amount} onChange={(e) => setNewTx({...newTx, amount: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Description / Memo</Label>
+              <Input placeholder="Transaction reference..." value={newTx.description} onChange={(e) => setNewTx({...newTx, description: e.target.value})} />
             </div>
           </div>
-          
-          <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-6">
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Asset Settlement</Label>
-                <p className={`text-3xl font-black ${viewingTransaction?.amount > 0 ? 'text-green-400' : 'text-white'}`}>
-                  {viewingTransaction?.amount > 0 ? '+' : '-'}{formatCurrency(viewingTransaction?.amount || 0, viewingTransaction?.currency || 'USD')}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Timestamp</Label>
-                <p className="text-lg font-bold">{viewingTransaction?.transactionDate ? new Date(viewingTransaction.transactionDate).toLocaleString() : 'N/A'}</p>
-              </div>
-              <div className="space-y-4 pt-4 border-t border-white/10">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-black uppercase text-slate-500">Client UID</span>
-                  <span className="text-[10px] font-mono break-all">{viewingTransaction?.customerId || viewingTransaction?.userId}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-black uppercase text-slate-500">Account Ledger ID</span>
-                  <span className="text-[10px] font-mono break-all">{viewingTransaction?.accountId}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="md:col-span-2 space-y-6">
-              <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                <Label className="text-[10px] font-black uppercase text-slate-500 mb-2 block">Institutional Metadata (Client Input)</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-accent uppercase">Recipient Name</span>
-                    <p className="text-sm font-bold">{viewingTransaction?.metadata?.recipientName || 'N/A'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-accent uppercase">Recipient Account</span>
-                    <p className="text-sm font-mono">{viewingTransaction?.metadata?.recipientAccount || 'N/A'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-accent uppercase">Routing / IBAN</span>
-                    <p className="text-sm font-mono">{viewingTransaction?.metadata?.routingOrIban || 'N/A'}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-[9px] font-bold text-accent uppercase">Protocol</span>
-                    <p className="text-sm font-bold">{viewingTransaction?.metadata?.paymentMethod || 'N/A'}</p>
-                  </div>
-                  <div className="space-y-1 col-span-2">
-                    <span className="text-[9px] font-bold text-accent uppercase">Bank Identity</span>
-                    <p className="text-sm font-bold">{viewingTransaction?.metadata?.bankName || 'N/A'}</p>
-                    <p className="text-[10px] text-slate-400">{viewingTransaction?.metadata?.bankAddress || 'N/A'}</p>
-                  </div>
-                  {viewingTransaction?.metadata?.note && (
-                    <div className="space-y-1 col-span-2 pt-2 border-t border-white/5">
-                      <span className="text-[9px] font-bold text-accent uppercase">Reference Note</span>
-                      <p className="text-xs text-slate-300 italic">"{viewingTransaction.metadata.note}"</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Public Memo</Label>
-                <p className="text-sm bg-white/5 p-4 rounded-xl border border-white/5 italic">"{viewingTransaction?.description}"</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-6 bg-slate-900 border-t border-white/10 sticky bottom-0 z-10 backdrop-blur-md">
-            <Button onClick={() => setViewingTransaction(null)} className="bg-primary w-full h-12 font-black uppercase tracking-widest text-xs">Dismiss Audit Record</Button>
-          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateTransaction} className="bg-primary px-8">Authorize Injection</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog - Unified Wide Layout */}
+      {/* Edit Transaction Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl p-0 border-none rounded-[2rem] shadow-2xl overflow-y-auto max-h-[95vh]">
-          <DialogHeader className="p-6 bg-slate-50 border-b sticky top-0 z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-xl text-primary"><Edit3 className="h-5 w-5" /></div>
-              <div>
-                <DialogTitle className="text-xl font-bold">Correction Form</DialogTitle>
-                <DialogDescription>Adjusting ledger entry ID: {editingTransaction?.id}</DialogDescription>
-              </div>
-            </div>
+        <DialogContent className="max-w-2xl rounded-[2rem] p-8">
+          <DialogHeader>
+            <DialogTitle>Modify Transaction Record</DialogTitle>
+            <DialogDescription>Performing authorized correction for record ID: {editingTransaction?.id}</DialogDescription>
           </DialogHeader>
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Execution Date</Label>
-                <Input type="datetime-local" className="h-11" value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})} />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Settlement Type</Label>
-                <Select value={editingTransaction?.transactionType ?? "withdrawal"} onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}>
-                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="deposit">Deposit</SelectItem>
-                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                    <SelectItem value="transfer">Transfer</SelectItem>
-                    <SelectItem value="bill_payment">Bill Payment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Amount</Label>
-                <Input type="number" step="0.01" className="h-11 font-bold" value={editingTransaction?.amount ?? ""} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input value={editingTransaction?.description || ""} onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})} />
             </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Public Memo</Label>
-                <Input className="h-11" value={editingTransaction?.description ?? ""} onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Audit Status</Label>
-                <Select value={editingTransaction?.status ?? "pending"} onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}>
-                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="completed">Settled</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-500">Currency</Label>
-                <Select value={editingTransaction?.currency ?? "USD"} onValueChange={(v) => setEditingTransaction({...editingTransaction, currency: v})}>
-                  <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="GBP">GBP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Amount (Positive or Negative)</Label>
+              <Input type="number" step="0.01" value={editingTransaction?.amount || ""} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Settlement Type</Label>
+              <Select value={editingTransaction?.transactionType || "deposit"} onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="deposit">Deposit</SelectItem>
+                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                  <SelectItem value="transfer">Transfer</SelectItem>
+                  <SelectItem value="fee">Fee</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Audit Status</Label>
+              <Select value={editingTransaction?.status || "completed"} onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">Settled</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <DialogFooter className="p-6 bg-slate-50 border-t gap-3 sticky bottom-0 z-10">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl h-12 flex-1">Cancel Audit</Button>
-            <Button onClick={handleUpdateTransaction} className="bg-primary rounded-xl h-12 flex-1 font-bold">Apply Correction</Button>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateTransaction} className="bg-accent">Commit Correction</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detailed View Dialog */}
+      <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
+        <DialogContent className="max-w-3xl p-0 border-none bg-slate-950 text-white rounded-3xl overflow-hidden shadow-2xl">
+          <div className="p-8 bg-primary/20 border-b border-white/10">
+            <DialogTitle className="text-2xl font-black flex items-center gap-3">
+              <Receipt className="text-accent h-6 w-6" /> Audit Insight
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 font-mono text-xs">REF: {viewingTransaction?.id}</DialogDescription>
+          </div>
+          <div className="p-8 space-y-6">
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-black text-slate-500">Execution Date</span>
+                <p className="text-lg font-bold">{viewingTransaction?.transactionDate ? new Date(viewingTransaction.transactionDate).toLocaleString() : 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-black text-slate-500">Settlement Amount</span>
+                <p className={`text-2xl font-black ${viewingTransaction?.amount > 0 ? 'text-green-400' : 'text-white'}`}>
+                  {viewingTransaction?.amount > 0 ? '+' : '-'}{formatCurrency(viewingTransaction?.amount || 0, viewingTransaction?.currency)}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-black text-slate-500">Client UID</span>
+                <p className="font-mono text-xs text-slate-300">{viewingTransaction?.customerId || viewingTransaction?.userId}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-black text-slate-500">Account ID</span>
+                <p className="font-mono text-xs text-slate-300">{viewingTransaction?.accountId}</p>
+              </div>
+            </div>
+            <div className="pt-6 border-t border-white/10">
+              <span className="text-[10px] uppercase font-black text-slate-500 block mb-2">Institutional Memo</span>
+              <p className="italic text-slate-300">"{viewingTransaction?.description}"</p>
+            </div>
+          </div>
+          <div className="p-6 bg-slate-900 border-t border-white/10 text-right">
+            <Button onClick={() => setViewingTransaction(null)} className="bg-primary px-8 font-black uppercase text-xs tracking-widest">Close Record</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

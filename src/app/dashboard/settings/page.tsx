@@ -12,6 +12,7 @@ import {
   Loader2, 
   CreditCard,
   Building2,
+  Lock,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -61,7 +62,10 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Profile View - "Basic Information" */}
         <div className="lg:col-span-8 space-y-8">
-          <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200">
+          <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200 relative overflow-hidden">
+            <div className="absolute top-4 right-4 text-slate-400">
+              <Lock className="h-5 w-5" />
+            </div>
             <div className="max-w-2xl mx-auto space-y-12">
               <div className="relative inline-block">
                 <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</h2>
@@ -82,7 +86,7 @@ export default function SettingsPage() {
                     <span className="font-black text-[#002B5B]">Username:</span> {profile?.username || user?.email?.split('@')[0]}
                   </p>
                   <p className="text-xl font-bold text-slate-700">
-                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{profile?.email}</span>
+                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{profile?.email || user?.email}</span>
                   </p>
                 </div>
               </div>
@@ -126,9 +130,11 @@ export default function SettingsPage() {
           </div>
           
           <Card className="bg-slate-50 border-2 border-dashed border-slate-200 p-8 rounded-[2rem] text-center">
-            <CardTitle className="text-primary mb-2">Institutional Lockdown Active</CardTitle>
+            <CardTitle className="text-primary mb-2 flex items-center justify-center gap-2">
+              <Lock className="h-5 w-5" /> Institutional Lockdown Active
+            </CardTitle>
             <CardDescription className="font-medium max-w-lg mx-auto leading-relaxed">
-              To maintain the highest security standards, your identity records are managed by your assigned Banking Administrator. Please contact Nexa Support for profile updates.
+              To maintain the highest security standards, your identity records are managed by your assigned Banking Administrator. All profile modifications must be requested through institutional support.
             </CardDescription>
           </Card>
         </div>
@@ -150,7 +156,7 @@ export default function SettingsPage() {
               <div className="p-6 space-y-4">
                 {isAccountsLoading ? (
                   Array(2).fill(0).map((_, i) => <div key={i} className="h-12 bg-slate-100 animate-pulse rounded-xl" />)
-                ) : accounts?.map((acc) => (
+                ) : accounts && accounts.length > 0 ? accounts.map((acc) => (
                   <div key={acc.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -163,7 +169,9 @@ export default function SettingsPage() {
                     </div>
                     <p className="font-black text-sm">${acc.balance?.toLocaleString()}</p>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-xs text-muted-foreground text-center py-4 italic">No active accounts detected.</p>
+                )}
               </div>
             </CardContent>
           </Card>

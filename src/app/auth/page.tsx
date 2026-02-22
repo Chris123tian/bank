@@ -1,14 +1,15 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth, useUser, useFirestore } from "@/firebase";
-import { initiateEmailSignIn, initiateEmailSignUp, initiateGoogleSignIn } from "@/firebase/non-blocking-login";
+import { initiateEmailSignIn, initiateGoogleSignIn } from "@/firebase/non-blocking-login";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, ArrowRight, Loader2, ShieldCheck } from "lucide-react";
+import { Building2, ArrowRight, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -17,24 +18,20 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 
 function AuthPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   const auth = useAuth();
   const db = useFirestore();
   const { user, isUserLoading } = useUser();
   const { t } = useTranslation();
 
-  const [isLogin, setIsLogin] = useState(searchParams.get("mode") !== "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user && !isUserLoading) {
-      // Fast redirect - don't block on admin role update
       if (user.email === "citybank@gmail.com") {
         const adminRef = doc(db, "roles_admin", user.uid);
-        // Non-blocking background update
         setDoc(adminRef, { 
           email: user.email, 
           assignedAt: serverTimestamp(),
@@ -50,12 +47,7 @@ function AuthPageContent() {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        await initiateEmailSignIn(auth, email, password);
-      } else {
-        await initiateEmailSignUp(auth, email, password);
-      }
-      // Redirection is handled by the useEffect watching 'user'
+      await initiateEmailSignIn(auth, email, password);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -71,7 +63,6 @@ function AuthPageContent() {
     try {
       await initiateGoogleSignIn(auth);
     } catch (error: any) {
-      // Handle "Popup blocked" or "Popup closed by user"
       toast({
         variant: "destructive",
         title: "Google Authentication Error",
@@ -107,9 +98,9 @@ function AuthPageContent() {
 
       <Card className="w-full max-w-[400px] shadow-xl border-t-4 border-t-accent overflow-hidden">
         <CardHeader className="space-y-1 text-center p-6 sm:p-8">
-          <CardTitle className="text-xl sm:text-2xl font-bold">{isLogin ? t('auth_signin') : t('auth_signup')}</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-bold">{t('auth_signin')}</CardTitle>
           <CardDescription className="text-xs sm:text-sm">
-            {isLogin ? t('auth_desc_login') : t('auth_desc_signup')}
+            {t('auth_desc_login')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 px-6 sm:px-8 pb-8">
@@ -149,7 +140,7 @@ function AuthPageContent() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  {isLogin ? "Log In" : "Register"}
+                  {t('nav_login')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
@@ -161,7 +152,7 @@ function AuthPageContent() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-[10px] uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              <span className="bg-background px-2 text-muted-foreground">Internal Access Only</span>
             </div>
           </div>
 
@@ -189,26 +180,13 @@ function AuthPageContent() {
                 fill="#EA4335"
               />
             </svg>
-            Google
+            Google Auth
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 pt-0 p-6 sm:p-8 border-t bg-slate-50/50">
-          <div className="text-center text-xs sm:text-sm">
-            {isLogin ? (
-              <span>
-                New to City Bank?{" "}
-                <button type="button" onClick={() => setIsLogin(false)} className="text-accent font-bold hover:underline">
-                  Get Started Now
-                </button>
-              </span>
-            ) : (
-              <span>
-                Already a member?{" "}
-                <button type="button" onClick={() => setIsLogin(true)} className="text-accent font-bold hover:underline">
-                  Log In
-                </button>
-              </span>
-            )}
+          <div className="text-center text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-2">
+            <Lock className="h-3 w-3" /> 
+            <span>Accounts are provisioned by Banking Administrators.</span>
           </div>
         </CardFooter>
       </Card>
