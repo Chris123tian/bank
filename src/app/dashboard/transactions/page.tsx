@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { query, orderBy, limit, collectionGroup, where, collection } from "firebase/firestore";
 
-export default function TransactionsPage() {
+function TransactionsContent() {
   const { user } = useUser();
   const db = useFirestore();
   const searchParams = useSearchParams();
@@ -349,5 +349,13 @@ export default function TransactionsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <TransactionsContent />
+    </Suspense>
   );
 }
