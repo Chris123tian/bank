@@ -12,9 +12,6 @@ import {
   Loader2, 
   CreditCard,
   Building2,
-  Briefcase,
-  MapPin,
-  Calendar
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -124,10 +121,6 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
-                <div className="mt-10 flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  <ShieldCheck className="h-4 w-4 text-green-500" />
-                  Verified Institutional Record
-                </div>
               </div>
             </div>
           </div>
@@ -135,7 +128,7 @@ export default function SettingsPage() {
           <Card className="bg-slate-50 border-2 border-dashed border-slate-200 p-8 rounded-[2rem] text-center">
             <CardTitle className="text-primary mb-2">Institutional Lockdown Active</CardTitle>
             <CardDescription className="font-medium max-w-lg mx-auto leading-relaxed">
-              To maintain the highest security standards, your vault identity records are managed by your assigned Banking Administrator. Please contact Nexa Support or your Relationship Manager for profile updates.
+              To maintain the highest security standards, your identity records are managed by your assigned Banking Administrator. Please contact Nexa Support for profile updates.
             </CardDescription>
           </Card>
         </div>
@@ -189,10 +182,6 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-accent/10">
                 <span className="text-xs font-bold">AML Tier</span>
                 <Badge className="bg-blue-100 text-blue-700 border-none px-3">Tier 1</Badge>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-accent/10">
-                <span className="text-xs font-bold">Digital Signature</span>
-                <Badge className="bg-green-100 text-green-700 border-none px-3">Authorized</Badge>
               </div>
             </CardContent>
           </Card>

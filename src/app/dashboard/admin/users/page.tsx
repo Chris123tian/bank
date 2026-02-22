@@ -20,7 +20,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, Upload, MapPin, Briefcase, User as UserIcon, FileText } from "lucide-react";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, User as UserIcon, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -88,7 +88,6 @@ export default function AdminUsersPage() {
   const handleUpdateUser = () => {
     if (!db || !editingUser) return;
     const userRef = doc(db, "users", editingUser.id);
-    // Only update Basic Information fields allowed by admin
     updateDocumentNonBlocking(userRef, {
       username: editingUser.username || "",
       email: editingUser.email || "",
@@ -233,12 +232,6 @@ export default function AdminUsersPage() {
                       {editingUser?.city ? `${editingUser.city}, ${editingUser.state || ""} ${editingUser.postalCode || ""}` : "—"}<br />
                       <span className="text-[10px] font-bold text-primary">{editingUser?.country || "United States"}</span>
                     </p>
-                  </div>
-                  <div className="space-y-1 pt-4">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase">Legal Signature</Label>
-                    {editingUser?.signature ? (
-                      <img src={editingUser.signature} alt="Signature" className="h-16 object-contain bg-white border rounded p-1" />
-                    ) : <p className="text-xs italic text-slate-300">No signature on file</p>}
                   </div>
                </div>
                <p className="text-[9px] text-center text-muted-foreground uppercase font-black tracking-widest leading-tight">
