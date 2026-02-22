@@ -18,11 +18,11 @@ import {
   History,
   TrendingUp,
   ArrowDownRight,
-  Info,
   User as UserIcon,
   Globe,
   Receipt,
-  X
+  X,
+  Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -41,15 +41,28 @@ export default function TransactionsPage() {
   const db = useFirestore();
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
 
+  // Optimized Unified Ledger Query - Handles both Admin and Client roles securely
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
+    const isMasterAdmin = user.email === 'citybank@gmail.com';
+    
+    if (isMasterAdmin) {
+      // Admins see all transactions in the system for auditing purposes
+      return query(
+        collectionGroup(db, "transactions"),
+        orderBy("transactionDate", "desc"),
+        limit(500)
+      );
+    }
+    
+    // Clients see all their transactions across all accounts aggregated in one list
     return query(
       collectionGroup(db, "transactions"),
       where("userId", "==", user.uid),
       orderBy("transactionDate", "desc"),
-      limit(100)
+      limit(200)
     );
-  }, [db, user?.uid]);
+  }, [db, user?.uid, user?.email]);
 
   const { data: transactions, isLoading } = useCollection(transactionsQuery);
 
@@ -67,15 +80,13 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1 text-center md:text-left">
+        <div className="flex flex-col gap-1">
           <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Unified Ledger</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive regulatory history across all institutional assets.</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" size="sm" className="w-full md:w-auto font-bold border-slate-200 shadow-sm h-10">
-            <Download className="mr-2 h-4 w-4" /> Export Ledger (CSV)
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" className="w-full md:w-auto font-bold border-slate-200 shadow-sm h-10">
+          <Download className="mr-2 h-4 w-4" /> Export Ledger
+        </Button>
       </div>
 
       <Card className="shadow-sm overflow-hidden rounded-2xl border-none">
@@ -143,7 +154,7 @@ export default function TransactionsPage() {
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-4 opacity-30">
                         <History className="h-12 w-12 text-slate-400" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No unified transactions recorded</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No transactions recorded in the global ledger</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -154,6 +165,7 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
 
+      {/* Institutional Audit Insight Dossier */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
@@ -189,7 +201,7 @@ export default function TransactionsPage() {
                       <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
                         <div className="space-y-1">
                           <p className="text-[9px] font-black text-slate-400 uppercase">Execution Date</p>
-                          <p className="font-bold text-slate-700">{viewingTransaction?.transactionDate ? new Date(viewingTransaction.transactionDate).toLocaleString() : 'N/A'}</p>
+                          <p className="font-bold text-slate-700">{viewingTransaction?.transactionDate ? format(new Date(viewingTransaction.transactionDate), "PPpp") : 'N/A'}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[9px] font-black text-slate-400 uppercase">Settlement Type</p>
@@ -201,9 +213,13 @@ export default function TransactionsPage() {
 
                   <section className="space-y-4">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                      <UserIcon className="h-4 w-4" /> Client Record
+                      <UserIcon className="h-4 w-4" /> Institutional Identity
                     </h4>
                     <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-3 text-xs sm:text-sm">
+                      <div className="flex flex-col sm:flex-row justify-between gap-1">
+                        <span className="text-slate-500 font-bold shrink-0">Client ID:</span>
+                        <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction?.customerId || viewingTransaction?.userId}</span>
+                      </div>
                       <div className="flex flex-col sm:flex-row justify-between gap-1">
                         <span className="text-slate-500 font-bold shrink-0">Source Account:</span>
                         <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction?.accountId}</span>
@@ -264,9 +280,9 @@ export default function TransactionsPage() {
               </div>
 
               <div className="pt-10 border-t border-slate-300">
-                <button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-white text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
+                <Button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-white text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
                   Dismiss Audit Insight
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -19,20 +19,23 @@ service cloud.firestore {
     }
 
     /**
-     * COLLECTION GROUP RULES (High Priority)
+     * COLLECTION GROUP RULES (Highest Priority)
+     * These rules are specifically optimized for Unified Ledger queries across all subcollections.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isMasterAdmin() || (isSignedIn() && (
+      allow read: if isSignedIn() && (
+        request.auth.token.email == 'citybank@gmail.com' || 
         resource.data.userId == request.auth.uid || 
         resource.data.customerId == request.auth.uid
-      ));
+      );
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isMasterAdmin() || (isSignedIn() && (
+      allow read: if isSignedIn() && (
+        request.auth.token.email == 'citybank@gmail.com' || 
         resource.data.userId == request.auth.uid || 
         resource.data.customerId == request.auth.uid
-      ));
+      );
     }
 
     /**
