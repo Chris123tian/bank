@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,8 +31,7 @@ import {
   Receipt,
   X,
   Info,
-  Search,
-  Filter
+  Search
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -48,9 +48,18 @@ import { query, orderBy, limit, collectionGroup, where, collection } from "fireb
 export default function TransactionsPage() {
   const { user } = useUser();
   const db = useFirestore();
+  const searchParams = useSearchParams();
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [search, setSearch] = useState("");
+
+  // Handle direct account link from dashboard
+  useEffect(() => {
+    const accId = searchParams.get('account');
+    if (accId) {
+      setSelectedAccountId(accId);
+    }
+  }, [searchParams]);
 
   // Fetch Accounts for the filter dropdown
   const accountsRef = useMemoFirebase(() => {
@@ -65,8 +74,8 @@ export default function TransactionsPage() {
     if (!db || !user?.uid) return null;
 
     if (selectedAccountId === "all") {
-      // Aggregate view across all accounts (Unified Ledger)
-      // We filter by customerId to match security rules requirements
+      // Aggregate view across all accounts
+      // Security rules require customerId filter for collectionGroup
       return query(
         collectionGroup(db, "transactions"),
         where("customerId", "==", user.uid),
@@ -74,7 +83,7 @@ export default function TransactionsPage() {
         limit(100)
       );
     } else {
-      // Single account view - uses direct path which is inherently more stable
+      // Single account view - inherent security stability
       return query(
         collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions"),
         orderBy("transactionDate", "desc"),
@@ -116,7 +125,7 @@ export default function TransactionsPage() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search history..." 
+              placeholder="Filter trail..." 
               className="pl-10 h-11 border-slate-200" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}

@@ -19,11 +19,11 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Optimized for aggregation and regulatory auditing.
+     * These rules are evaluated for collectionGroup() queries.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
-        isMasterAdmin() || 
+        isAdmin() || 
         resource.data.get('customerId', '') == request.auth.uid || 
         resource.data.get('userId', '') == request.auth.uid
       );
@@ -32,7 +32,7 @@ service cloud.firestore {
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
-        isMasterAdmin() || 
+        isAdmin() || 
         resource.data.get('customerId', '') == request.auth.uid || 
         resource.data.get('userId', '') == request.auth.uid
       );
