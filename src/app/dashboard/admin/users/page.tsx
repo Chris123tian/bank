@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -36,7 +35,8 @@ import {
   FileSignature,
   X,
   Landmark,
-  ArrowRight
+  ArrowRight,
+  MapPin
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
