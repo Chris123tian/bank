@@ -298,7 +298,7 @@ export default function AdminAccountsAuditPage() {
 
       {/* Account Edit / Balance Adjustment Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden">
+        <DialogContent className="max-w-xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           <div className="p-8 bg-[#002B5B] text-white shrink-0">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/10 rounded-2xl"><TrendingUp className="h-6 w-6" /></div>
@@ -370,7 +370,7 @@ export default function AdminAccountsAuditPage() {
               <p className="text-[10px] text-muted-foreground italic font-medium">Manual balance overrides reflect instantly on the client's dashboard and are logged for internal audit.</p>
             </div>
           </div>
-          <DialogFooter className="p-8 bg-slate-50 border-t flex gap-3">
+          <DialogFooter className="p-8 bg-slate-50 border-t flex gap-3 shrink-0">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold">Cancel</Button>
             <Button onClick={handleUpdateAccount} className="flex-1 h-12 bg-[#002B5B] hover:bg-[#003B7B] rounded-xl font-black uppercase tracking-widest shadow-lg">Commit Corrections</Button>
           </DialogFooter>
@@ -379,7 +379,7 @@ export default function AdminAccountsAuditPage() {
 
       {/* Create Account Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden">
+        <DialogContent className="max-w-xl p-0 border-none rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           <div className="p-8 bg-primary text-white shrink-0">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/10 rounded-2xl"><PlusCircle className="h-6 w-6" /></div>
@@ -389,7 +389,7 @@ export default function AdminAccountsAuditPage() {
               </div>
             </div>
           </div>
-          <div className="p-8 space-y-6">
+          <div className="flex-1 overflow-y-auto p-8 space-y-6">
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase text-slate-500">Target Client</Label>
               <Select value={newAccount.userId} onValueChange={(val) => setNewAccount({...newAccount, userId: val})}>
@@ -449,7 +449,7 @@ export default function AdminAccountsAuditPage() {
               </div>
             </div>
           </div>
-          <DialogFooter className="p-8 bg-slate-50 border-t">
+          <DialogFooter className="p-8 bg-slate-50 border-t shrink-0">
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold">Cancel</Button>
             <Button onClick={handleCreateAccount} className="flex-1 h-12 bg-primary hover:bg-primary/90 rounded-xl font-black uppercase tracking-widest">Initialize Asset</Button>
           </DialogFooter>
