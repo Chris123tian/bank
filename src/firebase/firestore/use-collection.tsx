@@ -30,7 +30,7 @@ export function useCollection<T = any>(
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // NUCLEAR GUARD: Prevent root listing or undefined paths during initialization.
+    // 1. INPUT GUARD: Prevent execution if ref is missing
     if (!memoizedTargetRefOrQuery) {
       setData(null);
       setIsLoading(false);
@@ -39,30 +39,38 @@ export function useCollection<T = any>(
 
     let pathString = '';
     let isGroupQuery = false;
+    let collectionGroupId = '';
     
     try {
       if ('path' in memoizedTargetRefOrQuery) {
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
-        // Extract collection ID for collectionGroup queries from internal SDK structure
-        // This is primarily for descriptive error reporting.
+        // Handle Query objects (including collectionGroup)
         const q = memoizedTargetRefOrQuery as any;
-        pathString = q._query?.path?.canonicalString() || 'Global';
-        // If path has no segments, it's a collectionGroup query
-        isGroupQuery = !pathString.includes('/');
+        // The path in a collectionGroup query is typically empty relative to root
+        pathString = q._query?.path?.canonicalString() || '';
+        
+        // If it's a collectionGroup query, the ID is stored in collectionGroup
+        if (q._query?.collectionGroup) {
+          isGroupQuery = true;
+          collectionGroupId = q._query.collectionGroup;
+        } else {
+          isGroupQuery = !pathString.includes('/');
+        }
       }
     } catch (e) {
       pathString = 'Unknown';
     }
 
-    // Defensive check: Block if path resolves to root or contains 'undefined' strings
+    // 2. NUCLEAR GUARD: Prevent root listing or undefined paths during initialization.
+    // Group queries are allowed to have empty paths as they target all segments.
     if (!isGroupQuery && (!pathString || pathString === '/' || pathString === '//' || pathString.includes('undefined'))) {
       setData(null);
       setIsLoading(false);
       return;
     }
 
-    // AUTH STABILITY GUARD:
+    // 3. AUTH STABILITY GUARD:
     // Firebase initialization is asynchronous. We must ensure the Auth SDK has settled 
     // before sending queries, especially collection group queries which are highly sensitive.
     const auth = getAuth();
@@ -90,7 +98,9 @@ export function useCollection<T = any>(
       },
       (firestoreError: FirestoreError) => {
         // Construct detailed audit path for error reporting
-        const finalPath = isGroupQuery ? `[Collection Group: ${pathString}]` : pathString;
+        const finalPath = isGroupQuery 
+          ? `[Collection Group: ${collectionGroupId || pathString || 'Global'}]` 
+          : (pathString || '[Unknown Path]');
         
         const contextualError = new FirestorePermissionError({
           operation: 'list',

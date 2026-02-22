@@ -1,3 +1,4 @@
+
 'use client';
     
 import { useState, useEffect } from 'react';
@@ -8,6 +9,7 @@ import {
   FirestoreError,
   DocumentSnapshot,
 } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -35,6 +37,14 @@ export function useDoc<T = any>(
 
     const path = memoizedDocRef.path;
     if (!path || path === '/' || path === '//' || path.includes('undefined')) {
+      setData(null);
+      setIsLoading(false);
+      return;
+    }
+
+    // AUTH STABILITY GUARD
+    const auth = getAuth();
+    if (!auth.currentUser) {
       setData(null);
       setIsLoading(false);
       return;
