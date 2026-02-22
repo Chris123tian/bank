@@ -5,7 +5,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "CustomerProfile",
       "type": "object",
-      "description": "Represents a user of the banking application, storing their personal and contact information.",
+      "description": "Represents a user of the banking application, storing their personal, contact, and identity verification information.",
       "properties": {
         "id": {
           "type": "string",
@@ -27,6 +27,15 @@
           "type": "string",
           "description": "The last name of the customer."
         },
+        "dob": {
+          "type": "string",
+          "format": "date",
+          "description": "Customer's date of birth."
+        },
+        "ssn": {
+          "type": "string",
+          "description": "Social Security Number or equivalent tax identification."
+        },
         "email": {
           "type": "string",
           "description": "The primary email address of the customer.",
@@ -39,10 +48,6 @@
         "addressLine1": {
           "type": "string",
           "description": "The first line of the customer's street address."
-        },
-        "addressLine2": {
-          "type": "string",
-          "description": "The second line of the customer's street address, if applicable."
         },
         "city": {
           "type": "string",
@@ -60,9 +65,25 @@
           "type": "string",
           "description": "The country of the customer's address."
         },
+        "employmentStatus": {
+          "type": "string",
+          "description": "Current employment status."
+        },
+        "employerName": {
+          "type": "string",
+          "description": "Name of the current employer."
+        },
+        "jobTitle": {
+          "type": "string",
+          "description": "Professional job title."
+        },
+        "annualIncome": {
+          "type": "number",
+          "description": "Self-reported annual income."
+        },
         "signature": {
           "type": "string",
-          "description": "Digital text representation of the user's legal signature."
+          "description": "Base64 encoded string of the user's uploaded signature image."
         },
         "createdAt": {
           "type": "string",
@@ -114,10 +135,6 @@
         "balance": {
           "type": "number",
           "description": "The current balance of the account."
-        },
-        "accountName": {
-          "type": "string",
-          "description": "A user-friendly name or nickname for the account."
         },
         "status": {
           "type": "string",
@@ -192,10 +209,6 @@
         "status": {
           "type": "string",
           "description": "The current status of the transaction."
-        },
-        "referenceNumber": {
-          "type": "string",
-          "description": "A unique reference number for the transaction."
         }
       },
       "required": [
@@ -208,41 +221,11 @@
         "transactionDate",
         "status"
       ]
-    },
-    "Payee": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Payee",
-      "type": "object",
-      "description": "Represents an external recipient of funds.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Payee entity."
-        },
-        "customerId": {
-          "type": "string",
-          "description": "Reference to the CustomerProfile who has added this payee."
-        },
-        "payeeName": {
-          "type": "string",
-          "description": "The official name of the payee or organization."
-        },
-        "nickname": {
-          "type": "string",
-          "description": "A user-defined friendly name for the payee."
-        }
-      },
-      "required": [
-        "id",
-        "customerId",
-        "payeeName"
-      ]
     }
   },
   "auth": {
     "providers": [
       "password",
-      "anonymous",
       "google"
     ]
   },

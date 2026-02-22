@@ -12,6 +12,9 @@ import {
   Loader2, 
   CreditCard,
   Building2,
+  Briefcase,
+  MapPin,
+  Calendar
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -44,183 +47,183 @@ export default function SettingsPage() {
     );
   }
 
-  const profileData = {
-    username: profile?.username || user?.email?.split('@')[0] || "N/A",
-    profilePictureUrl: profile?.profilePictureUrl || user?.photoURL || "",
-    firstName: profile?.firstName || user?.displayName?.split(' ')[0] || "N/A",
-    lastName: profile?.lastName || user?.displayName?.split(' ')[1] || "N/A",
-    email: profile?.email || user?.email || "N/A",
-    addressLine1: profile?.addressLine1 || "—",
-    addressLine2: profile?.addressLine2 || "—",
-    city: profile?.city || "",
-    state: profile?.state || "",
-    postalCode: profile?.postalCode || "",
-    country: profile?.country || "—",
-    signature: profile?.signature || "",
-  };
-
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-20">
+    <div className="max-w-6xl mx-auto space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-primary/10 rounded-xl text-primary">
             <UserIcon className="h-8 w-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-headline font-bold text-primary">Account User Information</h1>
-            <p className="text-muted-foreground">Secure global profile and financial identity overview.</p>
+            <h1 className="text-3xl font-headline font-bold text-primary">Vault Identity Record</h1>
+            <p className="text-muted-foreground">Comprehensive global profile and regulatory identity overview.</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Main Profile View - Read Only */}
+        <div className="lg:col-span-8 space-y-8">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200">
-            <div className="max-w-md mx-auto space-y-12">
+            <div className="max-w-2xl mx-auto space-y-12">
               <div className="relative inline-block">
-                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</h2>
+                <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Information</h2>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
 
-              <div className="flex justify-center pt-4">
-                <div className="h-64 w-64 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-lg border-8 border-slate-100">
-                  {profileData.profilePictureUrl ? (
-                    <img 
-                      src={profileData.profilePictureUrl} 
-                      alt="Profile" 
-                      className="h-full w-full object-cover"
-                    />
+              <div className="flex flex-col sm:flex-row items-center gap-8">
+                <div className="h-48 w-48 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-lg border-8 border-slate-100 shrink-0">
+                  {profile?.profilePictureUrl ? (
+                    <img src={profile.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-white text-7xl font-bold">
-                      {profileData.firstName.charAt(0)}{profileData.lastName.charAt(0)}
-                    </span>
+                    <span className="text-white text-5xl font-bold">{profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}</span>
                   )}
+                </div>
+                <div className="space-y-4 text-center sm:text-left">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Client Name</span>
+                    <span className="text-2xl font-black text-primary">{profile?.firstName} {profile?.lastName}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Email Identity</span>
+                    <span className="text-sm font-medium underline decoration-1 underline-offset-4">{profile?.email}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-6 pt-6">
-                <div className="flex gap-2 text-xl text-slate-700">
-                  <span className="font-bold min-w-[120px]">Username:</span>
-                  <span className="font-medium">{profileData.username}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 pt-12 border-t border-slate-300">
+                <div className="space-y-6">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4" /> Identity & Contact
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex gap-2 text-base text-slate-700">
+                      <span className="font-bold min-w-[100px]">DOB:</span>
+                      <span className="font-medium">{profile?.dob || "—"}</span>
+                    </div>
+                    <div className="flex gap-2 text-base text-slate-700">
+                      <span className="font-bold min-w-[100px]">SSN/TIN:</span>
+                      <span className="font-medium">•••• •••• {profile?.ssn?.slice(-4) || "—"}</span>
+                    </div>
+                    <div className="flex gap-2 text-base text-slate-700">
+                      <span className="font-bold min-w-[100px]">Phone:</span>
+                      <span className="font-medium">{profile?.phoneNumber || "—"}</span>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex gap-2 text-xl text-slate-700">
-                  <span className="font-bold min-w-[120px]">Email:</span>
-                  <span className="font-medium underline decoration-1 underline-offset-4">{profileData.email}</span>
+
+                <div className="space-y-6">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" /> Professional Profile
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex gap-2 text-base text-slate-700">
+                      <span className="font-bold min-w-[100px]">Status:</span>
+                      <span className="font-medium">{profile?.employmentStatus || "—"}</span>
+                    </div>
+                    <div className="flex gap-2 text-base text-slate-700">
+                      <span className="font-bold min-w-[100px]">Employer:</span>
+                      <span className="font-medium">{profile?.employerName || "—"}</span>
+                    </div>
+                    <div className="flex gap-2 text-base text-slate-700">
+                      <span className="font-bold min-w-[100px]">Title:</span>
+                      <span className="font-medium">{profile?.jobTitle || "—"}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="pt-12 space-y-5 border-t border-slate-300">
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Name :</span>
-                    <span className="font-medium">{profileData.firstName} {profileData.lastName}</span>
-                  </div>
-
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Address 1:</span>
-                    <span className="font-medium">{profileData.addressLine1}</span>
-                  </div>
-
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Address 2:</span>
-                    <span className="font-medium">{profileData.addressLine2}</span>
-                  </div>
-
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">City/State/Zip:</span>
-                    <span className="font-medium">
-                      {profileData.city}{profileData.state ? `, ${profileData.state}` : ''}{profileData.postalCode ? ` ${profileData.postalCode}` : ''}
-                      {!profileData.city && !profileData.state && "—"}
-                    </span>
-                  </div>
-
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Country:</span>
-                    <span className="font-medium">{profileData.country}</span>
+                <div className="col-span-1 md:col-span-2 space-y-6 pt-4">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> Registered Address
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base text-slate-700">
+                    <p className="font-medium">{profile?.addressLine1 || "No address on file"}</p>
+                    <p className="font-medium">{profile?.city}{profile?.state ? `, ${profile.state}` : ''} {profile?.postalCode}</p>
+                    <p className="font-bold text-primary">{profile?.country || "United States"}</p>
                   </div>
                 </div>
               </div>
 
               <div className="pt-16 pb-8">
                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Authenticated Legal Signature</p>
-                <div className="bg-white p-4 inline-block shadow-md rounded-md">
-                  {profileData.signature ? (
-                    <img src={profileData.signature} alt="Signature" className="h-20 object-contain" />
+                <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100">
+                  {profile?.signature ? (
+                    <img src={profile.signature} alt="Signature" className="h-20 object-contain mx-auto" />
                   ) : (
-                    <div className="h-20 w-48 flex items-center justify-center border-2 border-dashed border-slate-200 text-slate-300 text-[10px] uppercase font-black">
-                      No Signature on File
+                    <div className="h-20 w-64 flex items-center justify-center border-2 border-dashed border-slate-200 text-slate-300 text-[10px] uppercase font-black">
+                      No Signature Authorized
                     </div>
                   )}
                 </div>
-                <div className="mt-4 h-1 w-full bg-slate-300 rounded-full opacity-50" />
+                <div className="mt-6 flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <ShieldCheck className="h-4 w-4 text-green-500" />
+                  Verified on {profile?.updatedAt ? new Date(profile.updatedAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                </div>
               </div>
             </div>
           </div>
           
-          <div className="p-8 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-center">
-            <h4 className="text-lg font-bold text-primary mb-2">Institutional Management Only</h4>
-            <p className="text-sm text-muted-foreground font-medium max-w-lg mx-auto leading-relaxed">
-              Profile information is managed by your assigned Banking Administrator. Please contact Nexa Support or your Relationship Manager for identity or address updates.
-            </p>
-          </div>
+          <Card className="bg-slate-50 border-2 border-dashed border-slate-200 p-8 rounded-[2rem] text-center">
+            <CardTitle className="text-primary mb-2">Institutional Lockdown Active</CardTitle>
+            <CardDescription className="font-medium max-w-lg mx-auto leading-relaxed">
+              To maintain the highest security standards, your vault identity records are managed by your assigned Banking Administrator. Please contact Nexa Support or your Relationship Manager for profile updates.
+            </CardDescription>
+          </Card>
         </div>
 
-        <div className="space-y-8">
-          <Card className="border-primary/10 shadow-lg overflow-hidden">
-            <CardHeader className="bg-primary text-white">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Account Summary
-              </CardTitle>
-              <CardDescription className="text-white/70">Consolidated financial overview.</CardDescription>
+        {/* Sidebar Summary */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card className="border-primary/10 shadow-xl overflow-hidden rounded-3xl">
+            <CardHeader className="bg-primary text-white p-6">
+              <CardTitle className="text-lg flex items-center gap-2"><CreditCard className="h-5 w-5" /> Account Summary</CardTitle>
+              <CardDescription className="text-white/70">Consolidated institutional capital.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="p-6 bg-primary/5 border-b border-primary/10">
-                <p className="text-xs font-bold text-primary uppercase tracking-widest">Total Managed Capital</p>
+              <div className="p-8 bg-primary/5 border-b border-primary/10">
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Total Asset Value</p>
                 <p className="text-4xl font-black text-primary mt-1">
-                  ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="p-6 space-y-4">
                 {isAccountsLoading ? (
-                  Array(2).fill(0).map((_, i) => <div key={i} className="h-12 bg-slate-100 animate-pulse rounded-lg" />)
-                ) : accounts && accounts.length > 0 ? (
-                  accounts.map((acc) => (
-                    <div key={acc.id} className="flex items-center justify-between group">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                          <Building2 className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-primary">{acc.accountType}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono">...{acc.accountNumber?.slice(-8)}</p>
-                        </div>
+                  Array(2).fill(0).map((_, i) => <div key={i} className="h-12 bg-slate-100 animate-pulse rounded-xl" />)
+                ) : accounts?.map((acc) => (
+                  <div key={acc.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                        <Building2 className="h-5 w-5" />
                       </div>
-                      <p className="font-black text-sm text-right">
-                        ${acc.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </p>
+                      <div>
+                        <p className="text-xs font-bold text-primary">{acc.accountType}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">...{acc.accountNumber?.slice(-4)}</p>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-6 opacity-40">
-                    <p className="text-xs font-bold uppercase tracking-tighter">No Linked Accounts Found</p>
+                    <p className="font-black text-sm">${acc.balance?.toLocaleString()}</p>
                   </div>
-                )}
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-accent/5 border-accent/20">
+          <Card className="bg-accent/5 border-accent/20 rounded-3xl">
             <CardHeader>
-              <CardTitle className="text-sm font-bold text-accent uppercase tracking-widest">Security Status</CardTitle>
+              <CardTitle className="text-xs font-black text-accent uppercase tracking-widest flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" /> Compliance Status
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-accent/10 shadow-sm">
-                <span className="text-xs font-medium">KYC Verification</span>
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Verified</Badge>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-accent/10">
+                <span className="text-xs font-bold">KYC Identity</span>
+                <Badge className="bg-green-100 text-green-700 border-none px-3">Verified</Badge>
               </div>
-              <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-accent/10 shadow-sm">
-                <span className="text-xs font-medium">Account Status</span>
-                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Active</Badge>
+              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-accent/10">
+                <span className="text-xs font-bold">AML Tier</span>
+                <Badge className="bg-blue-100 text-blue-700 border-none px-3">Tier 1</Badge>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-accent/10">
+                <span className="text-xs font-bold">Digital Signature</span>
+                <Badge className="bg-green-100 text-green-700 border-none px-3">Authorized</Badge>
               </div>
             </CardContent>
           </Card>

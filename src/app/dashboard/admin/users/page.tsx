@@ -20,7 +20,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3 } from "lucide-react";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
@@ -96,6 +96,17 @@ export default function AdminUsersPage() {
     setEditingUser(null);
   };
 
+  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingUser) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingUser({ ...editingUser, signature: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleDeleteUser = (userId: string) => {
     if (!db) return;
     if (userId === currentUser?.uid) {
@@ -117,79 +128,26 @@ export default function AdminUsersPage() {
   }
 
   if (!isAdminConfirmed) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
-        <ShieldAlert className="h-12 w-12 text-red-500" />
-        <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
-        <p className="text-muted-foreground">Administrative privileges are required to manage users.</p>
-      </div>
-    );
+    return <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4"><ShieldAlert className="h-12 w-12 text-red-500" /><h2 className="text-2xl font-bold text-primary">Access Denied</h2></div>;
   }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-headline font-bold text-primary">User Management</h1>
-          <p className="text-muted-foreground">Create and manage client and admin profiles.</p>
+          <h1 className="text-3xl font-headline font-bold text-primary">Global User Audit</h1>
+          <p className="text-muted-foreground">Managing client and administrative profiles across the Nexa network.</p>
         </div>
         <Button onClick={() => setIsCreating(!isCreating)} className="bg-accent">
           {isCreating ? "Cancel" : <><UserPlus className="mr-2 h-4 w-4" /> New Profile</>}
         </Button>
       </div>
 
-      {isCreating && (
-        <Card className="border-accent/20">
-          <CardHeader>
-            <CardTitle>Create New User Profile</CardTitle>
-            <CardDescription>Manually create a profile for a new client or administrator.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <Label>First Name</Label>
-              <Input value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Last Name</Label>
-              <Input value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone Number</Label>
-              <Input value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select value={formData.userRole} onValueChange={(v) => setFormData({...formData, userRole: v})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="admin">Administrator</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-          <CardFooter className="justify-end border-t pt-6">
-            <Button onClick={handleCreateUser} className="bg-primary">Create Profile</Button>
-          </CardFooter>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search by name or email..." 
-              className="pl-10" 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <Input placeholder="Search global index..." className="pl-10 h-11" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent>
@@ -199,13 +157,13 @@ export default function AdminUsersPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead className="hidden md:table-cell">Joined</TableHead>
+                <TableHead className="hidden md:table-cell">Identity Verified</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isUsersLoading ? (
-                <TableRow><TableCell colSpan={5} className="text-center py-10">Syncing user records...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center py-10">Syncing user ledger...</TableCell></TableRow>
               ) : filteredUsers?.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="font-bold text-primary">
@@ -223,24 +181,13 @@ export default function AdminUsersPage() {
                       {u.userRole || 'client'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs opacity-60 hidden md:table-cell">
-                    {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                  <TableCell className="hidden md:table-cell">
+                    {u.ssn ? <Badge className="bg-green-100 text-green-700">KYC Complete</Badge> : <Badge variant="outline">Pending KYC</Badge>}
                   </TableCell>
                   <TableCell className="text-right flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingUser(u)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-accent" onClick={() => setEditingUser(u)}>
-                      <Edit3 className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-red-400 hover:text-red-600"
-                      onClick={() => handleDeleteUser(u.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingUser(u)}><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-accent" onClick={() => setEditingUser(u)}><Edit3 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400" onClick={() => handleDeleteUser(u.id)}><Trash2 className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -251,55 +198,51 @@ export default function AdminUsersPage() {
 
       {/* Edit Profile Dialog - Admin Only */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Client Profile</DialogTitle>
-            <DialogDescription>Administrative modification of identity and address records.</DialogDescription>
+            <DialogTitle>Administrative Profile Modification</DialogTitle>
+            <DialogDescription>Updating institutional records for UID: {editingUser?.id}</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label>First Name</Label>
-              <Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Personal & Identity</h4>
+              <div className="space-y-2"><Label>First Name</Label><Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Last Name</Label><Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} /></div>
+              <div className="space-y-2"><Label>DOB</Label><Input type="date" value={editingUser?.dob || ""} onChange={(e) => setEditingUser({...editingUser, dob: e.target.value})} /></div>
+              <div className="space-y-2"><Label>SSN / Tax ID</Label><Input value={editingUser?.ssn || ""} onChange={(e) => setEditingUser({...editingUser, ssn: e.target.value})} /></div>
             </div>
-            <div className="space-y-2">
-              <Label>Last Name</Label>
-              <Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} />
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Professional Records</h4>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={editingUser?.employmentStatus || "Full-Time"} onValueChange={(v) => setEditingUser({...editingUser, employmentStatus: v})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Full-Time">Full-Time</SelectItem>
+                    <SelectItem value="Part-Time">Part-Time</SelectItem>
+                    <SelectItem value="Self-Employed">Self-Employed</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Retired">Retired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2"><Label>Employer</Label><Input value={editingUser?.employerName || ""} onChange={(e) => setEditingUser({...editingUser, employerName: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Job Title</Label><Input value={editingUser?.jobTitle || ""} onChange={(e) => setEditingUser({...editingUser, jobTitle: e.target.value})} /></div>
+              <div className="space-y-2"><Label>Annual Income</Label><Input type="number" value={editingUser?.annualIncome || ""} onChange={(e) => setEditingUser({...editingUser, annualIncome: e.target.value})} /></div>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Email</Label>
-              <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Username</Label>
-              <Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone Number</Label>
-              <Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} />
-            </div>
-            <div className="space-y-2 md:col-span-2 border-t pt-4">
-              <Label>Address Line 1</Label>
-              <Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>City</Label>
-              <Input value={editingUser?.city || ""} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>State</Label>
-              <Input value={editingUser?.state || ""} onChange={(e) => setEditingUser({...editingUser, state: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Postal Code</Label>
-              <Input value={editingUser?.postalCode || ""} onChange={(e) => setEditingUser({...editingUser, postalCode: e.target.value})} />
-            </div>
-            <div className="space-y-2">
-              <Label>Country</Label>
-              <Input value={editingUser?.country || ""} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} />
+            <div className="md:col-span-2 space-y-4 border-t pt-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Signature Override</h4>
+              <div className="flex items-center gap-4">
+                {editingUser?.signature && <img src={editingUser.signature} className="h-16 w-32 object-contain bg-slate-50 border rounded p-2" />}
+                <label className="flex-1 cursor-pointer flex items-center justify-center h-16 border-2 border-dashed border-slate-200 rounded-lg hover:border-primary transition-colors">
+                  <Upload className="h-5 w-5 mr-2" /> Upload New Signature
+                  <input type="file" className="hidden" accept="image/*" onChange={handleSignatureUpload} />
+                </label>
+              </div>
             </div>
           </div>
           <DialogFooter className="sticky bottom-0 bg-background pt-4 border-t">
-            <Button onClick={handleUpdateUser} className="w-full">Save Profile Updates</Button>
+            <Button onClick={handleUpdateUser} className="w-full h-12">Commit Institutional Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -308,67 +251,63 @@ export default function AdminUsersPage() {
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
-            <div className="max-w-md mx-auto space-y-10">
+            <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
-                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">
-                  Basic Information
-                </DialogTitle>
-                <DialogDescription className="sr-only">
-                  Detailed view of the client's institutional profile.
-                </DialogDescription>
+                <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Information</DialogTitle>
+                <DialogDescription className="sr-only">Detailed view of the client's global institutional profile.</DialogDescription>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
+              
               <div className="flex justify-center pt-2">
                 <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white">
                   {viewingUser?.profilePictureUrl ? (
                     <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-white text-7xl font-bold">
-                      {viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}
-                    </span>
+                    <span className="text-white text-7xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
                   )}
                 </div>
               </div>
-              <div className="space-y-6 pt-4">
-                <div className="flex gap-2 text-xl text-slate-700">
-                  <span className="font-bold min-w-[120px]">Username:</span>
-                  <span className="font-medium">{viewingUser?.username || "N/A"}</span>
-                </div>
-                <div className="flex gap-2 text-xl text-slate-700">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 pt-6 text-xl text-slate-700">
+                <div className="flex gap-2">
                   <span className="font-bold min-w-[120px]">Email:</span>
-                  <span className="font-medium underline decoration-1 underline-offset-4">{viewingUser?.email}</span>
+                  <span className="font-medium underline underline-offset-4">{viewingUser?.email}</span>
                 </div>
-                <div className="pt-8 space-y-5 border-t border-slate-300">
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Name :</span>
-                    <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
+                <div className="flex gap-2">
+                  <span className="font-bold min-w-[120px]">DOB:</span>
+                  <span className="font-medium">{viewingUser?.dob || "N/A"}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-bold min-w-[120px]">SSN/TIN:</span>
+                  <span className="font-medium">{viewingUser?.ssn || "N/A"}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-bold min-w-[120px]">Phone:</span>
+                  <span className="font-medium">{viewingUser?.phoneNumber || "N/A"}</span>
+                </div>
+              </div>
+
+              <div className="pt-8 space-y-5 border-t border-slate-300">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Professional Records</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xl text-slate-700">
+                  <div className="flex gap-2">
+                    <span className="font-bold min-w-[160px]">Status:</span>
+                    <span className="font-medium">{viewingUser?.employmentStatus || "—"}</span>
                   </div>
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Address 1:</span>
-                    <span className="font-medium">{viewingUser?.addressLine1 || "—"}</span>
-                  </div>
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">City/State/Zip:</span>
-                    <span className="font-medium">
-                      {viewingUser?.city}{viewingUser?.state ? `, ${viewingUser.state}` : ''}{viewingUser?.postalCode ? ` ${viewingUser.postalCode}` : ''}
-                      {!viewingUser?.city && !viewingUser?.state && "—"}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Country:</span>
-                    <span className="font-medium">{viewingUser?.country || "—"}</span>
+                  <div className="flex gap-2">
+                    <span className="font-bold min-w-[160px]">Income:</span>
+                    <span className="font-medium">${viewingUser?.annualIncome?.toLocaleString() || "0"}</span>
                   </div>
                 </div>
               </div>
+
               <div className="pt-12">
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Authenticated Legal Signature</p>
-                <div className="bg-white p-4 inline-block shadow-lg rounded-xl min-w-[200px] border border-slate-200">
+                <div className="bg-white p-6 inline-block shadow-lg rounded-xl min-w-[250px] border border-slate-200">
                   {viewingUser?.signature ? (
-                    <img src={viewingUser.signature} alt="Signature" className="h-20 object-contain mx-auto" />
+                    <img src={viewingUser.signature} alt="Signature" className="h-24 object-contain mx-auto" />
                   ) : (
-                    <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-100 italic text-slate-300 text-sm">
-                      No signature on file
-                    </div>
+                    <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-100 italic text-slate-300 text-sm">No signature authorized</div>
                   )}
                 </div>
               </div>
