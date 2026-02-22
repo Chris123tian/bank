@@ -12,7 +12,7 @@ service cloud.firestore {
 
     function isAdmin() {
       // The master administrator account bypasses standard ownership rules
-      return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
+      return isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
     }
 
     function isOwner(userId) {
@@ -22,6 +22,7 @@ service cloud.firestore {
     /**
      * ADMINISTRATIVE OVERRIDE
      * Explicitly grant the master administrator account full access to the entire root.
+     * This recursive wildcard is essential for collectionGroup queries to succeed.
      */
     match /{allPaths=**} {
       allow read, write: if isAdmin();
@@ -33,17 +34,14 @@ service cloud.firestore {
      * These MUST use the {path=**} wildcard prefix to be effective.
      */
     match /{path=**}/accounts/{accountId} {
-      // Allow unfiltered list for admins, and filtered list for owners
       allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
     }
     
     match /{path=**}/transactions/{transactionId} {
-      // Allow unfiltered list for admins, and filtered list for owners
       allow read: if isAdmin() || (isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid));
     }
     
     match /{path=**}/cards/{cardId} {
-      // Allow unfiltered list for admins, and filtered list for owners
       allow read: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
     }
 

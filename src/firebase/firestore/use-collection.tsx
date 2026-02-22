@@ -54,7 +54,6 @@ export function useCollection<T = any>(
         pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
       } else {
         // Identify collectionGroup queries via internal structure check
-        // Group queries in Firestore usually have an internal query path that maps to the collection ID
         const internal = memoizedTargetRefOrQuery as unknown as InternalQuery;
         pathString = internal._query?.path?.canonicalString() || '';
         // If the path is a simple string without slashes, it's likely a collectionGroup query
@@ -71,10 +70,13 @@ export function useCollection<T = any>(
       return;
     }
 
-    // Extra Layer for Collection Group Queries: 
-    // Wait for the Auth SDK to have a stable user before sending the request to prevent transient 403s.
+    // AUTH STABILITY GUARD:
+    // Firebase initialization is asynchronous. We must ensure the Auth SDK has settled 
+    // before sending queries, especially collection group queries which are highly sensitive.
     const auth = getAuth();
-    if (isGroupQuery && !auth.currentUser) {
+    if (!auth.currentUser) {
+      // If we're not signed in yet, wait for the Auth provider to signal readiness.
+      // This prevents transient "Missing Permissions" errors during page hydration.
       setData(null);
       setIsLoading(false);
       return;
@@ -95,7 +97,7 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (firestoreError: FirestoreError) => {
-        // Ensure pathString is descriptive for the contextual error report
+        // Construct detailed audit path for error reporting
         const finalPath = isGroupQuery ? `[Collection Group: ${pathString || 'Global'}]` : (pathString || '[Unknown Path]');
         
         const contextualError = new FirestorePermissionError({
