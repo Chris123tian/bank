@@ -39,6 +39,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
+  DialogDescription
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
@@ -74,7 +75,7 @@ function TransactionsContent() {
     if (!db || !user?.uid) return null;
 
     if (selectedAccountId === "all") {
-      // Secure collectionGroup query requiring customerId filter to match high-priority rules
+      // Secure collectionGroup query filtered by customerId to match high-priority global rules
       return query(
         collectionGroup(db, "transactions"),
         where("customerId", "==", user.uid),
@@ -82,7 +83,7 @@ function TransactionsContent() {
         limit(100)
       );
     } else {
-      // Direct path query for specific account
+      // Direct path query for a specific account
       return query(
         collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions"),
         orderBy("transactionDate", "desc"),
@@ -235,12 +236,14 @@ function TransactionsContent() {
             <div className="space-y-10">
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="relative inline-block">
-                  <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Audit Insight</DialogTitle>
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Audit Insight</DialogTitle>
+                    <DialogDescription className="text-[10px] font-mono text-slate-500 mt-2 break-all">REF: {viewingTransaction?.id}</DialogDescription>
+                  </DialogHeader>
                   <div className="absolute -bottom-2 left-0 h-1.5 w-24 bg-[#2563EB]" />
                 </div>
                 <div className="text-left sm:text-right">
                   <Badge className="bg-[#002B5B] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">{viewingTransaction?.status || 'Completed'}</Badge>
-                  <p className="text-[10px] font-mono text-slate-500 mt-2 break-all">REF: {viewingTransaction?.id}</p>
                 </div>
               </div>
 

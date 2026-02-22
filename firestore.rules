@@ -16,12 +16,13 @@ service cloud.firestore {
     /**
      * COLLECTION GROUP RULES (Highest Priority)
      * Specifically authorized for collectionGroup() queries used in aggregate history views.
+     * We use resource.data.get() to safely handle cases where fields might be missing.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.customerId == request.auth.uid ||
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid ||
+        resource.data.get('userId', '') == request.auth.uid
       );
       allow write: if isMasterAdmin();
     }
@@ -29,8 +30,8 @@ service cloud.firestore {
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.customerId == request.auth.uid ||
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid ||
+        resource.data.get('userId', '') == request.auth.uid
       );
       allow write: if isMasterAdmin();
     }
