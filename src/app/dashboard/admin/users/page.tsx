@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -17,10 +18,11 @@ import {
   DialogHeader, 
   DialogTitle, 
   DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
-import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye } from "lucide-react";
+import { UserPlus, Search, ShieldCheck, ShieldAlert, Loader2, Trash2, Eye, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { setDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { setDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
@@ -29,6 +31,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [viewingUser, setViewingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<any>(null);
 
   // Verify Admin Status
   const adminRoleRef = useMemoFirebase(() => {
@@ -80,6 +83,17 @@ export default function AdminUsersPage() {
     toast({ title: "User Profile Created", description: `Profile for ${formData.firstName} has been added.` });
     setIsCreating(false);
     setFormData({ firstName: "", lastName: "", email: "", phoneNumber: "", userRole: "client" });
+  };
+
+  const handleUpdateUser = () => {
+    if (!db || !editingUser) return;
+    const userRef = doc(db, "users", editingUser.id);
+    updateDocumentNonBlocking(userRef, {
+      ...editingUser,
+      updatedAt: serverTimestamp(),
+    });
+    toast({ title: "Profile Updated", description: `User ${editingUser.firstName} profile modified.` });
+    setEditingUser(null);
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -216,6 +230,9 @@ export default function AdminUsersPage() {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => setViewingUser(u)}>
                       <Eye className="h-4 w-4" />
                     </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-accent" onClick={() => setEditingUser(u)}>
+                      <Edit3 className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -227,33 +244,75 @@ export default function AdminUsersPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {!isUsersLoading && (!filteredUsers || filteredUsers.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-24 text-muted-foreground italic">
-                    No user profiles found.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
+      {/* Edit Profile Dialog - Admin Only */}
+      <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Client Profile</DialogTitle>
+            <DialogDescription>Administrative modification of identity and address records.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>First Name</Label>
+              <Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Last Name</Label>
+              <Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>Email</Label>
+              <Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} />
+            </div>
+            <div className="space-y-2 col-span-2 border-t pt-4">
+              <Label>Address Line 1</Label>
+              <Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>City</Label>
+              <Input value={editingUser?.city || ""} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>State</Label>
+              <Input value={editingUser?.state || ""} onChange={(e) => setEditingUser({...editingUser, state: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Postal Code</Label>
+              <Input value={editingUser?.postalCode || ""} onChange={(e) => setEditingUser({...editingUser, postalCode: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Country</Label>
+              <Input value={editingUser?.country || ""} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleUpdateUser} className="w-full">Save Profile Updates</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* User Detail View Dialog */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Client Identity Profile</DialogTitle>
-          </DialogHeader>
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300">
             <div className="max-w-md mx-auto space-y-10">
-              {/* Header */}
               <div className="relative inline-block">
                 <h2 className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</h2>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
-
-              {/* Avatar */}
               <div className="flex justify-center pt-2">
                 <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-white">
                   {viewingUser?.profilePictureUrl ? (
@@ -265,35 +324,24 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </div>
-
-              {/* Data Fields */}
               <div className="space-y-6 pt-4">
                 <div className="flex gap-2 text-xl text-slate-700">
                   <span className="font-bold min-w-[120px]">Username:</span>
                   <span className="font-medium">{viewingUser?.username || "N/A"}</span>
                 </div>
-                
                 <div className="flex gap-2 text-xl text-slate-700">
                   <span className="font-bold min-w-[120px]">Email:</span>
                   <span className="font-medium underline decoration-1 underline-offset-4">{viewingUser?.email}</span>
                 </div>
-
                 <div className="pt-8 space-y-5 border-t border-slate-300">
                   <div className="flex gap-2 text-xl text-slate-700">
                     <span className="font-bold min-w-[160px]">Name :</span>
                     <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
                   </div>
-
                   <div className="flex gap-2 text-xl text-slate-700">
                     <span className="font-bold min-w-[160px]">Address 1:</span>
                     <span className="font-medium">{viewingUser?.addressLine1 || "—"}</span>
                   </div>
-
-                  <div className="flex gap-2 text-xl text-slate-700">
-                    <span className="font-bold min-w-[160px]">Address 2:</span>
-                    <span className="font-medium">{viewingUser?.addressLine2 || "—"}</span>
-                  </div>
-
                   <div className="flex gap-2 text-xl text-slate-700">
                     <span className="font-bold min-w-[160px]">City/State/Zip:</span>
                     <span className="font-medium">
@@ -301,15 +349,12 @@ export default function AdminUsersPage() {
                       {!viewingUser?.city && !viewingUser?.state && "—"}
                     </span>
                   </div>
-
                   <div className="flex gap-2 text-xl text-slate-700">
                     <span className="font-bold min-w-[160px]">Country:</span>
                     <span className="font-medium">{viewingUser?.country || "—"}</span>
                   </div>
                 </div>
               </div>
-
-              {/* Signature */}
               <div className="pt-12">
                 <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">Authenticated Legal Signature</p>
                 <div className="bg-white p-4 inline-block shadow-lg rounded-xl min-w-[200px] border border-slate-200">
@@ -321,7 +366,6 @@ export default function AdminUsersPage() {
                     </div>
                   )}
                 </div>
-                <div className="mt-4 h-1 w-full bg-slate-300 rounded-full opacity-30" />
               </div>
             </div>
           </div>
