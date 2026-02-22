@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from "react";
@@ -138,7 +137,7 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-center">
                     <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest ${acc.status !== 'Active' ? 'text-red-500' : 'text-slate-400'}`}>Status: {acc.status}</span>
                     <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-accent hover:text-accent hover:bg-accent/5" asChild>
-                      <Link href="/dashboard/transactions">
+                      <Link href={`/dashboard/transactions?account=${acc.id}`}>
                         View History <ArrowRight className="ml-1 h-3 w-3" />
                       </Link>
                     </Button>

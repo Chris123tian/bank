@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -67,6 +66,7 @@ export default function TransactionsPage() {
 
     if (selectedAccountId === "all") {
       // Aggregate view across all accounts (Unified Ledger)
+      // We filter by customerId to match security rules requirements
       return query(
         collectionGroup(db, "transactions"),
         where("customerId", "==", user.uid),
@@ -74,7 +74,7 @@ export default function TransactionsPage() {
         limit(100)
       );
     } else {
-      // Single account view
+      // Single account view - uses direct path which is inherently more stable
       return query(
         collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions"),
         orderBy("transactionDate", "desc"),
@@ -106,7 +106,7 @@ export default function TransactionsPage() {
   }, [transactions, search]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-1">
+    <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Institutional Ledger</h1>
@@ -116,7 +116,7 @@ export default function TransactionsPage() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search descriptions..." 
+              placeholder="Search history..." 
               className="pl-10 h-11 border-slate-200" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -148,7 +148,7 @@ export default function TransactionsPage() {
               <TableHeader className="bg-slate-50/80">
                 <TableRow>
                   <TableHead className="w-[110px] sm:w-[140px] font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Date</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Merchant / Description</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Description</TableHead>
                   <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
                   <TableHead className="hidden md:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
                   <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Amount</TableHead>
@@ -160,7 +160,7 @@ export default function TransactionsPage() {
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Unified Ledger...</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Ledger...</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -256,7 +256,7 @@ export default function TransactionsPage() {
                           <p className="font-bold text-slate-700">{viewingTransaction?.transactionDate ? format(new Date(viewingTransaction.transactionDate), "PPpp") : 'N/A'}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Settlement Type</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Type</p>
                           <p className="font-bold text-slate-700 capitalize">{viewingTransaction?.transactionType}</p>
                         </div>
                       </div>

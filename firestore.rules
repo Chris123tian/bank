@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -20,13 +19,13 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * These rules authorize aggregate queries like the Unified Ledger.
+     * Optimized for aggregation and regulatory auditing.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.customerId == request.auth.uid || 
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid || 
+        resource.data.get('userId', '') == request.auth.uid
       );
       allow write: if isAdmin();
     }
@@ -34,8 +33,8 @@ service cloud.firestore {
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.customerId == request.auth.uid || 
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid || 
+        resource.data.get('userId', '') == request.auth.uid
       );
       allow write: if isAdmin();
     }
