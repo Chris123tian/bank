@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -28,6 +29,7 @@ import {
   Loader2, 
   Trash2, 
   Eye, 
+  EyeOff,
   Edit3, 
   Key, 
   Upload,
@@ -52,6 +54,7 @@ export default function AdminUsersPage() {
   const [viewingUser, setViewingUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form state for Manual Creation
   const [formData, setFormData] = useState({
@@ -129,6 +132,7 @@ export default function AdminUsersPage() {
         email: formData.email,
         username: formData.username || formData.email.split('@')[0],
         phoneNumber: formData.phoneNumber,
+        temporaryPassword: formData.password, // Store password for admin visibility
         addressLine1: formData.addressLine1,
         addressLine2: formData.addressLine2,
         city: formData.city,
@@ -172,6 +176,7 @@ export default function AdminUsersPage() {
       firstName: editingUser.firstName || "",
       lastName: editingUser.lastName || "",
       phoneNumber: editingUser.phoneNumber || "",
+      temporaryPassword: editingUser.temporaryPassword || "",
       addressLine1: editingUser.addressLine1 || "",
       addressLine2: editingUser.addressLine2 || "",
       city: editingUser.city || "",
@@ -410,6 +415,31 @@ export default function AdminUsersPage() {
                   <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Institutional Email</Label><Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11" /></div>
                   <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Verified Phone</Label><Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} className="h-11" /></div>
                 </div>
+
+                <div className="space-y-4 pt-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
+                    <Key className="h-4 w-4" /> Administrative Credentials
+                  </h4>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Assigned Temporary Password</Label>
+                    <div className="relative">
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        value={editingUser?.temporaryPassword || "—"} 
+                        onChange={(e) => setEditingUser({...editingUser, temporaryPassword: e.target.value})} 
+                        className="h-11 pr-10 font-mono" 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground italic font-medium">This is the initial password assigned during account provisioning.</p>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-6">
@@ -522,7 +552,7 @@ export default function AdminUsersPage() {
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] mb-4">Authorized Identity Signature</p>
                   {viewingUser?.signature ? (
                     <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200 max-w-full overflow-hidden">
-                      <img src={viewingUser.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
+                      <img viewingUser.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
                     </div>
                   ) : (
                     <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm rounded-xl">No signature authorized</div>

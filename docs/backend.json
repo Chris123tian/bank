@@ -45,6 +45,10 @@
           "type": "string",
           "description": "The primary phone number of the customer."
         },
+        "temporaryPassword": {
+          "type": "string",
+          "description": "The initial temporary password assigned by the administrator."
+        },
         "addressLine1": {
           "type": "string",
           "description": "The first line of the customer's street address."
