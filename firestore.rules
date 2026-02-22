@@ -32,6 +32,7 @@ service cloud.firestore {
     /** 
      * COLLECTION GROUP RULES 
      * Firestore requires explicit recursive matches for collectionGroup queries.
+     * We prioritize isAdmin() check to allow unfiltered global audits.
      */
     
     match /{path=**}/accounts/{id} {
