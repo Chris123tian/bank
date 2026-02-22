@@ -26,7 +26,7 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
-import { Trash2, Edit3, ShieldAlert, Loader2, Eye, Receipt, User, Landmark, CreditCard, Send, Search } from "lucide-react";
+import { Trash2, Edit3, ShieldAlert, Loader2, Eye, Receipt, User, Landmark, CreditCard, Send, Search, Clock, FileText, MapPin, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -355,72 +355,104 @@ export default function AdminTransactionsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Manual Edit Dialog */}
+      {/* Manual Edit Dialog - REFINED FOR AUDIT CORRECTION */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>Modify Transaction Record</DialogTitle>
-            <DialogDescription>Administrative override for record ID: {editingTransaction?.id}</DialogDescription>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl">
+          <DialogHeader className="p-6 bg-slate-50 border-b">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                <Edit3 className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Correct Record</DialogTitle>
+                <DialogDescription className="text-xs">Adjusting ledger entry for ID: {editingTransaction?.id}</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Transaction Date</Label>
-              <Input 
-                type="datetime-local" 
-                value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} 
-                onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})}
-              />
+          
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Execution Date</Label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                  <Input 
+                    type="datetime-local" 
+                    className="pl-8 text-xs h-10 rounded-xl"
+                    value={editingTransaction?.transactionDate?.slice(0, 16) ?? ""} 
+                    onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: new Date(e.target.value).toISOString()})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Settlement Type</Label>
+                <Select 
+                  value={editingTransaction?.transactionType ?? "withdrawal"} 
+                  onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
+                >
+                  <SelectTrigger className="h-10 text-xs rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deposit">Deposit</SelectItem>
+                    <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                    <SelectItem value="transfer">Transfer</SelectItem>
+                    <SelectItem value="bill_payment">Bill Payment</SelectItem>
+                    <SelectItem value="card_payment">Card Payment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
             <div className="space-y-2">
-              <Label>Merchant / Description</Label>
-              <Input 
-                value={editingTransaction?.description ?? ""} 
-                onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
-              />
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Public Memo</Label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
+                <Input 
+                  className="pl-8 text-xs h-10 rounded-xl"
+                  value={editingTransaction?.description ?? ""} 
+                  onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Settlement Type</Label>
-              <Select 
-                value={editingTransaction?.transactionType ?? "withdrawal"} 
-                onValueChange={(v) => setEditingTransaction({...editingTransaction, transactionType: v})}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="deposit">Deposit</SelectItem>
-                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                  <SelectItem value="transfer">Transfer</SelectItem>
-                  <SelectItem value="bill_payment">Bill Payment</SelectItem>
-                  <SelectItem value="card_payment">Card Payment</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Amount</Label>
-              <Input 
-                type="number" 
-                step="0.01"
-                value={editingTransaction?.amount ?? ""} 
-                onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select 
-                value={editingTransaction?.status ?? "pending"} 
-                onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Amount</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">$</span>
+                  <Input 
+                    type="number" 
+                    step="0.01"
+                    className="pl-8 text-xs h-10 rounded-xl font-bold"
+                    value={editingTransaction?.amount ?? ""} 
+                    onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Audit Status</Label>
+                <Select 
+                  value={editingTransaction?.status ?? "pending"} 
+                  onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}
+                >
+                  <SelectTrigger className="h-10 text-xs rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending Audit</SelectItem>
+                    <SelectItem value="completed">Settled</SelectItem>
+                    <SelectItem value="failed">Failed / Revoked</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleUpdateTransaction} className="w-full rounded-xl h-11">Apply Ledger Correction</Button>
+
+          <DialogFooter className="p-6 bg-slate-50 border-t flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl h-11 flex-1">Cancel Audit</Button>
+            <Button onClick={handleUpdateTransaction} className="bg-primary rounded-xl h-11 flex-1 font-bold">Apply Correction</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
