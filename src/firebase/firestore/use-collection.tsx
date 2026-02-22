@@ -46,12 +46,18 @@ export function useCollection<T = any>(
     
     try {
       const q = memoizedTargetRefOrQuery as any;
-      if ('path' in memoizedTargetRefOrQuery) {
-        pathString = (memoizedTargetRefOrQuery as CollectionReference).path;
-      } else {
-        // Fallback for query path detection
-        pathString = q._query?.path?.canonicalString() || 'Query';
-        if (q._query?.collectionGroup) isGroupQuery = true;
+      
+      // Extract path or group information
+      if (typeof q.path === 'string') {
+        pathString = q.path;
+      } else if (q._query?.path) {
+        pathString = q._query.path.canonicalString();
+      }
+
+      // Detection for collection groups
+      if (q._query?.collectionGroup) {
+        isGroupQuery = true;
+        pathString = q._query.collectionGroup;
       }
     } catch (e) {
       pathString = 'Unknown';
@@ -69,7 +75,6 @@ export function useCollection<T = any>(
     // This prevents transient permission errors during page load.
     const auth = getAuth();
     if (!auth.currentUser) {
-      // Quietly wait for auth
       setData(null);
       setIsLoading(false);
       return;
