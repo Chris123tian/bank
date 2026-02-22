@@ -55,12 +55,18 @@ export function useCollection<T = any>(
       }
 
       // Detection for collection groups
-      if (q._query?.collectionGroup) {
+      if (q.type === 'query' && q._query?.collectionGroup) {
         isGroupQuery = true;
         pathString = q._query.collectionGroup;
+      } else if (!q.path && q._query?.path) {
+        // Fallback for some query objects
+        const segments = q._query.path.segments;
+        if (segments && segments.length > 0) {
+          pathString = segments[segments.length - 1];
+        }
       }
     } catch (e) {
-      pathString = 'Unknown';
+      pathString = 'Query';
     }
 
     // 2. NUCLEAR GUARD: Prevent root listing or malformed paths
@@ -72,7 +78,6 @@ export function useCollection<T = any>(
 
     // 3. AUTH STABILITY CHECK:
     // Ensure Firebase Auth is settled before sending requests to Firestore.
-    // This prevents transient permission errors during page load.
     const auth = getAuth();
     if (!auth.currentUser) {
       setData(null);
@@ -96,7 +101,7 @@ export function useCollection<T = any>(
       },
       (firestoreError: FirestoreError) => {
         // Construct detailed path for error reporting
-        const finalPath = isGroupQuery ? `[Collection Group: ${pathString}]` : pathString;
+        const finalPath = isGroupQuery ? `[Collection Group: ${pathString}]` : (pathString || '[Unknown Path]');
         
         const contextualError = new FirestorePermissionError({
           operation: 'list',
