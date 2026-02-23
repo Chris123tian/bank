@@ -44,7 +44,8 @@ export default function DashboardLayout({
     return user?.displayName || user?.email?.split('@')[0] || "Institutional Client";
   }, [profile, user]);
 
-  if (!isAuthReady || (isUserLoading && !user)) {
+  // Faster initial load: only wait for Auth readiness, not profile data
+  if (!isAuthReady) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -71,7 +72,9 @@ export default function DashboardLayout({
                   {isProfileLoading ? <Skeleton className="h-4 w-24" /> : displayName}
                 </div>
                 <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20 shrink-0 overflow-hidden">
-                  {profile?.profilePictureUrl ? (
+                  {isProfileLoading ? (
+                    <Skeleton className="h-full w-full rounded-full" />
+                  ) : profile?.profilePictureUrl ? (
                     <img src={profile.profilePictureUrl} className="h-full w-full object-cover" alt="Profile" />
                   ) : (
                     displayName.charAt(0).toUpperCase()
