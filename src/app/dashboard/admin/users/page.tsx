@@ -29,7 +29,6 @@ import {
   Loader2, 
   Trash2, 
   Eye, 
-  EyeOff,
   Edit3, 
   Key, 
   Upload,
@@ -37,8 +36,6 @@ import {
   FileSignature,
   X,
   Landmark,
-  ArrowRight,
-  MapPin,
   Hash
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -55,7 +52,6 @@ export default function AdminUsersPage() {
   const [viewingUser, setViewingUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   // Form state for Manual Creation
   const [formData, setFormData] = useState({
@@ -404,13 +400,15 @@ export default function AdminUsersPage() {
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent className="max-w-3xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-white/10 rounded-2xl shrink-0"><Edit3 className="h-6 w-6" /></div>
-              <div>
-                <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Institutional Profile</DialogTitle>
-                <DialogDescription className="text-white/60 text-xs sm:text-sm">Updating regulatory records for client ID: {editingUser?.accountNumber || editingUser?.id}</DialogDescription>
+            <DialogHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-2xl shrink-0"><Edit3 className="h-6 w-6" /></div>
+                <div>
+                  <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Institutional Profile</DialogTitle>
+                  <DialogDescription className="text-white/60 text-xs sm:text-sm">Updating regulatory records for client ID: {editingUser?.accountNumber || editingUser?.id}</DialogDescription>
+                </div>
               </div>
-            </div>
+            </DialogHeader>
           </div>
           
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-10 custom-scrollbar">
@@ -474,11 +472,13 @@ export default function AdminUsersPage() {
               <X className="h-6 w-6" />
             </button>
             <div className="max-w-2xl mx-auto space-y-10">
-              <div className="relative inline-block">
-                <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
-                <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client NEXA-{viewingUser?.accountNumber?.slice(-4)}.</DialogDescription>
-                <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
-              </div>
+              <DialogHeader>
+                <div className="relative inline-block">
+                  <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client NEXA-{viewingUser?.accountNumber?.slice(-4)}.</DialogDescription>
+                  <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
+                </div>
+              </DialogHeader>
               
               <div className="flex flex-col items-center gap-6 pt-2">
                 <div className="h-40 w-40 sm:h-56 sm:w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-2xl border-4 sm:border-8 border-white shrink-0">

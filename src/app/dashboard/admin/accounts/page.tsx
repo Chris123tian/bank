@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -29,19 +30,10 @@ import {
   Landmark, 
   ShieldAlert, 
   Loader2, 
-  Edit3, 
   Trash2, 
   PlusCircle, 
   Eye, 
   Search, 
-  User as UserIcon,
-  Briefcase,
-  MapPin,
-  ShieldCheck,
-  FileText,
-  CreditCard,
-  Lock,
-  ArrowRightLeft,
   TrendingUp,
   X
 } from "lucide-react";
@@ -91,7 +83,7 @@ export default function AdminAccountsAuditPage() {
     return collection(db, "users");
   }, [db, isAdminReady]);
 
-  const { data: allUsers, isLoading: isUsersLoading } = useCollection(usersRef);
+  const { data: allUsers } = useCollection(usersRef);
 
   // User Profile for the Dossier View
   const userProfileRef = useMemoFirebase(() => {

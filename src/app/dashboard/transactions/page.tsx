@@ -45,7 +45,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { query, orderBy, limit, collectionGroup, collection } from "firebase/firestore";
+import { collectionGroup, collection } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -78,15 +78,9 @@ function TransactionsContent() {
    */
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-
-    if (selectedAccountId === "all") {
-      // Aggregate mode: use collectionGroup
-      return collectionGroup(db, "transactions");
-    } else {
-      // Targeted mode: use direct path
-      return collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions");
-    }
-  }, [db, user?.uid, selectedAccountId]);
+    // Aggregation mode: use collectionGroup for ALL transactions
+    return collectionGroup(db, "transactions");
+  }, [db, user?.uid]);
 
   const { data: transactions, isLoading: transactionsLoading } = useCollection(transactionsQuery);
 
@@ -114,6 +108,9 @@ function TransactionsContent() {
         const isOwner = tx.customerId === user?.uid || tx.userId === user?.uid;
         if (!isOwner) return false;
 
+        // Account Filter
+        if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
+
         // Content search
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
@@ -128,7 +125,7 @@ function TransactionsContent() {
         return dateB - dateA;
       })
       .slice(0, 100);
-  }, [transactions, search, user?.uid]);
+  }, [transactions, search, user?.uid, selectedAccountId]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">

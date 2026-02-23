@@ -1,11 +1,15 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
-import { doc, collection } from "firebase/firestore";
+import { doc, collection, serverTimestamp } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   User as UserIcon, 
   ShieldCheck, 
@@ -13,12 +17,32 @@ import {
   CreditCard,
   Building2,
   Lock,
-  Hash
+  Hash,
+  Edit3,
+  Save,
+  X,
+  Upload,
+  ImageIcon
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function SettingsPage() {
+  const { toast } = useToast();
   const { user } = useUser();
   const db = useFirestore();
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState<any>({});
+
+  // Admin Detection
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return doc(db, "roles_admin", user.uid);
+  }, [db, user?.uid]);
+  const { data: adminRole } = useDoc(adminRoleRef);
+  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isAdmin = isMasterAdmin || !!adminRole;
 
   // Profile data fetch
   const profileRef = useMemoFirebase(() => {
@@ -36,7 +60,52 @@ export default function SettingsPage() {
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
 
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        username: profile.username || "",
+        email: profile.email || user?.email || "",
+        addressLine1: profile.addressLine1 || "",
+        city: profile.city || "",
+        state: profile.state || "",
+        postalCode: profile.postalCode || "",
+        country: profile.country || "United Kingdom",
+        profilePictureUrl: profile.profilePictureUrl || "",
+        signature: profile.signature || "",
+      });
+    }
+  }, [profile, user?.email]);
+
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'profilePictureUrl' | 'signature') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev: any) => ({ ...prev, [field]: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = () => {
+    if (!db || !user?.uid) return;
+    setSaving(true);
+    const userRef = doc(db, "users", user.uid);
+    setDocumentNonBlocking(userRef, {
+      ...formData,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+    
+    setTimeout(() => {
+      setSaving(false);
+      setIsEditing(false);
+      toast({ title: "Profile Updated", description: "Your administrative records have been synchronized." });
+    }, 800);
+  };
 
   if (isProfileLoading) {
     return (
@@ -58,6 +127,25 @@ export default function SettingsPage() {
             <p className="text-muted-foreground">Comprehensive global profile and regulatory identity overview.</p>
           </div>
         </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            {isEditing ? (
+              <>
+                <Button variant="outline" onClick={() => setIsEditing(false)} className="h-11 font-bold">
+                  <X className="mr-2 h-4 w-4" /> Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={saving} className="bg-primary h-11 font-bold">
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Commit Changes
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setIsEditing(true)} className="bg-accent h-11 font-black uppercase tracking-tighter shadow-lg">
+                <Edit3 className="mr-2 h-4 w-4" /> Edit My Profile
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -73,72 +161,131 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex flex-col items-center gap-8">
-                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-lg border-8 border-slate-100 shrink-0">
-                  {profile?.profilePictureUrl ? (
-                    <img src={profile.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-white text-7xl font-bold">{profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}</span>
+                <div className="relative group">
+                  <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-lg border-8 border-slate-100 shrink-0">
+                    {formData.profilePictureUrl ? (
+                      <img src={formData.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-white text-7xl font-bold">{formData.firstName?.charAt(0)}{formData.lastName?.charAt(0)}</span>
+                    )}
+                  </div>
+                  {isAdmin && isEditing && (
+                    <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Upload className="h-8 w-8 mb-2" />
+                      <span className="text-xs font-bold uppercase">Change Image</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl')} />
+                    </label>
                   )}
                 </div>
                 
-                <div className="text-center space-y-4">
+                <div className="text-center space-y-4 w-full">
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#002B5B] rounded-full text-white shadow-lg">
                     <Hash className="h-4 w-4 text-accent" />
                     <span className="text-sm font-black tracking-widest uppercase">ID: {profile?.accountNumber || "NEXA-PENDING"}</span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xl font-bold text-slate-700">
-                      <span className="font-black text-[#002B5B]">Username:</span> {profile?.username || user?.email?.split('@')[0]}
-                    </p>
-                    <p className="text-xl font-bold text-slate-700">
-                      <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{profile?.email || user?.email}</span>
-                    </p>
+                  
+                  <div className="space-y-4 pt-4">
+                    {isEditing ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase text-slate-500">First Name</Label>
+                          <Input value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} className="h-11 bg-white" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase text-slate-500">Last Name</Label>
+                          <Input value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} className="h-11 bg-white" />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label className="text-[10px] font-bold uppercase text-slate-500">Username</Label>
+                          <Input value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="h-11 bg-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <p className="text-xl font-bold text-slate-700">
+                          <span className="font-black text-[#002B5B]">Username:</span> {formData.username || "Member"}
+                        </p>
+                        <p className="text-xl font-bold text-slate-700">
+                          <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{formData.email}</span>
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6 pt-12 border-t border-slate-300 text-xl text-slate-700">
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">Name :</span>
-                  <span className="font-medium">{profile?.firstName} {profile?.lastName}</span>
-                </div>
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">Jurisdiction:</span>
-                  <span className="font-medium">{profile?.country || "United Kingdom"}</span>
-                </div>
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 1:</span>
-                  <span className="font-medium">{profile?.addressLine1 || "No address on file"}</span>
-                </div>
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">City/State/Zip:</span>
-                  <span className="font-medium">{profile?.city ? `${profile.city}, ${profile.state || ''} ${profile.postalCode || ''}` : '—'}</span>
-                </div>
+                {isEditing ? (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Street Address</Label>
+                      <Input value={formData.addressLine1} onChange={(e) => setFormData({...formData, addressLine1: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase text-slate-500">City</Label>
+                        <Input value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="h-11 bg-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase text-slate-500">Jurisdiction (Country)</Label>
+                        <Input value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} className="h-11 bg-white" />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex gap-4">
+                      <span className="font-black text-[#002B5B] min-w-[160px]">Name :</span>
+                      <span className="font-medium">{formData.firstName} {formData.lastName}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="font-black text-[#002B5B] min-w-[160px]">Jurisdiction:</span>
+                      <span className="font-medium">{formData.country}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="font-black text-[#002B5B] min-w-[160px]">Address 1:</span>
+                      <span className="font-medium">{formData.addressLine1 || "No address on file"}</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="font-black text-[#002B5B] min-w-[160px]">City/State/Zip:</span>
+                      <span className="font-medium">{formData.city ? `${formData.city}, ${formData.state || ''} ${formData.postalCode || ''}` : '—'}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="pt-16 pb-8">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] mb-4 text-center">Authorized Regulatory Signature</p>
-                <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100 mx-auto w-full max-w-sm">
-                  {profile?.signature ? (
-                    <img src={profile.signature} alt="Signature" className="h-24 object-contain mx-auto" />
+                <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100 mx-auto w-full max-w-sm relative group">
+                  {formData.signature ? (
+                    <img src={formData.signature} alt="Signature" className="h-24 object-contain mx-auto" />
                   ) : (
                     <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-200 text-slate-300 text-[10px] uppercase font-black">
                       No Signature Authorized
                     </div>
+                  )}
+                  {isAdmin && isEditing && (
+                    <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white rounded-xl cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Upload className="h-6 w-6 mb-1" />
+                      <span className="text-[10px] font-bold uppercase">Update Signature</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature')} />
+                    </label>
                   )}
                 </div>
               </div>
             </div>
           </div>
           
-          <Card className="bg-slate-50 border-2 border-dashed border-slate-200 p-8 rounded-[2rem] text-center">
-            <CardTitle className="text-primary mb-2 flex items-center justify-center gap-2">
-              <Lock className="h-5 w-5" /> Institutional Lockdown Active
-            </CardTitle>
-            <CardDescription className="font-medium max-w-lg mx-auto leading-relaxed">
-              To maintain the highest security standards, your identity records are managed by your assigned Banking Administrator. All profile modifications must be requested through institutional support.
-            </CardDescription>
-          </Card>
+          {!isAdmin && (
+            <Card className="bg-slate-50 border-2 border-dashed border-slate-200 p-8 rounded-[2rem] text-center">
+              <CardTitle className="text-primary mb-2 flex items-center justify-center gap-2">
+                <Lock className="h-5 w-5" /> Institutional Lockdown Active
+              </CardTitle>
+              <CardDescription className="font-medium max-w-lg mx-auto leading-relaxed">
+                To maintain the highest security standards, your identity records are managed by your assigned Banking Administrator. All profile modifications must be requested through institutional support.
+              </CardDescription>
+            </Card>
+          )}
         </div>
 
         <div className="lg:col-span-4 space-y-6">

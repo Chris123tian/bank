@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState } from "react";
 import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { collectionGroup, doc, collection, serverTimestamp, query, getDocs } from "firebase/firestore";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -36,15 +37,10 @@ import {
   PlusCircle, 
   Search, 
   Clock, 
-  FileText, 
-  Send, 
-  Calendar as CalendarIcon,
-  Building2,
+  Globe, 
   User as UserIcon,
-  Globe,
-  ArrowRightLeft,
-  Info,
-  X
+  X,
+  Info
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
