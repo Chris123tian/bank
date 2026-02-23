@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUser, useFirestore, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -12,6 +12,7 @@ import { ChatbotWidget } from "@/components/chatbot-widget";
 import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardLayout({
   children,
@@ -28,13 +29,20 @@ export default function DashboardLayout({
     return doc(db, "users", user.uid);
   }, [db, user?.uid]);
 
-  const { data: profile } = useDoc(profileRef);
+  const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef);
 
   useEffect(() => {
     if (isAuthReady && !user) {
       router.replace("/auth");
     }
   }, [user, isAuthReady, router]);
+
+  const displayName = useMemo(() => {
+    if (profile?.firstName) {
+      return `${profile.firstName} ${profile.lastName || ''}`.trim();
+    }
+    return user?.displayName || user?.email?.split('@')[0] || "Institutional Client";
+  }, [profile, user]);
 
   if (!isAuthReady || (isUserLoading && !user)) {
     return (
@@ -49,11 +57,6 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
-  // Prioritize Firestore profile name, then Auth displayName, then email prefix
-  const displayName = profile?.firstName 
-    ? `${profile.firstName} ${profile.lastName || ''}`.trim()
-    : (user.displayName || user.email?.split('@')[0]);
-
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-full bg-background overflow-hidden relative">
@@ -63,15 +66,17 @@ export default function DashboardLayout({
             <SidebarTrigger />
             <div className="ml-auto flex items-center gap-3 sm:gap-4">
               <LanguageSwitcher />
-              <div className="text-[10px] sm:text-sm font-bold truncate max-w-[120px] sm:max-w-none text-primary">
-                {displayName}
-              </div>
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20 shrink-0 overflow-hidden">
-                {profile?.profilePictureUrl ? (
-                  <img src={profile.profilePictureUrl} className="h-full w-full object-cover" alt="Profile" />
-                ) : (
-                  displayName.charAt(0).toUpperCase()
-                )}
+              <div className="flex items-center gap-3">
+                <div className="text-[10px] sm:text-sm font-bold truncate max-w-[120px] sm:max-w-none text-primary">
+                  {isProfileLoading ? <Skeleton className="h-4 w-24" /> : displayName}
+                </div>
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20 shrink-0 overflow-hidden">
+                  {profile?.profilePictureUrl ? (
+                    <img src={profile.profilePictureUrl} className="h-full w-full object-cover" alt="Profile" />
+                  ) : (
+                    displayName.charAt(0).toUpperCase()
+                  )}
+                </div>
               </div>
             </div>
           </header>
