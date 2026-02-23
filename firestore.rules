@@ -14,19 +14,20 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
+    function isAdmin() {
+      return isMasterAdmin() || exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * To support the "Admin Flow" (broad unfiltered queries with local filtering),
-     * we authorize listing for all verified sessions while enforcing data integrity.
+     * Authorize broad listing for unified ledger; document-level read ensures security.
      */
     match /{path=**}/transactions/{transactionId} {
-      // Allow broad list for unified ledger; document-level read ensures security.
       allow read: if isSignedIn();
-      // Writes are governed by specific path rules below.
     }
 
     match /{path=**}/accounts/{accountId} {
@@ -44,31 +45,31 @@ service cloud.firestore {
      * STANDARD PATH-BASED ACCESS CONTROL
      */
     match /users/{userId} {
-      allow read, write: if isMasterAdmin() || isOwner(userId);
+      allow read, write: if isAdmin() || isOwner(userId);
 
       match /accounts/{accountId} {
         // Allow balance updates ONLY if the account is Active.
-        allow update: if isMasterAdmin() || (
+        allow update: if isAdmin() || (
           isOwner(userId) && 
           resource.data.status == 'Active' && 
           request.resource.data.status == 'Active'
         );
-        allow read: if isMasterAdmin() || isOwner(userId);
-        allow create, delete: if isMasterAdmin();
+        allow read: if isAdmin() || isOwner(userId);
+        allow create, delete: if isAdmin();
 
         match /transactions/{transactionId} {
           // Allow creating transaction records ONLY if the parent account is Active.
-          allow create: if isMasterAdmin() || (
+          allow create: if isAdmin() || (
             isOwner(userId) && 
             get(/databases/$(database)/documents/users/$(userId)/accounts/$(accountId)).data.status == 'Active'
           );
-          allow read: if isMasterAdmin() || isOwner(userId);
-          allow update, delete: if isMasterAdmin();
+          allow read: if isAdmin() || isOwner(userId);
+          allow update, delete: if isAdmin();
         }
       }
 
       match /{allPaths=**} {
-        allow read, write: if isMasterAdmin() || isOwner(userId);
+        allow read, write: if isAdmin() || isOwner(userId);
       }
     }
 

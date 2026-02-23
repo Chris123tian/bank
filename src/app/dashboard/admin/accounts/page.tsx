@@ -41,7 +41,12 @@ import {
   Mail,
   Phone,
   Calendar,
-  Hash
+  Hash,
+  Briefcase,
+  MapPin,
+  FileSignature,
+  ShieldCheck,
+  CreditCard
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -414,12 +419,12 @@ export default function AdminAccountsAuditPage() {
       </Dialog>
 
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
-        <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
             <button onClick={() => setViewingClientPortfolio(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
               <X className="h-6 w-6" />
             </button>
-            <div className="max-w-2xl mx-auto space-y-10">
+            <div className="max-w-4xl mx-auto space-y-10">
               <div className="relative inline-block">
                 <DialogHeader>
                   <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Dossier</DialogTitle>
@@ -429,65 +434,111 @@ export default function AdminAccountsAuditPage() {
               </div>
               
               {viewingClientPortfolio && (
-                <div className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-300">
+                <div className="space-y-12">
+                  {/* Row 1: Identity and Employment */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-300">
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <UserIcon className="h-4 w-4" /> Client Identity
+                        <UserIcon className="h-4 w-4" /> Legal Identification
                       </h4>
-                      <div className="space-y-2 text-slate-700">
-                        <p className="flex justify-between items-center text-sm">
+                      <div className="space-y-3 text-slate-700">
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Legal Name:</span>
                           <span className="font-medium">{selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'N/A'}</span>
-                        </p>
-                        <p className="flex justify-between items-center text-sm">
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Institutional Email:</span>
                           <span className="font-medium text-xs font-mono">{selectedClient?.email || 'N/A'}</span>
-                        </p>
-                        <p className="flex justify-between items-center text-sm">
-                          <span className="font-black text-[#002B5B]">Client ID:</span>
-                          <span className="font-mono text-[10px]">{viewingClientPortfolio.customerId || viewingClientPortfolio.userId}</span>
-                        </p>
-                        <p className="flex justify-between items-center text-sm">
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Phone Number:</span>
+                          <span className="font-medium">{selectedClient?.phoneNumber || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">SSN / Tax ID:</span>
+                          <span className="font-mono text-xs">{selectedClient?.ssn ? `***-**-${selectedClient.ssn.slice(-4)}` : 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Jurisdiction:</span>
                           <span className="font-medium">{selectedClient?.country || 'United States'}</span>
-                        </p>
+                        </div>
                       </div>
                     </section>
 
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <Landmark className="h-4 w-4" /> Asset Details
+                        <Briefcase className="h-4 w-4" /> Employment Dossier
                       </h4>
-                      <div className="space-y-2 text-slate-700">
-                        <p className="flex justify-between items-center text-sm">
-                          <span className="font-black text-[#002B5B]">Asset Type:</span>
-                          <Badge variant="outline" className="text-[9px] font-black px-2">{viewingClientPortfolio.accountType}</Badge>
-                        </p>
-                        <p className="flex justify-between items-center text-sm">
-                          <span className="font-black text-[#002B5B]">Verified Balance:</span>
-                          <span className="font-black text-primary">{formatCurrency(viewingClientPortfolio.balance, viewingClientPortfolio.currency)}</span>
-                        </p>
-                        <p className="flex justify-between items-center text-sm">
-                          <span className="font-black text-[#002B5B]">Operational Status:</span>
-                          <Badge className={viewingClientPortfolio.status === 'Suspended' ? 'bg-red-100 text-red-700 text-[9px] font-black' : 'bg-green-100 text-green-700 text-[9px] font-black'}>
-                            {viewingClientPortfolio.status || 'Active'}
-                          </Badge>
-                        </p>
-                        <p className="flex justify-between items-center text-sm">
-                          <span className="font-black text-[#002B5B]">Account Reference:</span>
-                          <span className="font-mono text-xs font-bold text-accent">{viewingClientPortfolio.accountNumber}</span>
-                        </p>
+                      <div className="space-y-3 text-slate-700">
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Status:</span>
+                          <Badge variant="secondary" className="text-[9px] font-black px-2">{selectedClient?.employmentStatus || 'N/A'}</Badge>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Employer:</span>
+                          <span className="font-medium">{selectedClient?.employerName || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Job Title:</span>
+                          <span className="font-medium">{selectedClient?.jobTitle || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Annual Income:</span>
+                          <span className="font-black text-primary">${selectedClient?.annualIncome?.toLocaleString() || '0.00'}</span>
+                        </div>
                       </div>
                     </section>
                   </div>
 
-                  <div className="pt-8 border-t border-slate-300">
+                  {/* Row 2: Residential and Assets */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-300">
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <ShieldAlert className="h-4 w-4" /> Administrative Audit Data
+                        <MapPin className="h-4 w-4" /> Residential Metadata
                       </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 bg-white/50 rounded-xl border border-slate-300 space-y-2 text-sm">
+                        <p className="font-bold text-[#002B5B]">{selectedClient?.addressLine1 || 'No address on file'}</p>
+                        <p className="text-slate-600">
+                          {selectedClient?.city ? `${selectedClient.city}, ${selectedClient.state} ${selectedClient.postalCode}` : 'N/A'}
+                        </p>
+                        <p className="text-slate-500 uppercase text-[10px] font-black">{selectedClient?.country || 'USA'}</p>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <CreditCard className="h-4 w-4" /> Asset Details
+                      </h4>
+                      <div className="space-y-3 text-slate-700">
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Asset Type:</span>
+                          <Badge variant="outline" className="text-[9px] font-black px-2">{viewingClientPortfolio.accountType}</Badge>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Verified Balance:</span>
+                          <span className="font-black text-primary text-lg">{formatCurrency(viewingClientPortfolio.balance, viewingClientPortfolio.currency)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Operational Status:</span>
+                          <Badge className={viewingClientPortfolio.status === 'Suspended' ? 'bg-red-100 text-red-700 text-[9px] font-black' : 'bg-green-100 text-green-700 text-[9px] font-black'}>
+                            {viewingClientPortfolio.status || 'Active'}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                          <span className="font-black text-[#002B5B]">Account Reference:</span>
+                          <span className="font-mono text-xs font-bold text-accent">{viewingClientPortfolio.accountNumber}</span>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  {/* Row 3: Audit and Signature */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-300">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" /> Administrative Audit
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
                           <p className="text-[9px] font-black text-slate-400 uppercase">Initialization Date</p>
                           <p className="text-xs font-bold text-slate-600">
@@ -498,6 +549,19 @@ export default function AdminAccountsAuditPage() {
                           <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
                           <p className="text-xs font-bold text-slate-600">NexaSettlement Layer 1</p>
                         </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <FileSignature className="h-4 w-4" /> Authorized Signature
+                      </h4>
+                      <div className="h-24 w-full bg-white rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden shadow-inner">
+                        {selectedClient?.signature ? (
+                          <img src={selectedClient.signature} alt="Client Signature" className="h-20 object-contain" />
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">No signature record</span>
+                        )}
                       </div>
                     </section>
                   </div>
