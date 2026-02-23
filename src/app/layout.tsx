@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'City Global Bank',
+  title: 'City Bank Global',
   description: 'Global banking at the speed of life.',
 };
 

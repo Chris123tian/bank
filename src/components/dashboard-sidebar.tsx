@@ -104,7 +104,7 @@ export function DashboardSidebar() {
           <Building2 className="text-white h-6 w-6" />
         </div>
         <span className="font-headline font-black text-lg tracking-tight group-data-[collapsible=icon]:hidden text-white truncate uppercase">
-          City Global Bank
+          City Bank Global
         </span>
       </SidebarHeader>
       <SidebarContent className="custom-scrollbar overflow-x-hidden">

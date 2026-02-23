@@ -17,8 +17,6 @@ service cloud.firestore {
     /**
      * COLLECTION GROUP RULES (Highest Priority)
      * Critical for collectionGroup() queries used in Unified Ledger.
-     * We allow 'list' operations if the user is authenticated and is the owner
-     * of the data being aggregated, or is an administrator.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
@@ -49,10 +47,8 @@ service cloud.firestore {
      * STANDARD PATH-BASED ACCESS CONTROL
      */
     match /users/{userId} {
-      // Users can manage their own profile
       allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
 
-      // Recursive match for all sub-collections
       match /{allPaths=**} {
         allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
       }

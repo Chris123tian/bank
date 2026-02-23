@@ -21,8 +21,8 @@ export default function AboutPage() {
               <Building2 className="text-white h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div className="flex flex-col -space-y-1">
-              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white leading-none uppercase">City Global</span>
-              <span className="text-[7px] sm:text-[9px] font-black tracking-[0.3em] text-accent uppercase">Bank</span>
+              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white leading-none uppercase">City Bank</span>
+              <span className="text-[7px] sm:text-[9px] font-black tracking-[0.3em] text-accent uppercase">Global</span>
             </div>
           </LinkNext>
           <div className="flex items-center gap-4">
@@ -53,7 +53,7 @@ export default function AboutPage() {
             <div className="space-y-8">
               <h2 className="text-3xl font-black uppercase tracking-tight text-primary">Global Presence</h2>
               <p className="text-lg text-slate-600">
-                City Global Bank operates at the intersection of global trade and institutional finance. With strategic hubs in the world's most vital financial markets, we ensure our clients have 24/7 access to liquidity.
+                City Bank Global operates at the intersection of global trade and institutional finance. With strategic hubs in the world's most vital financial markets, we ensure our clients have 24/7 access to liquidity.
               </p>
               
               <div className="space-y-6">
@@ -105,7 +105,7 @@ export default function AboutPage() {
       <footer className="bg-slate-950 py-16 border-t border-white/5 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center space-y-4">
           <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">{t('footer_address')}</p>
-          <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">© 2024 City Global Bank. Member FDIC. Equal Housing Lender.</p>
+          <p className="text-[8px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-widest">© 2024 City Bank Global. Member FDIC. Equal Housing Lender.</p>
         </div>
       </footer>
     </div>
