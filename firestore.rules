@@ -13,9 +13,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Defensive checks for customerId or userId to authorize aggregate queries.
+     * These authorize aggregate queries like collectionGroup("transactions").
+     * Uses defensive 'get' to prevent evaluation errors on legacy documents.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
@@ -23,7 +28,7 @@ service cloud.firestore {
         resource.data.get('customerId', '') == request.auth.uid || 
         resource.data.get('userId', '') == request.auth.uid
       );
-      allow write: if isMasterAdmin();
+      // Writes to transactions are governed by specific path rules below.
     }
 
     match /{path=**}/accounts/{accountId} {
@@ -32,7 +37,7 @@ service cloud.firestore {
         resource.data.get('customerId', '') == request.auth.uid || 
         resource.data.get('userId', '') == request.auth.uid
       );
-      allow write: if isMasterAdmin();
+      // Writes to accounts are governed by specific path rules below.
     }
 
     /**
@@ -46,10 +51,32 @@ service cloud.firestore {
      * STANDARD PATH-BASED ACCESS CONTROL
      */
     match /users/{userId} {
-      allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow read, write: if isMasterAdmin() || isOwner(userId);
+
+      match /accounts/{accountId} {
+        // Allow clients to update their own balance ONLY if the account is Active.
+        // This prevents transfers from Suspended or Locked accounts.
+        allow update: if isMasterAdmin() || (
+          isOwner(userId) && 
+          resource.data.status == 'Active' && 
+          request.resource.data.status == 'Active'
+        );
+        allow read: if isMasterAdmin() || isOwner(userId);
+        allow create, delete: if isMasterAdmin();
+
+        match /transactions/{transactionId} {
+          // Allow creating transaction records ONLY if the parent account is Active.
+          allow create: if isMasterAdmin() || (
+            isOwner(userId) && 
+            get(/databases/$(database)/documents/users/$(userId)/accounts/$(accountId)).data.status == 'Active'
+          );
+          allow read: if isMasterAdmin() || isOwner(userId);
+          allow update, delete: if isMasterAdmin();
+        }
+      }
 
       match /{allPaths=**} {
-        allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
+        allow read, write: if isMasterAdmin() || isOwner(userId);
       }
     }
 

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, AlertCircle } from "lucide-react";
+import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, AlertCircle, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -38,6 +38,9 @@ export default function TransferPage() {
 
   const { data: accounts, isLoading: accountsLoading } = useCollection(accountsRef);
 
+  const selectedAccount = accounts?.find(a => a.id === fromAccountId);
+  const isAccountRestricted = selectedAccount && selectedAccount.status !== 'Active';
+
   const handleTransfer = () => {
     if (!fromAccountId || !amount || !recipientName || !recipientAccount || !user || !db) {
       toast({
@@ -48,15 +51,14 @@ export default function TransferPage() {
       return;
     }
 
-    const selectedAccount = accounts?.find(a => a.id === fromAccountId);
     if (!selectedAccount) return;
 
-    // ACCOUNT SUSPENSION CHECK
-    if (selectedAccount.status === 'Suspended' || selectedAccount.status === 'Locked') {
+    // REGULATORY LOCKDOWN CHECK
+    if (isAccountRestricted) {
       toast({
         variant: "destructive",
-        title: "Account Restricted",
-        description: "This account has been suspended or restricted by administration. Outgoing transfers are currently disabled.",
+        title: "Institutional Lockdown",
+        description: `This account status is currently: ${selectedAccount.status}. Outgoing capital movements are prohibited by administrative protocol.`,
       });
       return;
     }
@@ -95,8 +97,10 @@ export default function TransferPage() {
       createdAt: serverTimestamp(),
     };
 
+    // 1. Log Transaction
     addDocumentNonBlocking(transactionsRef, transactionData);
 
+    // 2. Adjust Balance
     const accountRef = doc(db, "users", user.uid, "accounts", fromAccountId);
     updateDocumentNonBlocking(accountRef, {
       balance: selectedAccount.balance - Number(amount),
@@ -106,7 +110,7 @@ export default function TransferPage() {
     setTimeout(() => {
       setLoading(false);
       toast({
-        title: "Transfer Initiated",
+        title: "Transfer Finalized",
         description: `Successfully moved ${selectedAccount.currency || '$'}${amount} to ${recipientName}. Settlement in progress.`,
       });
       // Reset Form
@@ -123,7 +127,7 @@ export default function TransferPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-headline font-bold text-primary">Move Capital</h1>
+        <h1 className="text-3xl font-headline font-bold text-primary uppercase tracking-tight">Move Capital</h1>
         <p className="text-muted-foreground">Secure global settlement via NexaNetwork Institutional Rails.</p>
       </div>
 
@@ -146,21 +150,28 @@ export default function TransferPage() {
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Source Account</Label>
                 <Select value={fromAccountId} onValueChange={setFromAccountId}>
-                  <SelectTrigger className="h-12 border-slate-200">
+                  <SelectTrigger className={`h-12 ${isAccountRestricted ? 'border-red-200 bg-red-50/30' : 'border-slate-200'}`}>
                     <SelectValue placeholder={accountsLoading ? "Fetching accounts..." : "Select account to debit"} />
                   </SelectTrigger>
                   <SelectContent>
                     {accounts?.map(acc => (
                       <SelectItem key={acc.id} value={acc.id}>
-                        {acc.accountType} (...{acc.accountNumber.slice(-4)}) — Balance: {acc.currency || '$'}{acc.balance?.toLocaleString()} {acc.status !== 'Active' ? `(${acc.status})` : ''}
+                        <div className="flex items-center gap-2">
+                          <span>{acc.accountType} (...{acc.accountNumber.slice(-4)}) — Balance: {acc.currency || '$'}{acc.balance?.toLocaleString()}</span>
+                          {acc.status !== 'Active' && <span className="text-[8px] font-black bg-red-100 text-red-600 px-1.5 rounded uppercase">{acc.status}</span>}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {accounts?.find(a => a.id === fromAccountId)?.status !== 'Active' && fromAccountId && (
-                  <div className="flex items-center gap-2 mt-2 p-3 bg-red-50 border border-red-100 rounded-lg text-[10px] font-bold text-red-600 uppercase tracking-widest">
-                    <AlertCircle className="h-4 w-4" />
-                    Administrative hold active. Outgoing transfers blocked.
+                
+                {isAccountRestricted && (
+                  <div className="flex items-center gap-3 mt-3 p-4 bg-red-50 border border-red-100 rounded-xl animate-in fade-in zoom-in-95 duration-300">
+                    <ShieldAlert className="h-5 w-5 text-red-600 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Regulatory Lockdown Active</p>
+                      <p className="text-xs text-red-500 font-medium">This account has been placed on an administrative hold. Outgoing capital movements are strictly prohibited until the restriction is lifted.</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -175,6 +186,7 @@ export default function TransferPage() {
                       placeholder="Full legal name or business entity" 
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
+                      disabled={isAccountRestricted}
                     />
                   </div>
                   <div className="space-y-2">
@@ -183,6 +195,7 @@ export default function TransferPage() {
                       placeholder="Account number" 
                       value={recipientAccount}
                       onChange={(e) => setRecipientAccount(e.target.value)}
+                      disabled={isAccountRestricted}
                     />
                   </div>
                   <div className="space-y-2">
@@ -191,6 +204,7 @@ export default function TransferPage() {
                       placeholder="SWIFT/BIC, Routing, or IBAN" 
                       value={routingOrIban}
                       onChange={(e) => setRoutingOrIban(e.target.value)}
+                      disabled={isAccountRestricted}
                     />
                   </div>
                 </div>
@@ -204,6 +218,7 @@ export default function TransferPage() {
                       placeholder="Financial institution name" 
                       value={bankName}
                       onChange={(e) => setBankName(e.target.value)}
+                      disabled={isAccountRestricted}
                     />
                   </div>
                   <div className="space-y-2">
@@ -212,11 +227,12 @@ export default function TransferPage() {
                       placeholder="Branch location or head office" 
                       value={bankAddress}
                       onChange={(e) => setBankAddress(e.target.value)}
+                      disabled={isAccountRestricted}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Payment Method</Label>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod} disabled={isAccountRestricted}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -243,6 +259,7 @@ export default function TransferPage() {
                       className="pl-8 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" 
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
+                      disabled={isAccountRestricted}
                     />
                   </div>
                   <p className="text-[9px] text-muted-foreground">Exchange rates and fees may apply to international wires.</p>
@@ -254,21 +271,22 @@ export default function TransferPage() {
                     className="min-h-[70px] resize-none"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
+                    disabled={isAccountRestricted}
                   />
                 </div>
               </div>
             </CardContent>
             <CardFooter className="bg-slate-50 border-t p-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
               <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                <ShieldCheck className="h-3 w-3 text-green-500" />
+                <ShieldCheck className={`h-3 w-3 ${isAccountRestricted ? 'text-slate-300' : 'text-green-500'}`} />
                 AES-256 Multi-Sig Authorization Active
               </div>
               <div className="flex gap-3 w-full sm:w-auto">
-                <Button variant="outline" className="flex-1 sm:flex-none">Cancel</Button>
+                <Button variant="outline" className="flex-1 sm:flex-none" disabled={loading}>Cancel</Button>
                 <Button 
                   onClick={handleTransfer} 
-                  disabled={loading || accountsLoading || (accounts?.find(a => a.id === fromAccountId)?.status !== 'Active' && fromAccountId !== "")} 
-                  className="flex-1 sm:flex-none bg-accent hover:bg-accent/90 min-w-[180px] h-11"
+                  disabled={loading || accountsLoading || isAccountRestricted || !fromAccountId} 
+                  className={`flex-1 sm:flex-none min-w-[180px] h-11 ${isAccountRestricted ? 'bg-slate-200 text-slate-400' : 'bg-accent hover:bg-accent/90'}`}
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -328,12 +346,13 @@ export default function TransferPage() {
                     setBankName(rec.bank);
                   }}
                   className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors text-left group"
+                  disabled={isAccountRestricted}
                 >
                   <div>
-                    <p className="text-sm font-bold text-primary group-hover:text-accent transition-colors">{rec.name}</p>
+                    <p className={`text-sm font-bold transition-colors ${isAccountRestricted ? 'text-slate-300' : 'text-primary group-hover:text-accent'}`}>{rec.name}</p>
                     <p className="text-[10px] text-muted-foreground">{rec.bank}</p>
                   </div>
-                  <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  <ArrowRight className={`h-3 w-3 transition-all ${isAccountRestricted ? 'opacity-0' : 'opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0'}`} />
                 </button>
               ))}
             </CardContent>
