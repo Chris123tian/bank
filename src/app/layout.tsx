@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
@@ -14,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'City Bank Global',
   description: 'Global banking at the speed of life.',
+  verification: {
+    google: 'D3yen22D67h-A9HwK2P3yWz3LTQx_N89_hm39wJPmFI',
+  },
 };
 
 export default function RootLayout({
