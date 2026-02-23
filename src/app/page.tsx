@@ -38,8 +38,8 @@ export default function LandingPage() {
               <Building2 className="text-white h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div className="flex flex-col -space-y-1">
-              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white leading-none">CITY BANK</span>
-              <span className="text-[7px] sm:text-[9px] font-black tracking-[0.3em] text-accent uppercase">International</span>
+              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white leading-none uppercase">City Global</span>
+              <span className="text-[7px] sm:text-[9px] font-black tracking-[0.3em] text-accent uppercase">Bank</span>
             </div>
           </div>
           
@@ -229,7 +229,7 @@ export default function LandingPage() {
                   <div className="bg-primary p-2 rounded-lg">
                     <Building2 className="text-white h-5 w-5" />
                   </div>
-                  <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter">CITY BANK</span>
+                  <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter">CITY GLOBAL BANK</span>
                 </div>
                 <p className="text-slate-400 max-w-sm mx-auto md:mx-0 text-xs sm:text-sm font-medium leading-relaxed">
                   Redefining the standard for international capital management through advanced settlement infrastructure and institutional custody.
@@ -260,7 +260,7 @@ export default function LandingPage() {
           <div className="pt-8 sm:pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6 text-center md:text-left">
             <p className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">{t('footer_standard')}</p>
             <p className="text-[8px] sm:text-[9px] text-slate-600 font-bold uppercase tracking-widest italic">
-              © 2024 City International Bank. All Rights Reserved. Member FDIC. Equal Housing Lender.
+              © 2024 City Global Bank. All Rights Reserved. Member FDIC. Equal Housing Lender.
             </p>
           </div>
         </div>

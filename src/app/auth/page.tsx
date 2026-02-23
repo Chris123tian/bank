@@ -95,8 +95,8 @@ function AuthPageContent() {
           <Building2 className="text-white h-5 w-5 sm:h-6 sm:w-6" />
         </div>
         <div className="flex flex-col -space-y-1">
-          <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-primary leading-none">CITY BANK</span>
-          <span className="text-[7px] sm:text-[8px] font-black tracking-[0.2em] text-accent uppercase">International</span>
+          <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-primary leading-none uppercase">City Global</span>
+          <span className="text-[7px] sm:text-[8px] font-black tracking-[0.2em] text-accent uppercase">Bank</span>
         </div>
       </Link>
 
@@ -200,7 +200,7 @@ function AuthPageContent() {
           Global Security Standards • 256-bit Encryption
         </p>
         <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-          © 2024 City International Bank. Member FDIC. Equal Housing Lender.
+          © 2024 City Global Bank. Member FDIC. Equal Housing Lender.
         </p>
       </div>
     </div>

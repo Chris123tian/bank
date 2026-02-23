@@ -52,8 +52,8 @@ export default function ServicesPage() {
               <Building2 className="text-white h-5 w-5 sm:h-6 sm:w-6" />
             </div>
             <div className="flex flex-col -space-y-1">
-              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white leading-none">CITY BANK</span>
-              <span className="text-[7px] sm:text-[9px] font-black tracking-[0.3em] text-accent uppercase">International</span>
+              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white leading-none uppercase">City Global</span>
+              <span className="text-[7px] sm:text-[9px] font-black tracking-[0.3em] text-accent uppercase">Bank</span>
             </div>
           </LinkNext>
           <div className="flex items-center gap-4">
@@ -92,7 +92,7 @@ export default function ServicesPage() {
 
       <footer className="bg-slate-950 py-16 border-t border-white/5 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Institutional Grade Financial Infrastructure</p>
+          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">© 2024 City Global Bank. Institutional Grade Financial Infrastructure</p>
         </div>
       </footer>
     </div>

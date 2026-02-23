@@ -103,8 +103,8 @@ export function DashboardSidebar() {
         <div className="bg-accent p-2 rounded-lg shrink-0 transition-transform hover:scale-110">
           <Building2 className="text-white h-6 w-6" />
         </div>
-        <span className="font-headline font-black text-xl tracking-tight group-data-[collapsible=icon]:hidden text-white truncate">
-          CITY BANK
+        <span className="font-headline font-black text-lg tracking-tight group-data-[collapsible=icon]:hidden text-white truncate uppercase">
+          City Global Bank
         </span>
       </SidebarHeader>
       <SidebarContent className="custom-scrollbar overflow-x-hidden">
