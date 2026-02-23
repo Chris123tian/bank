@@ -3,7 +3,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFirestore, useUser } from "@/firebase";
+import { useFirestore, useUser, useCollection } from "@/firebase";
+import { useMemoFirebase } from "@/firebase/provider";
 import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,11 @@ export default function NewAccountPage() {
   const db = useFirestore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+
+  const { data: accounts } = useCollection(useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return collection(db, "users", user.uid, "accounts");
+  }, [db, user?.uid]));
 
   // Form State
   const [formData, setFormData] = useState({
@@ -78,6 +84,20 @@ export default function NewAccountPage() {
 
   const handleOnboardingComplete = async () => {
     if (!user || !db) return;
+
+    // REGULATORY RESTRICTION: One Current Account per client
+    if (formData.accountType === "Current Account") {
+      const hasCurrent = accounts?.some(acc => acc.accountType === "Current Account");
+      if (hasCurrent) {
+        toast({
+          variant: "destructive",
+          title: "Regulatory Constraint",
+          description: "You already have an active Current Account. Multiple daily operations accounts are not permitted."
+        });
+        return;
+      }
+    }
+
     setLoading(true);
 
     // 1. Update Customer Profile with identity details
@@ -324,7 +344,7 @@ export default function NewAccountPage() {
       </Card>
       
       <p className="text-[9px] text-center text-muted-foreground mt-8 uppercase font-black tracking-widest leading-tight px-12">
-        Nexa International is regulated by the Federal Banking Authority. All data is protected by AES-256 institutional-grade encryption.
+        City Bank Global is regulated by the Federal Banking Authority. All data is protected by AES-256 institutional-grade encryption.
       </p>
     </div>
   );

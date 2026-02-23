@@ -110,12 +110,29 @@ export default function AdminAccountsAuditPage() {
       return;
     }
 
+    // REGULATORY RESTRICTION: One Current Account per client
+    if (newAccount.accountType === "Current Account") {
+      const hasCurrentAccount = accounts?.some(acc => 
+        (acc.customerId === newAccount.userId || acc.userId === newAccount.userId) && 
+        acc.accountType === "Current Account"
+      );
+      
+      if (hasCurrentAccount) {
+        toast({ 
+          variant: "destructive", 
+          title: "Regulatory Limit Reached", 
+          description: "This client already possesses an active Current Account. Multiple daily operations accounts are prohibited by institutional policy." 
+        });
+        return;
+      }
+    }
+
     const colRef = collection(db, "users", newAccount.userId, "accounts");
     const accountData = {
       accountNumber: `CITY-${Math.floor(10000000 + Math.random() * 90000000)}`,
       accountType: newAccount.accountType,
       balance: Number(newAccount.balance),
-      currency: newAccount.currency,
+      currency: "USD",
       userId: newAccount.userId,
       customerId: newAccount.userId,
       status: "Active",
@@ -132,6 +149,25 @@ export default function AdminAccountsAuditPage() {
   const handleUpdateAccount = () => {
     if (!editingAccount || !db) return;
     const clientUid = editingAccount.customerId || editingAccount.userId;
+
+    // REGULATORY RESTRICTION: One Current Account per client
+    if (editingAccount.accountType === "Current Account") {
+      const otherCurrentAccount = accounts?.some(acc => 
+        acc.id !== editingAccount.id &&
+        (acc.customerId === clientUid || acc.userId === clientUid) && 
+        acc.accountType === "Current Account"
+      );
+      
+      if (otherCurrentAccount) {
+        toast({ 
+          variant: "destructive", 
+          title: "Regulatory Limit Reached", 
+          description: "This client already possesses an active Current Account. Conversion to multiple daily operations accounts is prohibited." 
+        });
+        return;
+      }
+    }
+
     const docRef = doc(db, "users", clientUid, "accounts", editingAccount.id);
     
     updateDocumentNonBlocking(docRef, {
@@ -335,6 +371,19 @@ export default function AdminAccountsAuditPage() {
                     onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
                     className="h-12 text-lg font-black"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Type</Label>
+                  <Select value={editingAccount.accountType} onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Current Account">Current Account</SelectItem>
+                      <SelectItem value="Savings Account">Savings Account</SelectItem>
+                      <SelectItem value="Business Account">Business Account</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Account Status</Label>
