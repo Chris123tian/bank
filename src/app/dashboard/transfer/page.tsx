@@ -57,8 +57,8 @@ export default function TransferPage() {
     if (isAccountRestricted) {
       toast({
         variant: "destructive",
-        title: "Institutional Lockdown",
-        description: `This account status is currently: ${selectedAccount.status}. Outgoing capital movements are prohibited by administrative protocol.`,
+        title: "Regulatory Lockdown Active",
+        description: "This account has been placed on an administrative hold, contact customer support for assistance. Outgoing capital movements are strictly prohibited until the restriction is lifted.",
       });
       return;
     }
@@ -170,7 +170,7 @@ export default function TransferPage() {
                     <ShieldAlert className="h-5 w-5 text-red-600 shrink-0" />
                     <div>
                       <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Regulatory Lockdown Active</p>
-                      <p className="text-xs text-red-500 font-medium">This account has been placed on an administrative hold. Outgoing capital movements are strictly prohibited until the restriction is lifted.</p>
+                      <p className="text-xs text-red-500 font-medium">This account has been placed on an administrative hold, contact customer support for assistance. Outgoing capital movements are strictly prohibited until the restriction is lifted.</p>
                     </div>
                   </div>
                 )}
