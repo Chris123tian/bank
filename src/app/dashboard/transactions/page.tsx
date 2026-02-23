@@ -308,7 +308,7 @@ function TransactionsContent() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <p className="text-[9px] font-black text-slate-400 uppercase">Bank / Institution</p>
-                          <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.bankName || 'Nexa International'}</p>
+                          <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.bankName || 'City Bank Global'}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>

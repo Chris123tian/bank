@@ -81,13 +81,6 @@ export default function AdminAccountsAuditPage() {
 
   const { data: allUsers } = useCollection(usersRef);
 
-  const userProfileRef = useMemoFirebase(() => {
-    if (!db || !viewingClientPortfolio) return null;
-    return doc(db, "users", viewingClientPortfolio);
-  }, [db, viewingClientPortfolio]);
-
-  const { data: userProfile } = useDoc(userProfileRef);
-
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
       return new Intl.NumberFormat('en-US', {
@@ -222,7 +215,7 @@ export default function AdminAccountsAuditPage() {
       <Card className="shadow-xl rounded-2xl overflow-hidden border-none bg-white">
         <CardHeader className="bg-slate-50/50 border-b">
           <CardTitle className="text-lg">Institutional Asset Ledger</CardTitle>
-          <CardDescription>Auditing all capital holdings within the City International Bank ecosystem.</CardDescription>
+          <CardDescription>Auditing all capital holdings within the City Bank Global ecosystem.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto w-full">
@@ -318,7 +311,32 @@ export default function AdminAccountsAuditPage() {
             </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
-            {/* Form Content... */}
+            {editingAccount && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Adjusted Balance (USD)</Label>
+                  <Input 
+                    type="number" 
+                    value={editingAccount.balance} 
+                    onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
+                    className="h-12 text-lg font-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Status</Label>
+                  <Select value={editingAccount.status} onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Suspended">Suspended (Lockdown)</SelectItem>
+                      <SelectItem value="Locked">Regulatory Hold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold order-2 sm:order-1">Cancel</Button>
@@ -341,7 +359,43 @@ export default function AdminAccountsAuditPage() {
             </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar">
-            {/* Create Content... */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Target Client</Label>
+                <Select value={newAccount.userId} onValueChange={(v) => setNewAccount({...newAccount, userId: v})}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select verified client..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allUsers?.map(u => (
+                      <SelectItem key={u.id} value={u.id}>{u.firstName} {u.lastName} ({u.email})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Account Type</Label>
+                <Select value={newAccount.accountType} onValueChange={(v) => setNewAccount({...newAccount, accountType: v})}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Current Account">Current Account</SelectItem>
+                    <SelectItem value="Savings Account">Savings Account</SelectItem>
+                    <SelectItem value="Business Account">Business Account</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Initial Deposit (USD)</Label>
+                <Input 
+                  type="number" 
+                  value={newAccount.balance} 
+                  onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})}
+                  className="h-12 text-lg font-black"
+                />
+              </div>
+            </div>
           </div>
           <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1 h-12 rounded-xl font-bold order-2 sm:order-1">Cancel</Button>
@@ -359,12 +413,19 @@ export default function AdminAccountsAuditPage() {
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                  <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Dossier</DialogTitle>
                   <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client.</DialogDescription>
                 </DialogHeader>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
-              {/* Profile Details... */}
+              
+              <div className="space-y-6 pt-10 border-t border-slate-300 text-base sm:text-xl text-slate-700">
+                <div className="flex flex-col sm:flex-row sm:gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Client ID :</span>
+                  <span className="font-mono text-sm break-all">{viewingClientPortfolio}</span>
+                </div>
+              </div>
+
               <div className="pt-8 border-t border-slate-300">
                 <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-14 rounded-2xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss Dossier</Button>
               </div>
