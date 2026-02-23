@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, Suspense } from "react";
@@ -72,17 +73,17 @@ function TransactionsContent() {
 
   /**
    * ADMIN-STYLE DATA FLOW:
-   * We use a simplified collectionGroup query without complex 'where' filters 
-   * to align with the broad security rules and avoid "Missing permissions" errors.
+   * We use a high-performance collectionGroup query authorized by high-priority rules.
+   * This architecture resolves the permission errors by aggregating and then filtering locally.
    */
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
 
     if (selectedAccountId === "all") {
-      // Global collection group query (Admin structure)
+      // Aggregate mode: use collectionGroup
       return collectionGroup(db, "transactions");
     } else {
-      // Direct path query for a specific account
+      // Targeted mode: use direct path
       return collection(db, "users", user.uid, "accounts", selectedAccountId, "transactions");
     }
   }, [db, user?.uid, selectedAccountId]);
@@ -101,19 +102,19 @@ function TransactionsContent() {
   };
 
   /**
-   * LOCAL FILTERING & SORTING:
-   * We filter by current user identity and search terms locally, matching the Admin flow.
+   * LOCAL CLIENT-SIDE FILTERING & SORTING:
+   * This aligns with the administrative flow to bypass query-level permission limitations.
    */
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
     
     return transactions
       .filter(tx => {
-        // Ensure the transaction belongs to the current user (Regulatory guard)
+        // Ownership guard
         const isOwner = tx.customerId === user?.uid || tx.userId === user?.uid;
         if (!isOwner) return false;
 
-        // Apply search filter
+        // Content search
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
           tx.id?.toLowerCase().includes(search.toLowerCase()) ||
@@ -122,12 +123,11 @@ function TransactionsContent() {
         return matchesSearch;
       })
       .sort((a, b) => {
-        // Local chronological sorting
         const dateA = a.transactionDate ? new Date(a.transactionDate).getTime() : 0;
         const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
         return dateB - dateA;
       })
-      .slice(0, 100); // Limit locally for performance
+      .slice(0, 100);
   }, [transactions, search, user?.uid]);
 
   return (
@@ -141,7 +141,7 @@ function TransactionsContent() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Filter trail..." 
+              placeholder="Filter ledger..." 
               className="pl-10 h-11 border-slate-200" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}

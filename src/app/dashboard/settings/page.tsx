@@ -13,6 +13,7 @@ import {
   CreditCard,
   Building2,
   Lock,
+  Hash
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -60,7 +61,6 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Profile View - Redesigned based on request image */}
         <div className="lg:col-span-8 space-y-8">
           <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-inner border border-slate-200 relative overflow-hidden">
             <div className="absolute top-4 right-4 text-slate-400">
@@ -81,13 +81,19 @@ export default function SettingsPage() {
                   )}
                 </div>
                 
-                <div className="text-center space-y-2">
-                  <p className="text-xl font-bold text-slate-700">
-                    <span className="font-black text-[#002B5B]">Username:</span> {profile?.username || user?.email?.split('@')[0]}
-                  </p>
-                  <p className="text-xl font-bold text-slate-700">
-                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{profile?.email || user?.email}</span>
-                  </p>
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#002B5B] rounded-full text-white shadow-lg">
+                    <Hash className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-black tracking-widest uppercase">ID: {profile?.accountNumber || "NEXA-PENDING"}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xl font-bold text-slate-700">
+                      <span className="font-black text-[#002B5B]">Username:</span> {profile?.username || user?.email?.split('@')[0]}
+                    </p>
+                    <p className="text-xl font-bold text-slate-700">
+                      <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{profile?.email || user?.email}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -97,29 +103,26 @@ export default function SettingsPage() {
                   <span className="font-medium">{profile?.firstName} {profile?.lastName}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 1:</span>
-                  <span className="font-medium">{profile?.addressLine1 || "No address on file"}</span>
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Jurisdiction:</span>
+                  <span className="font-medium">{profile?.country || "United Kingdom"}</span>
                 </div>
                 <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 2:</span>
-                  <span className="font-medium">{profile?.addressLine2 || "—"}</span>
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 1:</span>
+                  <span className="font-medium">{profile?.addressLine1 || "No address on file"}</span>
                 </div>
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[160px]">City/State/Zip:</span>
                   <span className="font-medium">{profile?.city ? `${profile.city}, ${profile.state || ''} ${profile.postalCode || ''}` : '—'}</span>
                 </div>
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">Country:</span>
-                  <span className="font-medium">{profile?.country || "United Kingdom"}</span>
-                </div>
               </div>
 
               <div className="pt-16 pb-8">
-                <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] mb-4 text-center">Authorized Regulatory Signature</p>
+                <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100 mx-auto w-full max-w-sm">
                   {profile?.signature ? (
                     <img src={profile.signature} alt="Signature" className="h-24 object-contain mx-auto" />
                   ) : (
-                    <div className="h-20 w-64 flex items-center justify-center border-2 border-dashed border-slate-200 text-slate-300 text-[10px] uppercase font-black">
+                    <div className="h-20 flex items-center justify-center border-2 border-dashed border-slate-200 text-slate-300 text-[10px] uppercase font-black">
                       No Signature Authorized
                     </div>
                   )}
@@ -138,7 +141,6 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* Sidebar Summary */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="border-primary/10 shadow-xl overflow-hidden rounded-3xl">
             <CardHeader className="bg-primary text-white p-6">

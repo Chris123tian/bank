@@ -11,6 +11,10 @@
           "type": "string",
           "description": "Unique identifier for the CustomerProfile entity."
         },
+        "accountNumber": {
+          "type": "string",
+          "description": "The master institutional account number for the client profile."
+        },
         "username": {
           "type": "string",
           "description": "The chosen username for the client."

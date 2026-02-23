@@ -33,12 +33,13 @@ import {
   Edit3, 
   Key, 
   Upload,
-  Image as ImageIcon,
+  ImageIcon,
   FileSignature,
   X,
   Landmark,
   ArrowRight,
-  MapPin
+  MapPin,
+  Hash
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -58,6 +59,7 @@ export default function AdminUsersPage() {
 
   // Form state for Manual Creation
   const [formData, setFormData] = useState({
+    accountNumber: `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
     firstName: "",
     lastName: "",
     email: "",
@@ -127,6 +129,7 @@ export default function AdminUsersPage() {
       const userDocRef = doc(db, "users", newUid);
       const newUserData = {
         id: newUid,
+        accountNumber: formData.accountNumber || `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -151,10 +154,11 @@ export default function AdminUsersPage() {
 
       toast({ 
         title: "Client Provisioned", 
-        description: `Credentials for ${formData.firstName} successfully initialized.` 
+        description: `Institutional profile NEXA-${newUserData.accountNumber.slice(-4)} successfully initialized.` 
       });
       setIsCreating(false);
       setFormData({ 
+        accountNumber: `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
         firstName: "", lastName: "", email: "", password: "", username: "", 
         phoneNumber: "", addressLine1: "", addressLine2: "", city: "", 
         state: "", postalCode: "", country: "United Kingdom", userRole: "client",
@@ -171,6 +175,7 @@ export default function AdminUsersPage() {
     if (!db || !editingUser) return;
     const userRef = doc(db, "users", editingUser.id);
     updateDocumentNonBlocking(userRef, {
+      accountNumber: editingUser.accountNumber || `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
       username: editingUser.username || "",
       email: editingUser.email || "",
       firstName: editingUser.firstName || "",
@@ -204,7 +209,8 @@ export default function AdminUsersPage() {
 
   const filteredUsers = users?.filter(u => 
     u.email?.toLowerCase().includes(search.toLowerCase()) || 
-    `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase())
+    `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
+    u.accountNumber?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isAdminRoleLoading && !isMasterAdmin) {
@@ -247,6 +253,13 @@ export default function AdminUsersPage() {
           <CardContent className="space-y-8 pt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase text-slate-500">Master Account Number</Label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input value={formData.accountNumber} onChange={(e) => setFormData({...formData, accountNumber: e.target.value})} className="h-11 pl-10 font-mono text-xs font-black bg-slate-50" />
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-slate-500">First Name</Label>
                 <Input value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} placeholder="Legal First Name" className="h-11" />
               </div>
@@ -277,10 +290,6 @@ export default function AdminUsersPage() {
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase text-slate-500">City</Label>
                 <Input value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="h-11" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase text-slate-500">Country</Label>
-                <Input value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} className="h-11" />
               </div>
             </div>
 
@@ -333,7 +342,7 @@ export default function AdminUsersPage() {
         <CardHeader className="pb-0 bg-white">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search global index by name or email..." className="pl-10 h-12 border-slate-200 focus-visible:ring-primary" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Search global index by name, email or NEXA-ID..." className="pl-10 h-12 border-slate-200 focus-visible:ring-primary" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent className="pt-6 px-0">
@@ -342,9 +351,9 @@ export default function AdminUsersPage() {
               <TableHeader className="bg-slate-50/80">
                 <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Client Identity</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Master Account #</TableHead>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Institutional Email</TableHead>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Role</TableHead>
-                  <TableHead className="hidden lg:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Verification</TableHead>
                   <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -363,15 +372,13 @@ export default function AdminUsersPage() {
                         <span className="truncate max-w-[140px] sm:max-w-[200px]">{u.firstName} {u.lastName}</span>
                       </div>
                     </TableCell>
+                    <TableCell className="font-mono text-[10px] font-black tracking-widest text-accent">{u.accountNumber || "PENDING"}</TableCell>
                     <TableCell className="truncate max-w-[150px] sm:max-w-none font-medium text-slate-600 font-mono text-xs">{u.email}</TableCell>
                     <TableCell>
                       <Badge variant={u.userRole === 'admin' ? 'destructive' : 'secondary'} className="capitalize text-[9px] font-black tracking-widest px-2">
                         {u.userRole === 'admin' && <ShieldCheck className="h-3 w-3 mr-1" />}
                         {u.userRole || 'client'}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {u.addressLine1 ? <Badge className="bg-green-100 text-green-700 border-none font-black text-[9px] uppercase tracking-tighter">KYC Verified</Badge> : <Badge variant="outline" className="text-orange-500 border-orange-200 text-[9px] uppercase tracking-tighter font-black">Pending Identity</Badge>}
                     </TableCell>
                     <TableCell className="text-right px-6">
                       <div className="flex justify-end gap-1 sm:gap-2">
@@ -393,15 +400,15 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Profile Modification Dialog - Responsive Optimization */}
+      {/* Profile Modification Dialog */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent className="max-w-3xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[95vw] sm:w-full">
+        <DialogContent className="max-w-3xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/10 rounded-2xl shrink-0"><Edit3 className="h-6 w-6" /></div>
               <div>
                 <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Institutional Profile</DialogTitle>
-                <DialogDescription className="text-white/60 text-xs sm:text-sm truncate max-w-[250px] sm:max-w-none">Updating regulatory records for client UID: {editingUser?.id}</DialogDescription>
+                <DialogDescription className="text-white/60 text-xs sm:text-sm">Updating regulatory records for client ID: {editingUser?.accountNumber || editingUser?.id}</DialogDescription>
               </div>
             </div>
           </div>
@@ -413,38 +420,16 @@ export default function AdminUsersPage() {
                   <ShieldCheck className="h-4 w-4" /> Legal Identification
                 </h4>
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Master Account Number</Label>
+                    <Input value={editingUser?.accountNumber || ""} onChange={(e) => setEditingUser({...editingUser, accountNumber: e.target.value})} className="h-11 font-mono text-xs font-black text-accent bg-slate-50" />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">First Name</Label><Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} className="h-11" /></div>
                     <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Last Name</Label><Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} className="h-11" /></div>
                   </div>
                   <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Internal Handle (Username)</Label><Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} className="h-11" /></div>
                   <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Institutional Email</Label><Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11" /></div>
-                  <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Verified Phone</Label><Input value={editingUser?.phoneNumber || ""} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} className="h-11" /></div>
-                </div>
-
-                <div className="space-y-4 pt-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
-                    <Key className="h-4 w-4" /> Administrative Credentials
-                  </h4>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-slate-500">Assigned Temporary Password</Label>
-                    <div className="relative">
-                      <Input 
-                        type={showPassword ? "text" : "password"} 
-                        value={editingUser?.temporaryPassword || "—"} 
-                        onChange={(e) => setEditingUser({...editingUser, temporaryPassword: e.target.value})} 
-                        className="h-11 pr-10 font-mono" 
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    <p className="text-[9px] text-muted-foreground italic font-medium">This is the initial password assigned during account provisioning.</p>
-                  </div>
                 </div>
               </div>
 
@@ -471,21 +456,6 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
               </div>
-
-              <div className="space-y-6 md:col-span-2 pt-4">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
-                  <MapPin className="h-4 w-4" /> Residential Verification (KYC)
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Residential Address 1</Label><Input value={editingUser?.addressLine1 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} className="h-11" /></div>
-                  <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Address 2 (Suite/Unit)</Label><Input value={editingUser?.addressLine2 || ""} onChange={(e) => setEditingUser({...editingUser, addressLine2: e.target.value})} className="h-11" /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">City</Label><Input value={editingUser?.city || ""} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} className="h-11" /></div>
-                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Postal Code</Label><Input value={editingUser?.postalCode || ""} onChange={(e) => setEditingUser({...editingUser, postalCode: e.target.value})} className="h-11" /></div>
-                  </div>
-                  <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Jurisdiction (Country)</Label><Input value={editingUser?.country || ""} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} className="h-11" /></div>
-                </div>
-              </div>
             </div>
           </div>
           
@@ -496,7 +466,7 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Institutional Dossier View - Responsive Optimization */}
+      {/* Institutional Dossier View */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
@@ -506,6 +476,7 @@ export default function AdminUsersPage() {
             <div className="max-w-2xl mx-auto space-y-10">
               <div className="relative inline-block">
                 <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client NEXA-{viewingUser?.accountNumber?.slice(-4)}.</DialogDescription>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
@@ -519,6 +490,9 @@ export default function AdminUsersPage() {
                 </div>
                 
                 <div className="text-center space-y-2">
+                  <p className="text-lg sm:text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Master Account:</span> <span className="text-accent font-black tracking-widest">{viewingUser?.accountNumber || "PENDING"}</span>
+                  </p>
                   <p className="text-lg sm:text-xl font-bold text-slate-700">
                     <span className="font-black text-[#002B5B]">Username:</span> {viewingUser?.username || viewingUser?.email?.split('@')[0]}
                   </p>
@@ -534,45 +508,18 @@ export default function AdminUsersPage() {
                   <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 1:</span>
-                  <span className="font-medium break-words">{viewingUser?.addressLine1 || "—"}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Address 2:</span>
-                  <span className="font-medium">{viewingUser?.addressLine2 || "—"}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">City/State/Zip:</span>
-                  <span className="font-medium">
-                    {viewingUser?.city ? `${viewingUser.city}${viewingUser.state ? `, ${viewingUser.state}` : ''} ${viewingUser.postalCode || ''}` : '—'}
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Country:</span>
+                  <span className="font-black text-[#002B5B] min-w-[140px]">Jurisdiction:</span>
                   <span className="font-medium">{viewingUser?.country || "United Kingdom"}</span>
                 </div>
               </div>
 
-              <div className="pt-10 border-t border-slate-300 flex flex-col gap-6">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] mb-4">Authorized Identity Signature</p>
-                  {viewingUser?.signature ? (
-                    <div className="bg-white p-4 inline-block shadow-lg rounded-xl border border-slate-200 max-w-full overflow-hidden">
-                      <img src={viewingUser.signature} alt="Signature" className="h-20 sm:h-24 object-contain" />
-                    </div>
-                  ) : (
-                    <div className="h-24 w-full flex items-center justify-center border-2 border-dashed border-slate-300 text-slate-400 italic text-sm rounded-xl">No signature authorized</div>
-                  )}
-                </div>
-                
-                <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                  <Button variant="outline" asChild className="flex-1 h-12 rounded-xl font-bold border-slate-300 shadow-sm">
-                    <Link href={`/dashboard/admin/accounts?search=${viewingUser?.id}`}>
-                      <Landmark className="mr-2 h-4 w-4" /> Financial Assets
-                    </Link>
-                  </Button>
-                  <Button onClick={() => setViewingUser(null)} className="flex-1 h-12 rounded-xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss</Button>
-                </div>
+              <div className="pt-8 border-t border-slate-300 flex flex-col gap-4">
+                <Button variant="outline" asChild className="w-full h-12 rounded-xl font-bold border-slate-300 shadow-sm">
+                  <Link href={`/dashboard/admin/accounts?search=${viewingUser?.id}`}>
+                    <Landmark className="mr-2 h-4 w-4" /> Financial Assets
+                  </Link>
+                </Button>
+                <Button onClick={() => setViewingUser(null)} className="w-full h-14 rounded-2xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss Dossier</Button>
               </div>
             </div>
           </div>

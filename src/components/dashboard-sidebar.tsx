@@ -1,3 +1,4 @@
+
 "use client";
 
 import { 
@@ -11,7 +12,8 @@ import {
   ShieldAlert,
   Users,
   Landmark,
-  Wallet
+  Wallet,
+  Hash
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -120,8 +122,8 @@ export function DashboardSidebar() {
                 <span className="text-xs font-bold text-white truncate group-hover:text-accent transition-colors">
                   {profile?.firstName ? `${profile.firstName} ${profile.lastName}` : (user?.displayName || "Member")}
                 </span>
-                <span className="text-[9px] text-sidebar-foreground/60 truncate font-mono uppercase tracking-tighter">
-                  {profile?.username || user?.email?.split('@')[0]}
+                <span className="text-[9px] text-accent font-black tracking-tighter truncate uppercase flex items-center gap-1">
+                  <Hash className="h-2 w-2" /> {profile?.accountNumber || "PENDING"}
                 </span>
               </div>
             </div>
