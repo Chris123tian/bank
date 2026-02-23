@@ -3,7 +3,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useDoc } from "@/firebase";
+import { useMemoFirebase } from "@/firebase/provider";
+import { doc } from "firebase/firestore";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { ChatbotWidget } from "@/components/chatbot-widget";
@@ -18,6 +20,15 @@ export default function DashboardLayout({
 }) {
   const { user, isUserLoading, isAuthReady } = useUser();
   const router = useRouter();
+  const db = useFirestore();
+
+  // Fetch real-time Firestore profile to ensure custom names (like 'City Admin') are shown correctly
+  const profileRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return doc(db, "users", user.uid);
+  }, [db, user?.uid]);
+
+  const { data: profile } = useDoc(profileRef);
 
   useEffect(() => {
     if (isAuthReady && !user) {
@@ -38,6 +49,11 @@ export default function DashboardLayout({
 
   if (!user) return null;
 
+  // Prioritize Firestore profile name, then Auth displayName, then email prefix
+  const displayName = profile?.firstName 
+    ? `${profile.firstName} ${profile.lastName || ''}`.trim()
+    : (user.displayName || user.email?.split('@')[0]);
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-full bg-background overflow-hidden relative">
@@ -48,10 +64,14 @@ export default function DashboardLayout({
             <div className="ml-auto flex items-center gap-3 sm:gap-4">
               <LanguageSwitcher />
               <div className="text-[10px] sm:text-sm font-bold truncate max-w-[120px] sm:max-w-none text-primary">
-                {user.displayName || user.email?.split('@')[0]}
+                {displayName}
               </div>
-              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20 shrink-0">
-                {user.displayName?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+              <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xs border border-primary/20 shrink-0 overflow-hidden">
+                {profile?.profilePictureUrl ? (
+                  <img src={profile.profilePictureUrl} className="h-full w-full object-cover" alt="Profile" />
+                ) : (
+                  displayName.charAt(0).toUpperCase()
+                )}
               </div>
             </div>
           </header>

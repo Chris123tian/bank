@@ -16,17 +16,25 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * These rules are essential for collectionGroup() queries like the Unified Ledger.
-     * We allow all signed-in users to perform list operations on these groups
-     * because the application logic handles identity-based filtering locally (Admin Flow).
+     * Critical for collectionGroup() queries used in Unified Ledger.
+     * We allow 'list' operations if the user is authenticated and is the owner
+     * of the data being aggregated, or is an administrator.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isMasterAdmin() || 
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
+      );
       allow write: if isMasterAdmin();
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isMasterAdmin() || 
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
+      );
       allow write: if isMasterAdmin();
     }
 
@@ -44,7 +52,7 @@ service cloud.firestore {
       // Users can manage their own profile
       allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
 
-      // Recursive match for all sub-collections (accounts, transactions, etc.)
+      // Recursive match for all sub-collections
       match /{allPaths=**} {
         allow read, write: if isMasterAdmin() || (isSignedIn() && request.auth.uid == userId);
       }

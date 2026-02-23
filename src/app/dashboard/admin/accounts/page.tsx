@@ -50,7 +50,6 @@ export default function AdminAccountsAuditPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // Create Form State
   const [newAccount, setNewAccount] = useState({
     userId: "",
     accountType: "Current Account",
@@ -58,7 +57,6 @@ export default function AdminAccountsAuditPage() {
     currency: "USD"
   });
 
-  // Verify Admin Status
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
@@ -69,7 +67,6 @@ export default function AdminAccountsAuditPage() {
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
-  // Global Accounts Collection
   const accountsRef = useMemoFirebase(() => {
     if (!db || !isAdminReady) return null;
     return collectionGroup(db, "accounts");
@@ -77,7 +74,6 @@ export default function AdminAccountsAuditPage() {
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
 
-  // Fetch all users for the dropdown
   const usersRef = useMemoFirebase(() => {
     if (!db || !isAdminReady) return null;
     return collection(db, "users");
@@ -85,7 +81,6 @@ export default function AdminAccountsAuditPage() {
 
   const { data: allUsers } = useCollection(usersRef);
 
-  // User Profile for the Dossier View
   const userProfileRef = useMemoFirebase(() => {
     if (!db || !viewingClientPortfolio) return null;
     return doc(db, "users", viewingClientPortfolio);
@@ -142,7 +137,6 @@ export default function AdminAccountsAuditPage() {
       updatedAt: serverTimestamp(),
     });
 
-    // AUTO-INJECT AUDIT TRANSACTION RECORD
     const txRef = collection(db, "users", clientUid, "accounts", editingAccount.id, "transactions");
     addDocumentNonBlocking(txRef, {
       accountId: editingAccount.id,
@@ -310,7 +304,6 @@ export default function AdminAccountsAuditPage() {
         </CardContent>
       </Card>
 
-      {/* Account Edit / Balance Adjustment Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
@@ -392,7 +385,6 @@ export default function AdminAccountsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Account Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-primary text-white shrink-0">
@@ -473,7 +465,6 @@ export default function AdminAccountsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Institutional Information Dossier Dialog */}
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
         <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">

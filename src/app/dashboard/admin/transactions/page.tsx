@@ -309,7 +309,6 @@ export default function AdminTransactionsAuditPage() {
         </CardContent>
       </Card>
 
-      {/* Manual Entry Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
           <div className="p-6 sm:p-8 bg-slate-50 border-b shrink-0">
@@ -453,7 +452,6 @@ export default function AdminTransactionsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Transaction Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
           <div className="p-6 sm:p-8 bg-slate-50 border-b shrink-0">
@@ -562,7 +560,6 @@ export default function AdminTransactionsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      {/* One-Page Audit Insight Dossier */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
@@ -634,7 +631,7 @@ export default function AdminTransactionsAuditPage() {
                     </h4>
                     <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-slate-400 uppercase">Recipient Account</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase">{viewingTransaction?.amount > 0 ? 'Sender Identification' : 'Recipient Account'}</p>
                         <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.recipientName || 'Institutional Internal'}</p>
                         <p className="text-[10px] sm:text-xs text-slate-500 font-mono break-all">{viewingTransaction?.metadata?.recipientAccount || '—'}</p>
                       </div>

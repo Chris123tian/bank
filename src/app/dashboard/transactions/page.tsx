@@ -45,7 +45,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, collection } from "firebase/firestore";
+import { collectionGroup, collection, query, where } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -55,7 +55,6 @@ function TransactionsContent() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  // Handle direct account link from dashboard
   useEffect(() => {
     const accId = searchParams.get('account');
     if (accId) {
@@ -63,7 +62,6 @@ function TransactionsContent() {
     }
   }, [searchParams]);
 
-  // Fetch Accounts for the filter dropdown
   const accountsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return collection(db, "users", user.uid, "accounts");
@@ -72,14 +70,13 @@ function TransactionsContent() {
   const { data: accounts } = useCollection(accountsRef);
 
   /**
-   * ADMIN-STYLE DATA FLOW:
-   * We use a high-performance collectionGroup query authorized by high-priority rules.
-   * This architecture resolves the permission errors by aggregating and then filtering locally.
+   * ADMIN-STYLE FLOW FOR CLIENTS:
+   * We use a collectionGroup query constrained by ownership.
+   * This aligns with the 'list' permission rule /{path=**}/transactions.
    */
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    // Aggregation mode: use collectionGroup for ALL transactions
-    return collectionGroup(db, "transactions");
+    return query(collectionGroup(db, "transactions"), where("customerId", "==", user.uid));
   }, [db, user?.uid]);
 
   const { data: transactions, isLoading: transactionsLoading } = useCollection(transactionsQuery);
@@ -95,28 +92,16 @@ function TransactionsContent() {
     }
   };
 
-  /**
-   * LOCAL CLIENT-SIDE FILTERING & SORTING:
-   * This aligns with the administrative flow to bypass query-level permission limitations.
-   */
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
     
     return transactions
       .filter(tx => {
-        // Ownership guard
-        const isOwner = tx.customerId === user?.uid || tx.userId === user?.uid;
-        if (!isOwner) return false;
-
-        // Account Filter
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
-
-        // Content search
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
           tx.id?.toLowerCase().includes(search.toLowerCase()) ||
           tx.metadata?.recipientName?.toLowerCase().includes(search.toLowerCase());
-        
         return matchesSearch;
       })
       .sort((a, b) => {
@@ -125,7 +110,7 @@ function TransactionsContent() {
         return dateB - dateA;
       })
       .slice(0, 100);
-  }, [transactions, search, user?.uid, selectedAccountId]);
+  }, [transactions, search, selectedAccountId]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
@@ -239,7 +224,6 @@ function TransactionsContent() {
         </CardContent>
       </Card>
 
-      {/* Institutional Audit Insight Dossier */}
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">

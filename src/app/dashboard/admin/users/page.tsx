@@ -53,7 +53,6 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // Form state for Manual Creation
   const [formData, setFormData] = useState({
     accountNumber: `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
     firstName: "",
@@ -73,7 +72,6 @@ export default function AdminUsersPage() {
     signature: "",
   });
 
-  // Verify Admin Status
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !currentUser?.uid) return null;
     return doc(db, "roles_admin", currentUser.uid);
@@ -363,7 +361,7 @@ export default function AdminUsersPage() {
                     <TableCell className="font-bold text-primary py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 overflow-hidden border shadow-sm shrink-0">
-                          {u.profilePictureUrl ? <img src={u.profilePictureUrl} className="h-full w-full object-cover" /> : u.firstName?.charAt(0)}
+                          {u.profilePictureUrl ? <img src={u.profilePictureUrl} className="h-full w-full object-cover" alt="Avatar" /> : u.firstName?.charAt(0)}
                         </div>
                         <span className="truncate max-w-[140px] sm:max-w-[200px]">{u.firstName} {u.lastName}</span>
                       </div>
@@ -396,7 +394,6 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
 
-      {/* Profile Modification Dialog */}
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent className="max-w-3xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
@@ -440,7 +437,7 @@ export default function AdminUsersPage() {
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Profile Image</Label>
                     <div className="flex items-center gap-4">
                       <div className="h-20 w-20 rounded-full bg-slate-100 border overflow-hidden shrink-0 shadow-inner">
-                        {editingUser?.profilePictureUrl ? <img src={editingUser.profilePictureUrl} className="h-full w-full object-cover" /> : <ImageIcon className="h-full w-full p-5 text-slate-300" />}
+                        {editingUser?.profilePictureUrl ? <img src={editingUser.profilePictureUrl} className="h-full w-full object-cover" alt="Preview" /> : <ImageIcon className="h-full w-full p-5 text-slate-300" />}
                       </div>
                       <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl', true)} className="h-10 text-xs shrink-0 w-full sm:w-auto" />
                     </div>
@@ -448,7 +445,7 @@ export default function AdminUsersPage() {
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Authorized Legal Signature</Label>
                     <div className="h-24 w-full bg-white border rounded-xl flex items-center justify-center overflow-hidden mb-2 shadow-inner">
-                      {editingUser?.signature ? <img src={editingUser.signature} className="h-20 object-contain" /> : <p className="text-[10px] text-slate-300 italic">No signature authorized</p>}
+                      {editingUser?.signature ? <img src={editingUser.signature} className="h-20 object-contain" alt="Signature" /> : <p className="text-[10px] text-slate-300 italic">No signature authorized</p>}
                     </div>
                     <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature', true)} className="h-10 text-xs" />
                   </div>
@@ -464,7 +461,6 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Institutional Dossier View */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
