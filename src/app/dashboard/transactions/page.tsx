@@ -72,7 +72,7 @@ function TransactionsContent() {
   /**
    * ADMIN-STYLE FLOW FOR CLIENTS:
    * We use a collectionGroup query constrained by ownership.
-   * This aligns with the 'list' permission rule /{path=**}/transactions.
+   * This aligns with the prioritized 'list' rule in firestore.rules.
    */
   const transactionsQuery = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;

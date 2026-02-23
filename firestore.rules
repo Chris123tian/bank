@@ -21,13 +21,13 @@ service cloud.firestore {
     /**
      * COLLECTION GROUP RULES (Highest Priority)
      * These authorize aggregate queries like collectionGroup("transactions").
-     * Uses defensive 'get' to prevent evaluation errors on legacy documents.
+     * Uses defensive logic to ensure group queries for unified ledgers are authorized.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.get('customerId', '') == request.auth.uid || 
-        resource.data.get('userId', '') == request.auth.uid
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
       );
       // Writes to transactions are governed by specific path rules below.
     }
@@ -35,8 +35,8 @@ service cloud.firestore {
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
         isMasterAdmin() || 
-        resource.data.get('customerId', '') == request.auth.uid || 
-        resource.data.get('userId', '') == request.auth.uid
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
       );
       // Writes to accounts are governed by specific path rules below.
     }
@@ -56,7 +56,6 @@ service cloud.firestore {
 
       match /accounts/{accountId} {
         // Allow clients to update their own balance ONLY if the account is Active.
-        // This prevents transfers from Suspended or Locked accounts.
         allow update: if isMasterAdmin() || (
           isOwner(userId) && 
           resource.data.status == 'Active' && 
