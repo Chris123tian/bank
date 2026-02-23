@@ -35,17 +35,24 @@ import {
   Eye, 
   Search, 
   TrendingUp,
-  X
+  X,
+  User as UserIcon,
+  Globe,
+  Mail,
+  Phone,
+  Calendar,
+  Hash
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { format } from "date-fns";
 
 export default function AdminAccountsAuditPage() {
   const { toast } = useToast();
   const db = useFirestore();
   const { user } = useUser();
   const [editingAccount, setEditingAccount] = useState<any>(null);
-  const [viewingClientPortfolio, setViewingClientPortfolio] = useState<string | null>(null);
+  const [viewingClientPortfolio, setViewingClientPortfolio] = useState<any | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -165,6 +172,8 @@ export default function AdminAccountsAuditPage() {
     (acc.customerId || acc.userId)?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const selectedClient = viewingClientPortfolio ? allUsers?.find(u => u.id === (viewingClientPortfolio.customerId || viewingClientPortfolio.userId)) : null;
+
   if (isAdminRoleLoading && !isMasterAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -261,7 +270,7 @@ export default function AdminAccountsAuditPage() {
                           variant="ghost" 
                           size="icon" 
                           className="h-9 w-9 text-primary hover:bg-primary/5 shrink-0"
-                          onClick={() => setViewingClientPortfolio(acc.customerId || acc.userId)}
+                          onClick={() => setViewingClientPortfolio(acc)}
                           title="View Institutional Dossier"
                         >
                           <Eye className="h-4 w-4" />
@@ -405,7 +414,7 @@ export default function AdminAccountsAuditPage() {
       </Dialog>
 
       <Dialog open={!!viewingClientPortfolio} onOpenChange={() => setViewingClientPortfolio(null)}>
-        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+        <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
             <button onClick={() => setViewingClientPortfolio(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
               <X className="h-6 w-6" />
@@ -414,17 +423,86 @@ export default function AdminAccountsAuditPage() {
               <div className="relative inline-block">
                 <DialogHeader>
                   <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Dossier</DialogTitle>
-                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client.</DialogDescription>
+                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile and financial breakdown for verified institutional client and asset reference.</DialogDescription>
                 </DialogHeader>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
               
-              <div className="space-y-6 pt-10 border-t border-slate-300 text-base sm:text-xl text-slate-700">
-                <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Client ID :</span>
-                  <span className="font-mono text-sm break-all">{viewingClientPortfolio}</span>
+              {viewingClientPortfolio && (
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-300">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <UserIcon className="h-4 w-4" /> Client Identity
+                      </h4>
+                      <div className="space-y-2 text-slate-700">
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Legal Name:</span>
+                          <span className="font-medium">{selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : 'N/A'}</span>
+                        </p>
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Institutional Email:</span>
+                          <span className="font-medium text-xs font-mono">{selectedClient?.email || 'N/A'}</span>
+                        </p>
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Client ID:</span>
+                          <span className="font-mono text-[10px]">{viewingClientPortfolio.customerId || viewingClientPortfolio.userId}</span>
+                        </p>
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Jurisdiction:</span>
+                          <span className="font-medium">{selectedClient?.country || 'United States'}</span>
+                        </p>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <Landmark className="h-4 w-4" /> Asset Details
+                      </h4>
+                      <div className="space-y-2 text-slate-700">
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Asset Type:</span>
+                          <Badge variant="outline" className="text-[9px] font-black px-2">{viewingClientPortfolio.accountType}</Badge>
+                        </p>
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Verified Balance:</span>
+                          <span className="font-black text-primary">{formatCurrency(viewingClientPortfolio.balance, viewingClientPortfolio.currency)}</span>
+                        </p>
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Operational Status:</span>
+                          <Badge className={viewingClientPortfolio.status === 'Suspended' ? 'bg-red-100 text-red-700 text-[9px] font-black' : 'bg-green-100 text-green-700 text-[9px] font-black'}>
+                            {viewingClientPortfolio.status || 'Active'}
+                          </Badge>
+                        </p>
+                        <p className="flex justify-between items-center text-sm">
+                          <span className="font-black text-[#002B5B]">Account Reference:</span>
+                          <span className="font-mono text-xs font-bold text-accent">{viewingClientPortfolio.accountNumber}</span>
+                        </p>
+                      </div>
+                    </section>
+                  </div>
+
+                  <div className="pt-8 border-t border-slate-300">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <ShieldAlert className="h-4 w-4" /> Administrative Audit Data
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Initialization Date</p>
+                          <p className="text-xs font-bold text-slate-600">
+                            {viewingClientPortfolio.createdAt ? format(new Date(viewingClientPortfolio.createdAt.seconds * 1000), "PPP p") : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
+                          <p className="text-xs font-bold text-slate-600">NexaSettlement Layer 1</p>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="pt-8 border-t border-slate-300">
                 <Button onClick={() => setViewingClientPortfolio(null)} className="w-full h-14 rounded-2xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss Dossier</Button>
