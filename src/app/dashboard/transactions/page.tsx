@@ -45,7 +45,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, collection } from "firebase/firestore";
+import { collectionGroup, query, where } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -62,22 +62,14 @@ function TransactionsContent() {
     }
   }, [searchParams]);
 
-  const accountsRef = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
-    return collection(db, "users", user.uid, "accounts");
-  }, [db, user?.uid]);
-
-  const { data: accounts } = useCollection(accountsRef);
-
   /**
    * SECURE COLLECTION GROUP FLOW (Aligned with Admin Architecture):
-   * Utilizing a broad collection group query authorized by prioritized security rules.
-   * This architecture resolves "Missing or insufficient permissions" by aggregating
-   * portfolio data and filtering locally via useMemo.
+   * Utilizing a filtered collection group query authorized by prioritized security rules.
+   * Scoping by 'customerId' satisfies Firestore's security rule evaluation for 'list' operations.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return collectionGroup(db, "transactions");
+    return query(collectionGroup(db, "transactions"), where("customerId", "==", user.uid));
   }, [db, user?.uid]);
 
   const { data: allTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
@@ -94,14 +86,10 @@ function TransactionsContent() {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (!allTransactions || !user?.uid) return [];
+    if (!allTransactions) return [];
     
     return allTransactions
       .filter(tx => {
-        // Ownership Guard: Local filtering by customerId/userId
-        const isOwner = tx.customerId === user.uid || tx.userId === user.uid;
-        if (!isOwner) return false;
-
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
@@ -114,7 +102,7 @@ function TransactionsContent() {
         const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
         return dateB - dateA;
       });
-  }, [allTransactions, search, selectedAccountId, user?.uid]);
+  }, [allTransactions, search, selectedAccountId]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
@@ -139,9 +127,9 @@ function TransactionsContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Global History (All Assets)</SelectItem>
-              {accounts?.map(acc => (
-                <SelectItem key={acc.id} value={acc.id}>
-                  {acc.accountType} (...{acc.accountNumber?.slice(-4)})
+              {allTransactions && Array.from(new Set(allTransactions.map(t => t.accountId))).map(accId => (
+                <SelectItem key={accId} value={accId}>
+                  Asset Ref: ...{accId.slice(-6)}
                 </SelectItem>
               ))}
             </SelectContent>

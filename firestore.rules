@@ -48,11 +48,16 @@ service cloud.firestore {
       allow read, write: if isAdmin() || isOwner(userId);
 
       match /accounts/{accountId} {
-        // REGULATORY LOCKDOWN: Any status other than 'Active' blocks outgoing transfers.
-        allow update: if isAdmin() || (
+        // REGULATORY LOCKDOWN: Outgoing transfers blocked if not Active.
+        // Incoming deposits/adjustments blocked if not Active (even for admins).
+        allow update: if isAdmin() && (
+          request.resource.data.balance <= resource.data.balance || 
+          resource.data.status == 'Active'
+        ) || (
           isOwner(userId) && 
           resource.data.status == 'Active' && 
-          request.resource.data.status == 'Active'
+          request.resource.data.status == 'Active' &&
+          request.resource.data.balance <= resource.data.balance
         );
         allow read: if isAdmin() || isOwner(userId);
         allow create, delete: if isAdmin();
@@ -74,7 +79,6 @@ service cloud.firestore {
     }
 
     match /roles_admin/{uid} {
-      // Security Hardening: Users can only check their own admin status to prevent discovery.
       allow read: if isSignedIn() && (isAdmin() || request.auth.uid == uid);
       allow write: if isMasterAdmin(); 
     }

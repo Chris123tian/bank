@@ -38,16 +38,13 @@ import {
   X,
   User as UserIcon,
   Globe,
-  Mail,
-  Phone,
-  Calendar,
-  Hash,
   Briefcase,
   MapPin,
   FileSignature,
   ShieldCheck,
   CreditCard,
-  DollarSign
+  DollarSign,
+  AlertCircle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -111,7 +108,6 @@ export default function AdminAccountsAuditPage() {
       return;
     }
 
-    // REGULATORY RESTRICTION: One Current Account per client
     if (newAccount.accountType === "Current Account") {
       const hasCurrentAccount = accounts?.some(acc => 
         (acc.customerId === newAccount.userId || acc.userId === newAccount.userId) && 
@@ -151,7 +147,6 @@ export default function AdminAccountsAuditPage() {
     if (!editingAccount || !db) return;
     const clientUid = editingAccount.customerId || editingAccount.userId;
 
-    // REGULATORY RESTRICTION: One Current Account per client
     if (editingAccount.accountType === "Current Account") {
       const otherCurrentAccount = accounts?.some(acc => 
         acc.id !== editingAccount.id &&
@@ -373,9 +368,15 @@ export default function AdminAccountsAuditPage() {
                         type="number" 
                         value={editingAccount.balance} 
                         onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
+                        disabled={editingAccount.status !== 'Active'}
                         className="h-12 pl-10 text-lg font-black"
                       />
                     </div>
+                    {editingAccount.status !== 'Active' && (
+                      <p className="text-[9px] text-red-500 font-bold uppercase flex items-center gap-1">
+                        <AlertCircle className="h-2.5 w-2.5" /> Balance locked for non-active status.
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Asset Currency</Label>
