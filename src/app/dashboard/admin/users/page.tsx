@@ -40,7 +40,8 @@ import {
   Phone,
   Mail,
   MapPin,
-  Calendar
+  Calendar,
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -400,7 +401,7 @@ export default function AdminUsersPage() {
       </Card>
 
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent className="max-w-3xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
+        <DialogContent className="max-w-4xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">
           <div className="p-6 sm:p-8 bg-[#002B5B] text-white shrink-0">
             <DialogHeader>
               <div className="flex items-center gap-4">
@@ -413,53 +414,110 @@ export default function AdminUsersPage() {
             </DialogHeader>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-10 custom-scrollbar">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
-                  <ShieldCheck className="h-4 w-4" /> Legal Identification
-                </h4>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-slate-500">Master Account Number</Label>
-                    <Input value={editingUser?.accountNumber || ""} onChange={(e) => setEditingUser({...editingUser, accountNumber: e.target.value})} className="h-11 font-mono text-xs font-black text-accent bg-slate-50" />
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-10 custom-scrollbar bg-slate-50">
+            {editingUser && (
+              <div className="space-y-10">
+                <section className="space-y-6">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
+                    <ShieldCheck className="h-4 w-4" /> Legal Identification & Access
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Master Account Number</Label>
+                      <Input value={editingUser.accountNumber} onChange={(e) => setEditingUser({...editingUser, accountNumber: e.target.value})} className="h-11 font-mono text-xs font-black text-accent bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">First Name</Label>
+                      <Input value={editingUser.firstName} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Last Name</Label>
+                      <Input value={editingUser.lastName} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Username</Label>
+                      <Input value={editingUser.username} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Institutional Email</Label>
+                      <Input value={editingUser.email} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Phone Number</Label>
+                      <Input value={editingUser.phoneNumber} onChange={(e) => setEditingUser({...editingUser, phoneNumber: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Temporary Password Override</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input value={editingUser.temporaryPassword} onChange={(e) => setEditingUser({...editingUser, temporaryPassword: e.target.value})} className="h-11 pl-10 bg-white" placeholder="Reset password..." />
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">First Name</Label><Input value={editingUser?.firstName || ""} onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})} className="h-11" /></div>
-                    <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Last Name</Label><Input value={editingUser?.lastName || ""} onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})} className="h-11" /></div>
-                  </div>
-                  <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Internal Handle (Username)</Label><Input value={editingUser?.username || ""} onChange={(e) => setEditingUser({...editingUser, username: e.target.value})} className="h-11" /></div>
-                  <div className="space-y-2"><Label className="text-[10px] font-bold uppercase text-slate-500">Institutional Email</Label><Input value={editingUser?.email || ""} onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} className="h-11" /></div>
-                </div>
-              </div>
+                </section>
 
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
-                  <Upload className="h-4 w-4" /> Identity Assets
-                </h4>
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-slate-500">Profile Image</Label>
-                    <div className="flex items-center gap-4">
-                      <div className="h-20 w-20 rounded-full bg-slate-100 border overflow-hidden shrink-0 shadow-inner">
-                        {editingUser?.profilePictureUrl ? <img src={editingUser.profilePictureUrl} className="h-full w-full object-cover" alt="Preview" /> : <ImageIcon className="h-full w-full p-5 text-slate-300" />}
+                <section className="space-y-6">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2 border-b border-slate-200 pb-2">
+                    <MapPin className="h-4 w-4" /> Residential Metadata
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="sm:col-span-2 space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Address Line 1</Label>
+                      <Input value={editingUser.addressLine1} onChange={(e) => setEditingUser({...editingUser, addressLine1: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Address Line 2</Label>
+                      <Input value={editingUser.addressLine2} onChange={(e) => setEditingUser({...editingUser, addressLine2: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">City</Label>
+                      <Input value={editingUser.city} onChange={(e) => setEditingUser({...editingUser, city: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">State / Province</Label>
+                      <Input value={editingUser.state} onChange={(e) => setEditingUser({...editingUser, state: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Postal / Zip Code</Label>
+                      <Input value={editingUser.postalCode} onChange={(e) => setEditingUser({...editingUser, postalCode: e.target.value})} className="h-11 bg-white font-mono" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Jurisdiction (Country)</Label>
+                      <Input value={editingUser.country} onChange={(e) => setEditingUser({...editingUser, country: e.target.value})} className="h-11 bg-white" />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <section className="space-y-4">
+                    <Label className="text-xs font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" /> Identity Asset: Profile Image
+                    </Label>
+                    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border">
+                      <div className="h-24 w-24 rounded-full bg-slate-100 border overflow-hidden shrink-0 shadow-inner">
+                        {editingUser.profilePictureUrl ? <img src={editingUser.profilePictureUrl} className="h-full w-full object-cover" alt="Preview" /> : <ImageIcon className="h-full w-full p-6 text-slate-300" />}
                       </div>
                       <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'profilePictureUrl', true)} className="h-10 text-xs shrink-0 w-full sm:w-auto" />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-slate-500">Authorized Legal Signature</Label>
-                    <div className="h-24 w-full bg-white border rounded-xl flex items-center justify-center overflow-hidden mb-2 shadow-inner">
-                      {editingUser?.signature ? <img src={editingUser.signature} className="h-20 object-contain" alt="Signature" /> : <p className="text-[10px] text-slate-300 italic">No signature authorized</p>}
+                  </section>
+
+                  <section className="space-y-4">
+                    <Label className="text-xs font-black uppercase tracking-widest text-[#002B5B] flex items-center gap-2">
+                      <FileSignature className="h-4 w-4" /> Identity Asset: Legal Signature
+                    </Label>
+                    <div className="p-4 bg-white rounded-2xl border space-y-3">
+                      <div className="h-24 w-full bg-slate-50 border rounded-xl flex items-center justify-center overflow-hidden shadow-inner">
+                        {editingUser.signature ? <img src={editingUser.signature} className="h-20 object-contain" alt="Signature" /> : <p className="text-[10px] text-slate-300 italic">No signature authorized</p>}
+                      </div>
+                      <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature', true)} className="h-10 text-xs" />
                     </div>
-                    <Input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'signature', true)} className="h-10 text-xs" />
-                  </div>
+                  </section>
                 </div>
               </div>
-            </div>
+            )}
           </div>
           
-          <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t shrink-0 flex flex-col sm:flex-row gap-3">
+          <DialogFooter className="p-6 sm:p-8 bg-slate-100 border-t shrink-0 flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setEditingUser(null)} className="flex-1 h-12 font-bold rounded-xl order-2 sm:order-1">Cancel</Button>
             <Button onClick={handleUpdateUser} className="flex-1 h-12 font-black uppercase tracking-widest bg-[#002B5B] hover:bg-[#003B7B] text-white rounded-xl shadow-lg order-1 sm:order-2">Commit Registry Updates</Button>
           </DialogFooter>
@@ -467,129 +525,71 @@ export default function AdminUsersPage() {
       </Dialog>
 
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
-        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
-          <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
+        <DialogContent className="max-w-2xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+          <div className="bg-[#E5E7EB] rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-300 relative overflow-hidden">
             <button onClick={() => setViewingUser(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
               <X className="h-6 w-6" />
             </button>
-            <div className="max-w-4xl mx-auto space-y-10">
+            
+            <div className="max-w-2xl mx-auto space-y-12">
               <div className="relative inline-block">
                 <DialogHeader>
-                  <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
-                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client CITY-{viewingUser?.accountNumber?.slice(-4)}.</DialogDescription>
+                  <DialogTitle className="text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
+                  <DialogDescription className="hidden">Institutional profile breakdown for verified client.</DialogDescription>
                 </DialogHeader>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
-                <div className="md:col-span-1 flex flex-col items-center gap-6">
-                  <div className="h-48 w-48 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shadow-xl border-4 border-white shrink-0">
-                    {viewingUser?.profilePictureUrl ? (
-                      <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-slate-300 text-6xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div className="text-center space-y-1">
-                    <Badge variant={viewingUser?.userRole === 'admin' ? 'destructive' : 'secondary'} className="uppercase font-black tracking-widest px-4 py-1">
-                      {viewingUser?.userRole || 'Client'}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-2">Verified Level 1</p>
-                  </div>
+
+              <div className="flex flex-col items-center gap-8">
+                <div className="h-56 w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-xl border-8 border-slate-100 shrink-0">
+                  {viewingUser?.profilePictureUrl ? (
+                    <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-white text-7xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
+                  )}
                 </div>
-
-                <div className="md:col-span-2 space-y-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-                    <section className="space-y-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4" /> Identity Record
-                      </h4>
-                      <div className="space-y-3 text-slate-700">
-                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
-                          <span className="text-[9px] font-black text-slate-400 uppercase">Legal Name</span>
-                          <span className="font-bold text-[#002B5B]">{viewingUser?.firstName} {viewingUser?.lastName}</span>
-                        </div>
-                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
-                          <span className="text-[9px] font-black text-slate-400 uppercase">Master Account #</span>
-                          <span className="font-mono text-xs font-black text-accent tracking-widest">{viewingUser?.accountNumber || "PENDING"}</span>
-                        </div>
-                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
-                          <span className="text-[9px] font-black text-slate-400 uppercase">Internal Handle</span>
-                          <span className="font-medium">@{viewingUser?.username || "member"}</span>
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="space-y-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <Phone className="h-4 w-4" /> Contact Dossier
-                      </h4>
-                      <div className="space-y-3 text-slate-700">
-                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
-                          <span className="text-[9px] font-black text-slate-400 uppercase">Institutional Email</span>
-                          <span className="font-medium text-xs font-mono">{viewingUser?.email}</span>
-                        </div>
-                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
-                          <span className="text-[9px] font-black text-slate-400 uppercase">Phone Number</span>
-                          <span className="font-medium">{viewingUser?.phoneNumber || "No record found"}</span>
-                        </div>
-                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
-                          <span className="text-[9px] font-black text-slate-400 uppercase">Jurisdiction</span>
-                          <span className="font-medium">{viewingUser?.country || "United States"}</span>
-                        </div>
-                      </div>
-                    </section>
-                  </div>
-
-                  <section className="space-y-4 pt-4 border-t border-slate-200">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                      <MapPin className="h-4 w-4" /> Residential Metadata
-                    </h4>
-                    <div className="bg-white/50 p-4 rounded-xl border border-slate-300 space-y-1">
-                      <p className="font-bold text-[#002B5B]">{viewingUser?.addressLine1 || "No address authorized"}</p>
-                      {viewingUser?.addressLine2 && <p className="text-slate-600">{viewingUser.addressLine2}</p>}
-                      <p className="text-slate-600">
-                        {viewingUser?.city ? `${viewingUser.city}, ${viewingUser.state || ''} ${viewingUser.postalCode || ''}` : "—"}
-                      </p>
-                    </div>
-                  </section>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4 border-t border-slate-200">
-                    <section className="space-y-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <Calendar className="h-4 w-4" /> Regulatory Audit
-                      </h4>
-                      <div className="flex flex-col gap-0.5 bg-white/50 p-3 rounded-lg border border-slate-200">
-                        <span className="text-[9px] font-black text-slate-400 uppercase">Initialized On</span>
-                        <span className="text-xs font-bold text-slate-600">
-                          {viewingUser?.createdAt ? format(new Date(viewingUser.createdAt.seconds * 1000), "PPP p") : "Unknown"}
-                        </span>
-                      </div>
-                    </section>
-
-                    <section className="space-y-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <FileSignature className="h-4 w-4" /> Authorized Signature
-                      </h4>
-                      <div className="h-20 w-full bg-white rounded-xl border border-slate-300 flex items-center justify-center overflow-hidden shadow-inner">
-                        {viewingUser?.signature ? (
-                          <img src={viewingUser.signature} alt="Signature" className="h-16 object-contain" />
-                        ) : (
-                          <span className="text-[9px] font-black text-slate-300 uppercase">No signature recorded</span>
-                        )}
-                      </div>
-                    </section>
-                  </div>
+                
+                <div className="text-center space-y-4">
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Username:</span> {viewingUser?.username || "EVAC15371DK@"}
+                  </p>
+                  <p className="text-xl font-bold text-slate-700">
+                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{viewingUser?.email}</span>
+                  </p>
                 </div>
               </div>
 
-              <div className="pt-8 border-t border-slate-300 flex flex-col sm:flex-row gap-4">
-                <Button variant="outline" asChild className="flex-1 h-12 rounded-xl font-bold border-slate-300 shadow-sm">
-                  <Link href={`/dashboard/admin/accounts?search=${viewingUser?.id}`}>
-                    <Landmark className="mr-2 h-4 w-4" /> Assets Overview
-                  </Link>
-                </Button>
-                <Button onClick={() => setViewingUser(null)} className="flex-1 h-12 rounded-xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss Dossier</Button>
+              <div className="space-y-6 pt-12 border-t border-slate-300 text-xl text-slate-700 font-medium">
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Name :</span>
+                  <span>{viewingUser?.firstName} {viewingUser?.lastName}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 1:</span>
+                  <span>{viewingUser?.addressLine1 || "—"}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 2:</span>
+                  <span>{viewingUser?.addressLine2 || "—"}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">City/State/Zip:</span>
+                  <span>{viewingUser?.city}{viewingUser?.state ? `, ${viewingUser.state}` : ''}{viewingUser?.postalCode ? ` ${viewingUser.postalCode}` : ''}</span>
+                </div>
+                <div className="flex gap-4">
+                  <span className="font-black text-[#002B5B] min-w-[160px]">Country:</span>
+                  <span>{viewingUser?.country || "United Kingdom"}</span>
+                </div>
+              </div>
+
+              <div className="pt-16 pb-8 text-center flex flex-col items-center">
+                <div className="bg-white p-6 inline-block shadow-md rounded-xl border border-slate-100">
+                  {viewingUser?.signature ? (
+                    <img src={viewingUser.signature} alt="Client Signature" className="h-24 object-contain" />
+                  ) : (
+                    <div className="h-20 flex items-center justify-center text-slate-300 text-[10px] uppercase font-black px-10 border-2 border-dashed rounded-lg">No Signature Authorized</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
