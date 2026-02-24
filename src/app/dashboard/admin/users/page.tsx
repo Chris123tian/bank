@@ -36,12 +36,17 @@ import {
   FileSignature,
   X,
   Landmark,
-  Hash
+  Hash,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { firebaseConfig } from "@/firebase/config";
 import Link from "next/link";
+import { format } from "date-fns";
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
@@ -54,7 +59,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    accountNumber: `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+    accountNumber: `CITY-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
     firstName: "",
     lastName: "",
     email: "",
@@ -66,7 +71,7 @@ export default function AdminUsersPage() {
     city: "",
     state: "",
     postalCode: "",
-    country: "United Kingdom",
+    country: "United States",
     userRole: "client",
     profilePictureUrl: "",
     signature: "",
@@ -123,7 +128,7 @@ export default function AdminUsersPage() {
       const userDocRef = doc(db, "users", newUid);
       const newUserData = {
         id: newUid,
-        accountNumber: formData.accountNumber || `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        accountNumber: formData.accountNumber || `CITY-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -148,14 +153,14 @@ export default function AdminUsersPage() {
 
       toast({ 
         title: "Client Provisioned", 
-        description: `Institutional profile NEXA-${newUserData.accountNumber.slice(-4)} successfully initialized.` 
+        description: `Institutional profile CITY-${newUserData.accountNumber.slice(-4)} successfully initialized.` 
       });
       setIsCreating(false);
       setFormData({ 
-        accountNumber: `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        accountNumber: `CITY-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
         firstName: "", lastName: "", email: "", password: "", username: "", 
         phoneNumber: "", addressLine1: "", addressLine2: "", city: "", 
-        state: "", postalCode: "", country: "United Kingdom", userRole: "client",
+        state: "", postalCode: "", country: "United States", userRole: "client",
         profilePictureUrl: "", signature: ""
       });
     } catch (error: any) {
@@ -169,7 +174,7 @@ export default function AdminUsersPage() {
     if (!db || !editingUser) return;
     const userRef = doc(db, "users", editingUser.id);
     updateDocumentNonBlocking(userRef, {
-      accountNumber: editingUser.accountNumber || `NEXA-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      accountNumber: editingUser.accountNumber || `CITY-${Math.floor(1000000000 + Math.random() * 9000000000)}`,
       username: editingUser.username || "",
       email: editingUser.email || "",
       firstName: editingUser.firstName || "",
@@ -181,7 +186,7 @@ export default function AdminUsersPage() {
       city: editingUser.city || "",
       state: editingUser.state || "",
       postalCode: editingUser.postalCode || "",
-      country: editingUser.country || "United Kingdom",
+      country: editingUser.country || "United States",
       profilePictureUrl: editingUser.profilePictureUrl || "",
       signature: editingUser.signature || "",
       updatedAt: serverTimestamp(),
@@ -231,7 +236,7 @@ export default function AdminUsersPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Global User Audit</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Managing client and administrative profiles across the Nexa network.</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Managing client and administrative profiles across the Global network.</p>
         </div>
         <Button onClick={() => setIsCreating(!isCreating)} className="bg-accent h-11 px-6 font-black uppercase tracking-tighter w-full md:w-auto shadow-lg">
           {isCreating ? "Cancel Creation" : <><UserPlus className="mr-2 h-4 w-4" /> Provision New Profile</>}
@@ -336,7 +341,7 @@ export default function AdminUsersPage() {
         <CardHeader className="pb-0 bg-white">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search global index by name, email or NEXA-ID..." className="pl-10 h-12 border-slate-200 focus-visible:ring-primary" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Search global index by name, email or CITY-ID..." className="pl-10 h-12 border-slate-200 focus-visible:ring-primary" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent className="pt-6 px-0">
@@ -462,60 +467,129 @@ export default function AdminUsersPage() {
       </Dialog>
 
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
-        <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
             <button onClick={() => setViewingUser(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
               <X className="h-6 w-6" />
             </button>
-            <div className="max-w-2xl mx-auto space-y-10">
-              <DialogHeader>
-                <div className="relative inline-block">
+            <div className="max-w-4xl mx-auto space-y-10">
+              <div className="relative inline-block">
+                <DialogHeader>
                   <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Basic Information</DialogTitle>
-                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client NEXA-{viewingUser?.accountNumber?.slice(-4)}.</DialogDescription>
-                  <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
-                </div>
-              </DialogHeader>
+                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile breakdown for verified institutional client CITY-{viewingUser?.accountNumber?.slice(-4)}.</DialogDescription>
+                </DialogHeader>
+                <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
+              </div>
               
-              <div className="flex flex-col items-center gap-6 pt-2">
-                <div className="h-40 w-40 sm:h-56 sm:w-56 rounded-full bg-[#FFA07A] flex items-center justify-center overflow-hidden shadow-2xl border-4 sm:border-8 border-white shrink-0">
-                  {viewingUser?.profilePictureUrl ? (
-                    <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-white text-5xl sm:text-7xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
-                  )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
+                <div className="md:col-span-1 flex flex-col items-center gap-6">
+                  <div className="h-48 w-48 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden shadow-xl border-4 border-white shrink-0">
+                    {viewingUser?.profilePictureUrl ? (
+                      <img src={viewingUser.profilePictureUrl} alt="Profile" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-slate-300 text-6xl font-bold">{viewingUser?.firstName?.charAt(0)}{viewingUser?.lastName?.charAt(0)}</span>
+                    )}
+                  </div>
+                  <div className="text-center space-y-1">
+                    <Badge variant={viewingUser?.userRole === 'admin' ? 'destructive' : 'secondary'} className="uppercase font-black tracking-widest px-4 py-1">
+                      {viewingUser?.userRole || 'Client'}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-2">Verified Level 1</p>
+                  </div>
                 </div>
-                
-                <div className="text-center space-y-2">
-                  <p className="text-lg sm:text-xl font-bold text-slate-700">
-                    <span className="font-black text-[#002B5B]">Master Account:</span> <span className="text-accent font-black tracking-widest">{viewingUser?.accountNumber || "PENDING"}</span>
-                  </p>
-                  <p className="text-lg sm:text-xl font-bold text-slate-700">
-                    <span className="font-black text-[#002B5B]">Username:</span> {viewingUser?.username || viewingUser?.email?.split('@')[0]}
-                  </p>
-                  <p className="text-lg sm:text-xl font-bold text-slate-700 break-all px-4">
-                    <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{viewingUser?.email}</span>
-                  </p>
+
+                <div className="md:col-span-2 space-y-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" /> Identity Record
+                      </h4>
+                      <div className="space-y-3 text-slate-700">
+                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
+                          <span className="text-[9px] font-black text-slate-400 uppercase">Legal Name</span>
+                          <span className="font-bold text-[#002B5B]">{viewingUser?.firstName} {viewingUser?.lastName}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
+                          <span className="text-[9px] font-black text-slate-400 uppercase">Master Account #</span>
+                          <span className="font-mono text-xs font-black text-accent tracking-widest">{viewingUser?.accountNumber || "PENDING"}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
+                          <span className="text-[9px] font-black text-slate-400 uppercase">Internal Handle</span>
+                          <span className="font-medium">@{viewingUser?.username || "member"}</span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <Phone className="h-4 w-4" /> Contact Dossier
+                      </h4>
+                      <div className="space-y-3 text-slate-700">
+                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
+                          <span className="text-[9px] font-black text-slate-400 uppercase">Institutional Email</span>
+                          <span className="font-medium text-xs font-mono">{viewingUser?.email}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
+                          <span className="text-[9px] font-black text-slate-400 uppercase">Phone Number</span>
+                          <span className="font-medium">{viewingUser?.phoneNumber || "No record found"}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 border-b border-slate-200 pb-1">
+                          <span className="text-[9px] font-black text-slate-400 uppercase">Jurisdiction</span>
+                          <span className="font-medium">{viewingUser?.country || "United States"}</span>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <section className="space-y-4 pt-4 border-t border-slate-200">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                      <MapPin className="h-4 w-4" /> Residential Metadata
+                    </h4>
+                    <div className="bg-white/50 p-4 rounded-xl border border-slate-300 space-y-1">
+                      <p className="font-bold text-[#002B5B]">{viewingUser?.addressLine1 || "No address authorized"}</p>
+                      {viewingUser?.addressLine2 && <p className="text-slate-600">{viewingUser.addressLine2}</p>}
+                      <p className="text-slate-600">
+                        {viewingUser?.city ? `${viewingUser.city}, ${viewingUser.state || ''} ${viewingUser.postalCode || ''}` : "—"}
+                      </p>
+                    </div>
+                  </section>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4 border-t border-slate-200">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <Calendar className="h-4 w-4" /> Regulatory Audit
+                      </h4>
+                      <div className="flex flex-col gap-0.5 bg-white/50 p-3 rounded-lg border border-slate-200">
+                        <span className="text-[9px] font-black text-slate-400 uppercase">Initialized On</span>
+                        <span className="text-xs font-bold text-slate-600">
+                          {viewingUser?.createdAt ? format(new Date(viewingUser.createdAt.seconds * 1000), "PPP p") : "Unknown"}
+                        </span>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                        <FileSignature className="h-4 w-4" /> Authorized Signature
+                      </h4>
+                      <div className="h-20 w-full bg-white rounded-xl border border-slate-300 flex items-center justify-center overflow-hidden shadow-inner">
+                        {viewingUser?.signature ? (
+                          <img src={viewingUser.signature} alt="Signature" className="h-16 object-contain" />
+                        ) : (
+                          <span className="text-[9px] font-black text-slate-300 uppercase">No signature recorded</span>
+                        )}
+                      </div>
+                    </section>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-6 pt-10 border-t border-slate-300 text-base sm:text-xl text-slate-700">
-                <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Name :</span>
-                  <span className="font-medium">{viewingUser?.firstName} {viewingUser?.lastName}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[140px]">Jurisdiction:</span>
-                  <span className="font-medium">{viewingUser?.country || "United Kingdom"}</span>
-                </div>
-              </div>
-
-              <div className="pt-8 border-t border-slate-300 flex flex-col gap-4">
-                <Button variant="outline" asChild className="w-full h-12 rounded-xl font-bold border-slate-300 shadow-sm">
+              <div className="pt-8 border-t border-slate-300 flex flex-col sm:flex-row gap-4">
+                <Button variant="outline" asChild className="flex-1 h-12 rounded-xl font-bold border-slate-300 shadow-sm">
                   <Link href={`/dashboard/admin/accounts?search=${viewingUser?.id}`}>
-                    <Landmark className="mr-2 h-4 w-4" /> Financial Assets
+                    <Landmark className="mr-2 h-4 w-4" /> Assets Overview
                   </Link>
                 </Button>
-                <Button onClick={() => setViewingUser(null)} className="w-full h-14 rounded-2xl font-bold bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss Dossier</Button>
+                <Button onClick={() => setViewingUser(null)} className="flex-1 h-12 rounded-xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-lg uppercase tracking-wider">Dismiss Dossier</Button>
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI-powered chatbot for instant customer support.
@@ -28,7 +29,7 @@ const customerSupportChatbotPrompt = ai.definePrompt({
   name: 'customerSupportChatbotPrompt',
   input: { schema: CustomerSupportChatbotInputSchema },
   output: { schema: CustomerSupportChatbotOutputSchema },
-  prompt: `You are an AI-powered customer support chatbot for Nexa International Bank. Your purpose is to provide instant support to users, answering common questions about banking services and guiding them through tasks. Be helpful, knowledgeable, and friendly.
+  prompt: `You are an AI-powered customer support chatbot for City Bank Global. Your purpose is to provide instant support to users, answering common questions about banking services and guiding them through tasks. Be helpful, knowledgeable, and friendly.
 
 Instructions:
 - Answer questions about banking services accurately and concisely.

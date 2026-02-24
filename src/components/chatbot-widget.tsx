@@ -18,7 +18,7 @@ export function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "bot", text: "Hello! I'm your Nexa Virtual Assistant. How can I help you today?" }
+    { role: "bot", text: "Hello! I'm your City Virtual Assistant. How can I help you today?" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -63,7 +63,7 @@ export function ChatbotWidget() {
           <CardHeader className="bg-primary text-white flex flex-row items-center justify-between p-4 rounded-t-lg">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              <CardTitle className="text-sm font-semibold">Nexa Support</CardTitle>
+              <CardTitle className="text-sm font-semibold">City Support</CardTitle>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white hover:bg-white/10 h-8 w-8">
               <X className="h-4 w-4" />

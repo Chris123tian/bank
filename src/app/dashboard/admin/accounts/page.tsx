@@ -46,7 +46,8 @@ import {
   MapPin,
   FileSignature,
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  DollarSign
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -100,7 +101,7 @@ export default function AdminAccountsAuditPage() {
         currency: currency,
       }).format(amount);
     } catch (e) {
-      return `$${amount.toLocaleString()}`;
+      return `${currency} ${amount.toLocaleString()}`;
     }
   };
 
@@ -132,7 +133,7 @@ export default function AdminAccountsAuditPage() {
       accountNumber: `CITY-${Math.floor(10000000 + Math.random() * 90000000)}`,
       accountType: newAccount.accountType,
       balance: Number(newAccount.balance),
-      currency: "USD",
+      currency: newAccount.currency || "USD",
       userId: newAccount.userId,
       customerId: newAccount.userId,
       status: "Active",
@@ -363,14 +364,33 @@ export default function AdminAccountsAuditPage() {
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
             {editingAccount && (
               <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Adjusted Balance (USD)</Label>
-                  <Input 
-                    type="number" 
-                    value={editingAccount.balance} 
-                    onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
-                    className="h-12 text-lg font-black"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Adjusted Balance</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input 
+                        type="number" 
+                        value={editingAccount.balance} 
+                        onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
+                        className="h-12 pl-10 text-lg font-black"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Asset Currency</Label>
+                    <Select value={editingAccount.currency} onValueChange={(v) => setEditingAccount({...editingAccount, currency: v})}>
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD (US Dollar)</SelectItem>
+                        <SelectItem value="EUR">EUR (Euro)</SelectItem>
+                        <SelectItem value="GBP">GBP (British Pound)</SelectItem>
+                        <SelectItem value="AUD">AUD (Australian Dollar)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Account Type</Label>
@@ -436,21 +456,37 @@ export default function AdminAccountsAuditPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Account Type</Label>
-                <Select value={newAccount.accountType} onValueChange={(v) => setNewAccount({...newAccount, accountType: v})}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Current Account">Current Account</SelectItem>
-                    <SelectItem value="Savings Account">Savings Account</SelectItem>
-                    <SelectItem value="Business Account">Business Account</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Account Type</Label>
+                  <Select value={newAccount.accountType} onValueChange={(v) => setNewAccount({...newAccount, accountType: v})}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Current Account">Current Account</SelectItem>
+                      <SelectItem value="Savings Account">Savings Account</SelectItem>
+                      <SelectItem value="Business Account">Business Account</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Select value={newAccount.currency} onValueChange={(v) => setNewAccount({...newAccount, currency: v})}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="AUD">AUD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Initial Deposit (USD)</Label>
+                <Label>Initial Deposit</Label>
                 <Input 
                   type="number" 
                   value={newAccount.balance} 
@@ -484,7 +520,6 @@ export default function AdminAccountsAuditPage() {
               
               {viewingClientPortfolio && (
                 <div className="space-y-12">
-                  {/* Row 1: Identity and Employment */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-300">
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -539,7 +574,6 @@ export default function AdminAccountsAuditPage() {
                     </section>
                   </div>
 
-                  {/* Row 2: Residential and Assets */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-300">
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -583,7 +617,6 @@ export default function AdminAccountsAuditPage() {
                     </section>
                   </div>
 
-                  {/* Row 3: Audit and Signature */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-300">
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -598,7 +631,7 @@ export default function AdminAccountsAuditPage() {
                         </div>
                         <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
                           <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
-                          <p className="text-xs font-bold text-slate-600">NexaSettlement Layer 1</p>
+                          <p className="text-xs font-bold text-slate-600">Settlement Layer 1</p>
                         </div>
                       </div>
                     </section>

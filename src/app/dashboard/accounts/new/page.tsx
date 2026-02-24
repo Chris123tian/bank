@@ -51,7 +51,7 @@ export default function NewAccountPage() {
     city: "",
     state: "",
     postalCode: "",
-    country: "USA",
+    country: "United States",
     // Employment
     employmentStatus: "Full-Time",
     employerName: "",
@@ -140,7 +140,7 @@ export default function NewAccountPage() {
     setTimeout(() => {
       toast({ 
         title: "Institutional Account Initialized", 
-        description: `Welcome to Nexa International. Your ${formData.accountType} is now active.` 
+        description: `Welcome to City Bank Global. Your ${formData.accountType} is now active.` 
       });
       router.push("/dashboard");
     }, 1500);
@@ -316,7 +316,7 @@ export default function NewAccountPage() {
                   </p>
                   <p className="flex gap-2">
                     <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-                    I agree to the Nexa International Global Privacy Policy and Institutional Disclosure.
+                    I agree to the City Bank Global Privacy Policy and Institutional Disclosure.
                   </p>
                 </div>
               </div>

@@ -18,7 +18,7 @@
     "hero_cta_secondary": "The Network",
     "feature_custody": "Institutional Custody",
     "feature_custody_desc": "Vault-grade security for your digital and fiat reserves.",
-    "feature_settlement": "NexaSettlement",
+    "feature_settlement": "Settlement Rails",
     "feature_settlement_desc": "Instant cross-border transfers with zero latency.",
     "feature_intelligence": "Wealth Intelligence",
     "feature_intelligence_desc": "AI-driven portfolio insights and yield optimization.",
@@ -54,7 +54,7 @@
     "hero_cta_secondary": "Das Netzwerk",
     "feature_custody": "Institutionelle Verwahrung",
     "feature_custody_desc": "Sicherheit auf Tresorniveau für Ihre Reserven.",
-    "feature_settlement": "NexaSettlement",
+    "feature_settlement": "Abrechnungsschienen",
     "feature_settlement_desc": "Sofortige grenzüberschreitende Überweisungen.",
     "feature_intelligence": "Vermögensintelligenz",
     "feature_intelligence_desc": "KI-gesteuerte Portfolio-Einblicke.",
@@ -90,7 +90,7 @@
     "hero_cta_secondary": "Le Réseau",
     "feature_custody": "Garde Institutionnelle",
     "feature_custody_desc": "Sécurité de niveau coffre-fort pour vos réserves.",
-    "feature_settlement": "NexaSettlement",
+    "feature_settlement": "Rails de règlement",
     "feature_settlement_desc": "Transferts transfrontaliers instantanés.",
     "feature_intelligence": "Intelligence Patrimoniale",
     "feature_intelligence_desc": "Analyses de portefeuille pilotées par l'IA.",
@@ -126,7 +126,7 @@
     "hero_cta_secondary": "La Red",
     "feature_custody": "Custodia Institucional",
     "feature_custody_desc": "Seguridad de nivel bóveda para sus reservas.",
-    "feature_settlement": "NexaSettlement",
+    "feature_settlement": "Canales de Liquidación",
     "feature_settlement_desc": "Transferencias transfronterizas instantáneas.",
     "feature_intelligence": "Inteligencia de Riqueza",
     "feature_intelligence_desc": "Información de cartera impulsada por IA.",
@@ -142,6 +142,6 @@
     "about_title": "Pioneros del capital global",
     "about_desc": "Fundado sobre los principios de liquidez absoluta e integridad institucional.",
     "services_title": "Soluciones integrales de activos",
-    "services_desc": "Infraestructura financiera a medida para los inversores más sofisticados del mundo."
+    "services_desc": "Infraestructura financiera a medida para los expertos inversores del mundo."
   }
 }

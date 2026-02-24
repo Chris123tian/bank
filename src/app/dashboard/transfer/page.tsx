@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -128,7 +129,7 @@ export default function TransferPage() {
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-headline font-bold text-primary uppercase tracking-tight">Move Capital</h1>
-        <p className="text-muted-foreground">Secure global settlement via NexaNetwork Institutional Rails.</p>
+        <p className="text-muted-foreground">Secure global settlement via Institutional Rails.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -237,7 +238,7 @@ export default function TransferPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Online Transfer">Online Nexa Transfer</SelectItem>
+                        <SelectItem value="Online Transfer">Online Global Transfer</SelectItem>
                         <SelectItem value="Wire Transfer">Wire Transfer (Same Day)</SelectItem>
                         <SelectItem value="ACH Settlement">ACH Settlement (Standard)</SelectItem>
                         <SelectItem value="SWIFT International">SWIFT International</SelectItem>
@@ -313,12 +314,12 @@ export default function TransferPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <p className="text-xs opacity-70 leading-relaxed font-medium">
-                  Internal Nexa-to-Nexa transfers are finalized instantly. SWIFT and International Wires may take 1-3 business days for final clearance.
+                  Internal Global-to-Global transfers are finalized instantly. SWIFT and International Wires may take 1-3 business days for final clearance.
                 </p>
                 <div className="h-px bg-white/10 w-full" />
                 <ul className="text-[10px] space-y-2 opacity-90 font-bold uppercase tracking-widest">
                   <li className="flex justify-between"><span>Domestic ACH:</span> <span className="text-accent">Free</span></li>
-                  <li className="flex justify-between"><span>Instant Nexa:</span> <span className="text-accent">Free</span></li>
+                  <li className="flex justify-between"><span>Instant Internal:</span> <span className="text-accent">Free</span></li>
                   <li className="flex justify-between"><span>Wire (Same Day):</span> <span>$15.00</span></li>
                   <li className="flex justify-between"><span>International:</span> <span>$25.00</span></li>
                 </ul>

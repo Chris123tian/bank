@@ -229,7 +229,7 @@ export default function LandingPage() {
                   <div className="bg-primary p-2 rounded-lg">
                     <Building2 className="text-white h-5 w-5" />
                   </div>
-                  <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter">CITY BANK GLOBAL</span>
+                  <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter uppercase">CITY BANK GLOBAL</span>
                 </div>
                 <p className="text-slate-400 max-w-sm mx-auto md:mx-0 text-xs sm:text-sm font-medium leading-relaxed">
                   Redefining the standard for international capital management through advanced settlement infrastructure and institutional custody.
@@ -260,7 +260,7 @@ export default function LandingPage() {
           <div className="pt-8 sm:pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6 text-center md:text-left">
             <p className="text-[9px] sm:text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">{t('footer_standard')}</p>
             <p className="text-[8px] sm:text-[9px] text-slate-600 font-bold uppercase tracking-widest italic">
-              © 2024 City Bank Global. All Rights Reserved. Member FDIC. Equal Housing Lender.
+              © City Bank Global. All Rights Reserved. Member FDIC. Equal Housing Lender.
             </p>
           </div>
         </div>
