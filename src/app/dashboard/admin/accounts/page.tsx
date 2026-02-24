@@ -579,9 +579,9 @@ export default function AdminAccountsAuditPage() {
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                         <MapPin className="h-4 w-4" /> Residential Metadata
                       </h4>
-                      <div className="p-4 bg-white/50 rounded-xl border border-slate-300 space-y-2 text-sm">
+                      <div className="p-4 bg-white/50 rounded-xl border border-slate-300 space-y-2 text-sm text-slate-700">
                         <div className="font-bold text-[#002B5B]">{selectedClient?.addressLine1 || 'No address on file'}</div>
-                        <div className="text-slate-600">
+                        <div>
                           {selectedClient?.city ? `${selectedClient.city}, ${selectedClient.state} ${selectedClient.postalCode}` : 'N/A'}
                         </div>
                         <div className="text-slate-500 uppercase text-[10px] font-black">{selectedClient?.country || 'USA'}</div>
