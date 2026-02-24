@@ -521,7 +521,7 @@ export default function AdminAccountsAuditPage() {
                       <div className="space-y-3 text-slate-700">
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Status:</span>
-                          <Badge variant="secondary" className="text-[9px] font-black px-2">{selectedClient?.employmentStatus || 'N/A'}</Badge>
+                          <div className="inline-flex"><Badge variant="secondary" className="text-[9px] font-black px-2">{selectedClient?.employmentStatus || 'N/A'}</Badge></div>
                         </div>
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Employer:</span>
@@ -561,7 +561,7 @@ export default function AdminAccountsAuditPage() {
                       <div className="space-y-3 text-slate-700">
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Asset Type:</span>
-                          <Badge variant="outline" className="text-[9px] font-black px-2">{viewingClientPortfolio.accountType}</Badge>
+                          <div className="inline-flex"><Badge variant="outline" className="text-[9px] font-black px-2">{viewingClientPortfolio.accountType}</Badge></div>
                         </div>
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Verified Balance:</span>
@@ -569,9 +569,11 @@ export default function AdminAccountsAuditPage() {
                         </div>
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Operational Status:</span>
-                          <Badge className={viewingClientPortfolio.status === 'Suspended' ? 'bg-red-100 text-red-700 text-[9px] font-black' : 'bg-green-100 text-green-700 text-[9px] font-black'}>
-                            {viewingClientPortfolio.status || 'Active'}
-                          </Badge>
+                          <div className="inline-flex">
+                            <Badge className={viewingClientPortfolio.status === 'Suspended' ? 'bg-red-100 text-red-700 text-[9px] font-black' : 'bg-green-100 text-green-700 text-[9px] font-black'}>
+                              {viewingClientPortfolio.status || 'Active'}
+                            </Badge>
+                          </div>
                         </div>
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Account Reference:</span>

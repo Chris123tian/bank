@@ -24,21 +24,21 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Hardened to ensure list operations are only allowed for owners or admins.
+     * Proof-safe list operations for unified ledgers.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
         isAdmin() || 
-        resource.data.customerId == request.auth.uid || 
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid || 
+        resource.data.get('userId', '') == request.auth.uid
       );
     }
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
         isAdmin() || 
-        resource.data.customerId == request.auth.uid || 
-        resource.data.userId == request.auth.uid
+        resource.data.get('customerId', '') == request.auth.uid || 
+        resource.data.get('userId', '') == request.auth.uid
       );
     }
 
