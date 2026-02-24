@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download } from "lucide-react";
+import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -26,6 +26,7 @@ export default function TransferPage() {
   
   // Receipt State
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [showFullReceipt, setShowFullReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
   // Form State
@@ -138,6 +139,7 @@ export default function TransferPage() {
         senderAccount: selectedAccount.accountNumber,
         newBalance: selectedAccount.balance - Number(amount)
       });
+      setShowFullReceipt(false);
       setIsReceiptOpen(true);
       
       // Reset Form
@@ -332,79 +334,97 @@ export default function TransferPage() {
 
       {/* INSTITUTIONAL RECEIPT MODAL */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl">
+        <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>
           <DialogHeader className="sr-only">
-            <DialogTitle>Transfer Receipt</DialogTitle>
+            <DialogTitle>Transfer Confirmation</DialogTitle>
             <DialogDescription>Summary of authorized capital movement.</DialogDescription>
           </DialogHeader>
           <div className="bg-white p-8 space-y-8">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center animate-in zoom-in duration-500">
-                <CheckCircle2 className="h-12 w-12 text-green-500" />
+            {!showFullReceipt ? (
+              <div className="flex flex-col items-center text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
+                <div className="h-24 w-24 bg-green-50 rounded-full flex items-center justify-center border-4 border-green-100">
+                  <CheckCircle2 className="h-14 w-14 text-green-500" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-black text-primary uppercase tracking-tight">Transfer Success</h2>
+                  <p className="text-sm text-muted-foreground font-medium max-w-[250px] mx-auto">Your institutional transfer has been authorized and dispatched successfully.</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 w-full pt-4">
+                  <Button variant="outline" className="h-12 font-bold rounded-xl border-slate-200" onClick={() => setIsReceiptOpen(false)}>
+                    Done
+                  </Button>
+                  <Button className="h-12 bg-primary font-black uppercase tracking-widest rounded-xl shadow-xl flex items-center gap-2" onClick={() => setShowFullReceipt(true)}>
+                    <FileText className="h-4 w-4" /> View Receipt
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-1">
-                <h2 className="text-2xl font-black text-primary uppercase tracking-tight">Payment Completed</h2>
-                <p className="text-xs text-muted-foreground font-medium">Institutional transfer authorized successfully.</p>
-              </div>
-            </div>
-
-            {receiptData && (
-              <div className="space-y-6">
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center space-y-1">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount Dispatched</p>
-                  <p className="text-4xl font-black text-primary">{formatCurrency(receiptData.amount, receiptData.currency)}</p>
+            ) : (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-black text-primary uppercase tracking-tight">Institutional Receipt</h2>
+                    <p className="text-[10px] font-mono text-slate-400 mt-1">TXID: {receiptData?.id}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setShowFullReceipt(false)} className="h-8 w-8 rounded-full"><X className="h-4 w-4" /></Button>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                    <span className="text-slate-500 font-bold">Status</span>
-                    <Badge className="bg-green-100 text-green-700 font-black uppercase text-[9px]">COMPLETED</Badge>
-                  </div>
-                  <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                    <span className="text-slate-500 font-bold">Execution Date</span>
-                    <span className="font-medium text-slate-700">{format(new Date(receiptData.date), "MMM dd, yyyy HH:mm:ss")}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                    <span className="text-slate-500 font-bold">Source</span>
-                    <span className="font-mono text-xs font-bold text-slate-700">{maskAccount(receiptData.senderAccount)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                    <span className="text-slate-500 font-bold">Recipient</span>
-                    <div className="text-right">
-                      <p className="font-bold text-slate-700">{receiptData.recipientName}</p>
-                      <p className="text-[10px] text-slate-400 font-mono">{maskAccount(receiptData.recipientAccount)}</p>
+                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount Dispatched</p>
+                  <p className="text-4xl font-black text-primary">{formatCurrency(receiptData?.amount || 0, receiptData?.currency || 'USD')}</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase">Execution Status</p>
+                      <Badge className="bg-green-100 text-green-700 font-black uppercase text-[9px] h-5">COMPLETED</Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase">Execution Date</p>
+                      <p className="text-xs font-bold text-slate-700">{receiptData?.date ? format(new Date(receiptData.date), "MMM dd, yyyy HH:mm:ss") : 'N/A'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase">Source Asset</p>
+                      <p className="font-mono text-xs font-bold text-slate-700">{maskAccount(receiptData?.senderAccount)}</p>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                    <span className="text-slate-500 font-bold">Reference</span>
-                    <span className="font-medium text-slate-700 italic">{receiptData.reference || "None"}</span>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase">Beneficiary</p>
+                      <p className="text-xs font-bold text-slate-700 uppercase">{receiptData?.recipientName}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">{maskAccount(receiptData?.recipientAccount)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase">Settlement Rail</p>
+                      <p className="text-xs font-bold text-slate-700">{receiptData?.method}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase">Running Balance</p>
+                      <p className="text-xs font-black text-primary">{formatCurrency(receiptData?.newBalance || 0, receiptData?.currency || 'USD')}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                    <span className="text-slate-500 font-bold">Transaction ID</span>
-                    <span className="font-mono text-[10px] font-black text-accent">{receiptData.id}</span>
+                </div>
+
+                {receiptData?.reference && (
+                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+                    <p className="text-[9px] font-black text-primary/60 uppercase mb-1">Reference Memo</p>
+                    <p className="text-xs italic text-slate-600">{receiptData.reference}</p>
                   </div>
-                  <div className="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                    <span className="text-slate-500 font-bold">Fees & Charges</span>
-                    <span className="font-bold text-green-600">No Fee</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500 font-bold">Running Balance</span>
-                    <span className="font-black text-primary">{formatCurrency(receiptData.newBalance, receiptData.currency)}</span>
-                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t">
+                  <Button variant="outline" className="h-12 font-bold rounded-xl" onClick={() => window.print()}>
+                    <Download className="mr-2 h-4 w-4" /> Print
+                  </Button>
+                  <Button className="h-12 bg-primary font-black uppercase tracking-widest rounded-xl shadow-xl" onClick={() => setIsReceiptOpen(false)}>
+                    Done
+                  </Button>
                 </div>
               </div>
             )}
-
-            <div className="grid grid-cols-2 gap-3 pt-4">
-              <Button variant="outline" className="h-12 font-bold rounded-xl" onClick={() => window.print()}>
-                <Download className="mr-2 h-4 w-4" /> Receipt
-              </Button>
-              <Button className="h-12 bg-primary font-black uppercase tracking-widest rounded-xl shadow-xl" onClick={() => setIsReceiptOpen(false)}>
-                Done
-              </Button>
-            </div>
             
-            <p className="text-[8px] text-center text-slate-400 font-bold uppercase tracking-[0.2em]">
+            <p className="text-[8px] text-center text-slate-400 font-bold uppercase tracking-[0.2em] mt-4">
               Authorized by City Bank Global Institutional Rails
             </p>
           </div>

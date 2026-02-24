@@ -36,6 +36,7 @@ import { doc, collection } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
 import { initiateSignOut } from "@/firebase/non-blocking-login";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useMemo } from "react";
 
 const navItems = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -86,6 +87,18 @@ export function DashboardSidebar() {
   const isAdmin = isMasterAdmin || !!adminRole;
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
+  const baseCurrency = useMemo(() => accounts?.[0]?.currency || 'USD', [accounts]);
+
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    } catch (e) {
+      return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -140,7 +153,7 @@ export function DashboardSidebar() {
               <Wallet className="h-3 w-3 text-accent" />
             </div>
             <div className="text-lg font-black text-white truncate">
-              ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(totalBalance, baseCurrency)}
             </div>
           </div>
         </SidebarGroup>
