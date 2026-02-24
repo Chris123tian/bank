@@ -1,7 +1,7 @@
 
 # City Bank Global
 
-This is the official platform for City Bank Global (branding: Nexa International).
+This is the official platform for City Bank Global.
 
 ## Features
 - **User Registration:** Secure institutional profile provisioning.
@@ -16,4 +16,4 @@ This is the official platform for City Bank Global (branding: Nexa International
 - Firebase Authentication & Firestore
 - Genkit (Gemini 2.5 Flash)
 
-© 2024 City Bank Global.
+© City Bank Global.
