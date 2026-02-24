@@ -117,7 +117,7 @@ export default function AdminAccountsAuditPage() {
         toast({ 
           variant: "destructive", 
           title: "Regulatory Limit Reached", 
-          description: "This client already possesses an active Current Account. Multiple daily operations accounts are prohibited by institutional policy." 
+          description: "This client already possesses an active Current Account. Multiple daily operations accounts are prohibited." 
         });
         return;
       }
@@ -157,7 +157,7 @@ export default function AdminAccountsAuditPage() {
         toast({ 
           variant: "destructive", 
           title: "Regulatory Limit Reached", 
-          description: "This client already possesses an active Current Account. Conversion to multiple daily operations accounts is prohibited." 
+          description: "This client already possesses an active Current Account." 
         });
         return;
       }
@@ -191,7 +191,7 @@ export default function AdminAccountsAuditPage() {
       createdAt: serverTimestamp(),
     });
 
-    toast({ title: "Ledger Corrected", description: `Financial records for ${editingAccount.accountNumber} updated and audit record generated.` });
+    toast({ title: "Ledger Corrected", description: `Financial records for ${editingAccount.accountNumber} updated.` });
     setEditingAccount(null);
     setIsEditDialogOpen(false);
   };
@@ -200,7 +200,7 @@ export default function AdminAccountsAuditPage() {
     if (!db) return;
     const docRef = doc(db, "users", acc.customerId || acc.userId, "accounts", acc.id);
     deleteDocumentNonBlocking(docRef);
-    toast({ title: "Account Terminated", description: "The account record has been permanently removed from the ledger." });
+    toast({ title: "Account Terminated", description: "The account record has been permanently removed." });
   };
 
   const filteredAccounts = accounts?.filter(acc => 
@@ -224,7 +224,7 @@ export default function AdminAccountsAuditPage() {
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
         <ShieldAlert className="h-12 w-12 text-red-500" />
         <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
-        <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p>
+        <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials required.</p>
       </div>
     );
   }
@@ -384,10 +384,10 @@ export default function AdminAccountsAuditPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="USD">USD (US Dollar)</SelectItem>
-                        <SelectItem value="EUR">EUR (Euro)</SelectItem>
-                        <SelectItem value="GBP">GBP (British Pound)</SelectItem>
-                        <SelectItem value="AUD">AUD (Australian Dollar)</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                        <SelectItem value="AUD">AUD</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -413,8 +413,8 @@ export default function AdminAccountsAuditPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Suspended">Suspended (Lockdown)</SelectItem>
-                      <SelectItem value="Locked">Regulatory Hold</SelectItem>
+                      <SelectItem value="Suspended">Suspended</SelectItem>
+                      <SelectItem value="Locked">Hold</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -436,7 +436,7 @@ export default function AdminAccountsAuditPage() {
                 <div className="p-3 bg-white/10 rounded-2xl shrink-0"><PlusCircle className="h-6 w-6" /></div>
                 <div>
                   <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Open Institutional Account</DialogTitle>
-                  <DialogDescription className="text-white/60 text-xs sm:text-sm">Provisioning a new financial asset for a verified client within the ledger.</DialogDescription>
+                  <DialogDescription className="text-white/60 text-xs sm:text-sm">Provisioning a new financial asset.</DialogDescription>
                 </div>
               </div>
             </DialogHeader>
@@ -513,7 +513,7 @@ export default function AdminAccountsAuditPage() {
               <div className="relative inline-block">
                 <DialogHeader>
                   <DialogTitle className="text-2xl sm:text-3xl font-bold text-[#002B5B] tracking-tight uppercase">Institutional Dossier</DialogTitle>
-                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive profile and financial breakdown for verified institutional client and asset reference.</DialogDescription>
+                  <DialogDescription className="text-slate-500 text-xs mt-2">Comprehensive financial breakdown.</DialogDescription>
                 </DialogHeader>
                 <div className="absolute -bottom-2 left-0 h-1.5 w-20 bg-[#2563EB]" />
               </div>
@@ -542,10 +542,6 @@ export default function AdminAccountsAuditPage() {
                           <span className="font-black text-[#002B5B]">SSN / Tax ID:</span>
                           <span className="font-mono text-xs">{selectedClient?.ssn ? `***-**-${selectedClient.ssn.slice(-4)}` : 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
-                          <span className="font-black text-[#002B5B]">Jurisdiction:</span>
-                          <span className="font-medium">{selectedClient?.country || 'United States'}</span>
-                        </div>
                       </div>
                     </section>
 
@@ -561,10 +557,6 @@ export default function AdminAccountsAuditPage() {
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Employer:</span>
                           <span className="font-medium">{selectedClient?.employerName || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
-                          <span className="font-black text-[#002B5B]">Job Title:</span>
-                          <span className="font-medium">{selectedClient?.jobTitle || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                           <span className="font-black text-[#002B5B]">Annual Income:</span>
@@ -584,7 +576,6 @@ export default function AdminAccountsAuditPage() {
                         <div>
                           {selectedClient?.city ? `${selectedClient.city}, ${selectedClient.state} ${selectedClient.postalCode}` : 'N/A'}
                         </div>
-                        <div className="text-slate-500 uppercase text-[10px] font-black">{selectedClient?.country || 'USA'}</div>
                       </div>
                     </section>
 
@@ -609,43 +600,6 @@ export default function AdminAccountsAuditPage() {
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
-                          <span className="font-black text-[#002B5B]">Account Reference:</span>
-                          <span className="font-mono text-xs font-bold text-accent">{viewingClientPortfolio.accountNumber}</span>
-                        </div>
-                      </div>
-                    </section>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-slate-300">
-                    <section className="space-y-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4" /> Administrative Audit
-                      </h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
-                          <div className="text-[9px] font-black text-slate-400 uppercase">Initialization Date</div>
-                          <div className="text-xs font-bold text-slate-600">
-                            {viewingClientPortfolio.createdAt ? format(new Date(viewingClientPortfolio.createdAt.seconds * 1000), "PPP p") : 'N/A'}
-                          </div>
-                        </div>
-                        <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
-                          <div className="text-[9px] font-black text-slate-400 uppercase">System Rail</div>
-                          <div className="text-xs font-bold text-slate-600">Settlement Layer 1</div>
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="space-y-4">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                        <FileSignature className="h-4 w-4" /> Authorized Signature
-                      </h4>
-                      <div className="h-24 w-full bg-white rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden shadow-inner">
-                        {selectedClient?.signature ? (
-                          <img src={selectedClient.signature} alt="Client Signature" className="h-20 object-contain" />
-                        ) : (
-                          <div className="text-[10px] text-slate-400 font-bold uppercase">No signature record</div>
-                        )}
                       </div>
                     </section>
                   </div>

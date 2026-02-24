@@ -24,7 +24,7 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Authorized for aggregate institutional ledgers.
+     * Specifically authorized for broad institutional ledger audits.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn();
@@ -48,7 +48,8 @@ service cloud.firestore {
       allow read, write: if isAdmin() || isOwner(userId);
 
       match /accounts/{accountId} {
-        // REGULATORY LOCKDOWN: Outgoing transfers blocked if not Active.
+        // REGULATORY LOCKDOWN: Balance changes blocked if status not Active.
+        // Also ensures clients cannot adjust their own balance above existing liquidity.
         allow update: if isAdmin() || (
           isOwner(userId) && 
           resource.data.status == 'Active' && 

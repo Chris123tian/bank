@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download, FileText } from "lucide-react";
+import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -333,6 +333,10 @@ export default function TransferPage() {
       {/* INSTITUTIONAL RECEIPT MODAL */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Transfer Receipt</DialogTitle>
+            <DialogDescription>Summary of authorized capital movement.</DialogDescription>
+          </DialogHeader>
           <div className="bg-white p-8 space-y-8">
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center animate-in zoom-in duration-500">
