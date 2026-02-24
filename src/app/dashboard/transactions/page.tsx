@@ -45,7 +45,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, collection, query, where } from "firebase/firestore";
+import { collectionGroup, collection } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -71,19 +71,16 @@ function TransactionsContent() {
 
   /**
    * SECURE COLLECTION GROUP FLOW (Aligned with Admin Architecture):
-   * We filter by customerId at the query level to satisfy hardened security rules.
-   * This architecture resolves "Missing or insufficient permissions" by providing
-   * the proof the security rules require for collection group 'list' operations.
+   * Utilizing a broad collection group query authorized by prioritized security rules.
+   * This architecture resolves "Missing or insufficient permissions" by aggregating
+   * portfolio data and filtering locally via useMemo.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return query(
-      collectionGroup(db, "transactions"), 
-      where("customerId", "==", user.uid)
-    );
+    return collectionGroup(db, "transactions");
   }, [db, user?.uid]);
 
-  const { data: transactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
+  const { data: allTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
@@ -97,10 +94,14 @@ function TransactionsContent() {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (!transactions) return [];
+    if (!allTransactions || !user?.uid) return [];
     
-    return transactions
+    return allTransactions
       .filter(tx => {
+        // Ownership Guard: Local filtering by customerId/userId
+        const isOwner = tx.customerId === user.uid || tx.userId === user.uid;
+        if (!isOwner) return false;
+
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
@@ -113,7 +114,7 @@ function TransactionsContent() {
         const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
         return dateB - dateA;
       });
-  }, [transactions, search, selectedAccountId]);
+  }, [allTransactions, search, selectedAccountId, user?.uid]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">

@@ -253,7 +253,7 @@ export default function AdminAccountsAuditPage() {
               placeholder="Search Client or Account..." 
               className="pl-10 h-11 border-slate-200" 
               value={searchQuery}
-              onChange={(e) => searchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-accent h-11 px-6 font-black uppercase tracking-tighter shadow-lg shrink-0">
