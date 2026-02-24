@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
 import { doc, collection, serverTimestamp } from "firebase/firestore";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -21,8 +21,7 @@ import {
   Edit3,
   Save,
   X,
-  Upload,
-  ImageIcon
+  Upload
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -79,6 +78,18 @@ export default function SettingsPage() {
   }, [profile, user?.email]);
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
+  const baseCurrency = useMemo(() => accounts?.[0]?.currency || 'USD', [accounts]);
+
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    } catch (e) {
+      return `${currency} ${amount.toLocaleString()}`;
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'profilePictureUrl' | 'signature') => {
     const file = e.target.files?.[0];
@@ -298,7 +309,7 @@ export default function SettingsPage() {
               <div className="p-8 bg-primary/5 border-b border-primary/10">
                 <p className="text-[10px] font-black text-primary uppercase tracking-widest">Total Asset Value</p>
                 <p className="text-4xl font-black text-primary mt-1">
-                  ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {formatCurrency(totalBalance, baseCurrency)}
                 </p>
               </div>
               <div className="p-6 space-y-4">
@@ -315,7 +326,7 @@ export default function SettingsPage() {
                         <p className="text-[10px] text-muted-foreground font-mono">...{acc.accountNumber?.slice(-4)}</p>
                       </div>
                     </div>
-                    <p className="font-black text-sm">${acc.balance?.toLocaleString()}</p>
+                    <p className="font-black text-sm">{formatCurrency(acc.balance, acc.currency)}</p>
                   </div>
                 )) : (
                   <p className="text-xs text-muted-foreground text-center py-4 italic">No active accounts detected.</p>

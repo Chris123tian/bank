@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, AlertCircle, ShieldAlert } from "lucide-react";
+import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -29,6 +29,7 @@ export default function TransferPage() {
   const [bankName, setBankName] = useState("");
   const [bankAddress, setBankAddress] = useState("");
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Online Transfer");
 
@@ -41,6 +42,13 @@ export default function TransferPage() {
 
   const selectedAccount = accounts?.find(a => a.id === fromAccountId);
   const isAccountRestricted = selectedAccount && selectedAccount.status !== 'Active';
+
+  // Sync currency with selected account
+  useEffect(() => {
+    if (selectedAccount?.currency) {
+      setCurrency(selectedAccount.currency);
+    }
+  }, [selectedAccount]);
 
   const handleTransfer = () => {
     if (!fromAccountId || !amount || !recipientName || !recipientAccount || !user || !db) {
@@ -82,7 +90,7 @@ export default function TransferPage() {
       userId: user.uid,
       transactionType: "transfer",
       amount: -Number(amount), 
-      currency: selectedAccount.currency || "USD",
+      currency: currency,
       transactionDate: new Date().toISOString(),
       description: `Transfer to ${recipientName} (${recipientAccount}) - ${paymentMethod}`,
       metadata: {
@@ -112,7 +120,7 @@ export default function TransferPage() {
       setLoading(false);
       toast({
         title: "Transfer Finalized",
-        description: `Successfully moved ${selectedAccount.currency || '$'}${amount} to ${recipientName}. Settlement in progress.`,
+        description: `Successfully moved ${currency} ${amount} to ${recipientName}. Settlement in progress.`,
       });
       // Reset Form
       setRecipientName("");
@@ -252,12 +260,22 @@ export default function TransferPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Transfer Amount</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold">$</span>
+                  <div className="flex gap-2">
+                    <Select value={currency} onValueChange={setCurrency} disabled={isAccountRestricted}>
+                      <SelectTrigger className="w-[100px] h-12 font-black text-primary border-primary/20 bg-primary/5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                        <SelectItem value="AUD">AUD</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <Input 
                       type="number" 
                       placeholder="0.00" 
-                      className="pl-8 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" 
+                      className="flex-1 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" 
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       disabled={isAccountRestricted}

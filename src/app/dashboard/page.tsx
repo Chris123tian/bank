@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from "react";
@@ -37,12 +38,16 @@ export default function DashboardPage() {
         currency: currency,
       }).format(Math.abs(amount));
     } catch (e) {
-      return `$${Math.abs(amount).toLocaleString()}`;
+      return `${currency} ${Math.abs(amount).toLocaleString()}`;
     }
   };
 
   const totalBalance = useMemo(() => {
     return accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
+  }, [accounts]);
+
+  const baseCurrency = useMemo(() => {
+    return accounts?.[0]?.currency || 'USD';
   }, [accounts]);
 
   if (isUserLoading && !accounts) {
@@ -77,7 +82,7 @@ export default function DashboardPage() {
           </div>
           <CardHeader className="pb-2">
             <CardDescription className="text-white/70 uppercase text-[10px] font-black tracking-widest">Total Net Worth</CardDescription>
-            <CardTitle className="text-2xl sm:text-3xl font-black">{formatCurrency(totalBalance)}</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl font-black">{formatCurrency(totalBalance, baseCurrency)}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-[10px] font-bold text-white/50">Across {accounts?.length || 0} Assets</p>

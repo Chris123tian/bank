@@ -24,7 +24,7 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Broadly authorized for aggregate institutional ledgers.
+     * Authorized for aggregate institutional ledgers.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn();
