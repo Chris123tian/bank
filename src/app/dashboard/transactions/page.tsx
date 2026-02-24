@@ -45,7 +45,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, collection } from "firebase/firestore";
+import { collectionGroup, collection, query, where } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -70,13 +70,16 @@ function TransactionsContent() {
   const { data: accounts } = useCollection(accountsRef);
 
   /**
-   * ADMIN-STYLE FLOW:
-   * We use an unfiltered collectionGroup query authorized by high-priority rules.
-   * Filtering is handled locally via useMemo for maximum performance and stability.
+   * SECURE COLLECTION GROUP FLOW:
+   * We filter by customerId at the query level to satisfy hardened security rules.
+   * This prevents "Missing or insufficient permissions" while allowing portfolio-wide auditing.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return collectionGroup(db, "transactions");
+    return query(
+      collectionGroup(db, "transactions"), 
+      where("customerId", "==", user.uid)
+    );
   }, [db, user?.uid]);
 
   const { data: transactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
@@ -93,14 +96,10 @@ function TransactionsContent() {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (!transactions || !user?.uid) return [];
+    if (!transactions) return [];
     
     return transactions
       .filter(tx => {
-        // Ownership Guard
-        if (tx.customerId !== user.uid && tx.userId !== user.uid) return false;
-        
-        // UI Filters
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
@@ -113,7 +112,7 @@ function TransactionsContent() {
         const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
         return dateB - dateA;
       });
-  }, [transactions, search, selectedAccountId, user?.uid]);
+  }, [transactions, search, selectedAccountId]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">

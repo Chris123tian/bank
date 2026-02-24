@@ -24,14 +24,22 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Authorize broad listing for unified ledger; document-level read ensures security.
+     * Authorize broad listing for unified ledger; ensures ownership or admin clearance.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isAdmin() || 
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
+      );
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isAdmin() || 
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
+      );
     }
 
     /**
@@ -49,6 +57,7 @@ service cloud.firestore {
 
       match /accounts/{accountId} {
         // Allow balance updates ONLY if the account is Active.
+        // Hard Lockdown: Any status other than 'Active' blocks outgoing transfers.
         allow update: if isAdmin() || (
           isOwner(userId) && 
           resource.data.status == 'Active' && 
