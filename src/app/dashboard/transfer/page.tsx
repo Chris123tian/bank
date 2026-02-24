@@ -154,7 +154,11 @@ export default function TransferPage() {
   };
 
   const formatCurrency = (val: number, cur: string) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(val);
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(val);
+    } catch (e) {
+      return `${cur} ${val.toLocaleString()}`;
+    }
   };
 
   const maskAccount = (acc: string) => {
@@ -332,7 +336,7 @@ export default function TransferPage() {
         </div>
       </div>
 
-      {/* INSTITUTIONAL RECEIPT MODAL */}
+      {/* TWO-STAGE INSTITUTIONAL RECEIPT MODAL */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>
           <DialogHeader className="sr-only">

@@ -59,7 +59,7 @@ export default function ServicesPage() {
           <div className="flex items-center gap-4">
             <LanguageSwitcher />
             <Button className="bg-accent hover:bg-accent/90" asChild>
-              <LinkNext href="/auth?mode=signup">{t('nav_open_account')}</LinkNext>
+              <LinkNext href="/auth">{t('nav_open_account')}</LinkNext>
             </Button>
           </div>
         </div>
