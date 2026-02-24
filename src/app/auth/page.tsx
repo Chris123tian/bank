@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, useUser, useFirestore } from "@/firebase";
-import { initiateEmailSignIn, initiateGoogleSignIn } from "@/firebase/non-blocking-login";
+import { initiateEmailSignIn, initiateGoogleSignIn, initiateSignOut } from "@/firebase/non-blocking-login";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Building2, ArrowRight, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import { useTranslation } from "@/components/language-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -28,7 +28,7 @@ function AuthPageContent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Faster redirect logic using isAuthReady
+  // Deactivation Protocol and Master Admin Redirect
   useEffect(() => {
     if (isAuthReady && user) {
       if (user.email === "citybank@gmail.com") {
@@ -38,10 +38,33 @@ function AuthPageContent() {
           assignedAt: serverTimestamp(),
           role: "super_admin"
         }, { merge: true }).catch(() => {});
+        router.replace("/dashboard");
+      } else {
+        // Institutional account existence check
+        const checkProfile = async () => {
+          try {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              router.replace("/dashboard");
+            } else {
+              await initiateSignOut(auth);
+              toast({
+                variant: "destructive",
+                title: "Access Denied",
+                description: "This institutional profile has been deactivated. Please contact administration.",
+              });
+              setLoading(false);
+            }
+          } catch (e) {
+            // Fallback: if rules prevent read, let dashboard layout handle the kickout
+            router.replace("/dashboard");
+          }
+        };
+        checkProfile();
       }
-      router.replace("/dashboard");
     }
-  }, [user, isAuthReady, router, db]);
+  }, [user, isAuthReady, router, db, auth, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

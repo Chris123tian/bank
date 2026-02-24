@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, useFirestore, useDoc } from "@/firebase";
+import { useUser, useFirestore, useDoc, useAuth } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Skeleton } from "@/components/ui/skeleton";
+import { initiateSignOut } from "@/firebase/non-blocking-login";
 
 export default function DashboardLayout({
   children,
@@ -22,8 +23,9 @@ export default function DashboardLayout({
   const { user, isUserLoading, isAuthReady } = useUser();
   const router = useRouter();
   const db = useFirestore();
+  const auth = useAuth();
 
-  // Fetch real-time Firestore profile to ensure custom names (like 'City Admin') are shown correctly
+  // Fetch real-time Firestore profile
   const profileRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return doc(db, "users", user.uid);
@@ -35,7 +37,14 @@ export default function DashboardLayout({
     if (isAuthReady && !user) {
       router.replace("/auth");
     }
-  }, [user, isAuthReady, router]);
+
+    // Deactivation Protocol: Kick out users whose profiles have been deleted
+    if (isAuthReady && user && !isProfileLoading && !profile && user.email !== "citybank@gmail.com") {
+      initiateSignOut(auth).then(() => {
+        router.replace("/auth");
+      });
+    }
+  }, [user, isAuthReady, router, isProfileLoading, profile, auth]);
 
   const displayName = useMemo(() => {
     if (profile?.firstName) {
@@ -44,7 +53,6 @@ export default function DashboardLayout({
     return user?.displayName || user?.email?.split('@')[0] || "Institutional Client";
   }, [profile, user]);
 
-  // Faster initial load: only wait for Auth readiness, not profile data
   if (!isAuthReady) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">

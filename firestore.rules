@@ -23,15 +23,23 @@ service cloud.firestore {
     }
 
     /**
-     * COLLECTION GROUP RULES (Highest Priority)
+     * COLLECTION GROUP RULES (Hardened for Aggregate Audits)
      * Authorized for broad institutional ledger audits and consolidated client history.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isAdmin() || 
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
+      );
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (
+        isAdmin() || 
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
+      );
     }
 
     /**

@@ -74,7 +74,7 @@ export default function TransferPage() {
       toast({
         variant: "destructive",
         title: "Regulatory Lockdown Active",
-        description: "This account has been placed on an administrative hold, contact customer support for assistance. Outgoing capital movements are strictly prohibited until the restriction is lifted.",
+        description: "This account has been placed on an administrative hold, contact customer support for assistance.",
       });
       return;
     }
@@ -211,7 +211,7 @@ export default function TransferPage() {
                     <ShieldAlert className="h-5 w-5 text-red-600 shrink-0" />
                     <div>
                       <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Regulatory Lockdown Active</p>
-                      <p className="text-xs text-red-500 font-medium">This account has been placed on an administrative hold, contact customer support for assistance. Outgoing capital movements are strictly prohibited until the restriction is lifted.</p>
+                      <p className="text-xs text-red-500 font-medium">This account has been placed on an administrative hold, contact customer support for assistance.</p>
                     </div>
                   </div>
                 )}
@@ -339,10 +339,10 @@ export default function TransferPage() {
       {/* TWO-STAGE INSTITUTIONAL RECEIPT MODAL */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>
-          <DialogHeader className="sr-only">
+          <div className="sr-only">
             <DialogTitle>Transfer Confirmation</DialogTitle>
             <DialogDescription>Summary of authorized capital movement.</DialogDescription>
-          </DialogHeader>
+          </div>
           <div className="bg-white p-8 space-y-8">
             {!showFullReceipt ? (
               <div className="flex flex-col items-center text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
@@ -409,13 +409,6 @@ export default function TransferPage() {
                     </div>
                   </div>
                 </div>
-
-                {receiptData?.reference && (
-                  <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                    <p className="text-[9px] font-black text-primary/60 uppercase mb-1">Reference Memo</p>
-                    <p className="text-xs italic text-slate-600">{receiptData.reference}</p>
-                  </div>
-                )}
 
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t">
                   <Button variant="outline" className="h-12 font-bold rounded-xl" onClick={() => window.print()}>
