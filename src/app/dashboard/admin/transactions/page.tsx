@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { format } from "date-fns";
 
 export default function AdminTransactionsAuditPage() {
   const { toast } = useToast();
@@ -55,7 +56,6 @@ export default function AdminTransactionsAuditPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  // New Transaction Form State
   const [newTx, setNewTx] = useState({
     userId: "",
     accountId: "",
@@ -183,8 +183,8 @@ export default function AdminTransactionsAuditPage() {
 
   const handleUpdateTransaction = () => {
     if (!editingTransaction || !db) return;
-    const path = `users/${editingTransaction.customerId || editingTransaction.userId}/accounts/${editingTransaction.accountId}/transactions/${editingTransaction.id}`;
-    const docRef = doc(db, path);
+    const clientUid = editingTransaction.customerId || editingTransaction.userId;
+    const docRef = doc(db, "users", clientUid, "accounts", editingTransaction.accountId, "transactions", editingTransaction.id);
     
     updateDocumentNonBlocking(docRef, {
       description: editingTransaction.description ?? "",
@@ -212,8 +212,8 @@ export default function AdminTransactionsAuditPage() {
 
   const handleDelete = (tx: any) => {
     if (!db) return;
-    const path = `users/${tx.customerId || tx.userId}/accounts/${tx.accountId}/transactions/${tx.id}`;
-    const docRef = doc(db, path);
+    const clientUid = tx.customerId || tx.userId;
+    const docRef = doc(db, "users", clientUid, "accounts", tx.accountId, "transactions", tx.id);
     deleteDocumentNonBlocking(docRef);
     toast({ title: "Transaction Removed", description: "Record has been purged from the ledger." });
   };
@@ -222,18 +222,33 @@ export default function AdminTransactionsAuditPage() {
     tx.description?.toLowerCase().includes(search.toLowerCase()) || 
     (tx.customerId || tx.userId)?.toLowerCase().includes(search.toLowerCase()) ||
     tx.metadata?.recipientName?.toLowerCase().includes(search.toLowerCase())
-  );
+  ).sort((a, b) => {
+    const dateA = a.transactionDate ? new Date(a.transactionDate).getTime() : 0;
+    const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
+    return dateB - dateA;
+  });
 
   if (isAdminRoleLoading && !isMasterAdmin) {
-    return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Verifying Administrative Clearance...</p>
+      </div>
+    );
   }
 
   if (!isAdminConfirmed) {
-    return <div className="text-center py-20 px-6"><ShieldAlert className="h-12 w-12 mx-auto text-red-500 mb-4" /><h2 className="text-2xl font-bold">Access Denied</h2><p className="text-sm text-muted-foreground">Administrative privileges required.</p></div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
+        <ShieldAlert className="h-12 w-12 text-red-500" />
+        <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
+        <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 text-foreground pb-20 px-1">
+    <div className="max-w-7xl mx-auto space-y-6 px-1 pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-red-100 rounded-xl text-red-600 shrink-0">
@@ -255,16 +270,16 @@ export default function AdminTransactionsAuditPage() {
         </div>
       </div>
 
-      <Card className="shadow-xl rounded-2xl border-none overflow-hidden">
-        <CardHeader className="bg-white">
+      <Card className="shadow-xl rounded-2xl border-none overflow-hidden bg-white">
+        <CardHeader className="border-b bg-slate-50/50">
           <CardTitle className="text-lg">Institutional Settlement Ledger</CardTitle>
-          <CardDescription>Auditing all financial movements across the network.</CardDescription>
+          <CardDescription>Auditing all financial movements across the City Bank Global network.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto w-full">
             <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/80">
+              <TableHeader className="bg-slate-50/80">
+                <TableRow>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Date</TableHead>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Client ID</TableHead>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Description</TableHead>
@@ -276,23 +291,23 @@ export default function AdminTransactionsAuditPage() {
               </TableHeader>
               <TableBody>
                 {isTransactionsLoading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-24"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Network...</span></div></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-24"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Network Ledger...</span></div></TableCell></TableRow>
                 ) : filteredTransactions?.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-24 text-muted-foreground italic">No transaction records matching your criteria were found.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-24 text-muted-foreground italic">No transaction records found.</TableCell></TableRow>
                 ) : filteredTransactions?.map((tx) => (
                   <TableRow key={tx.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
-                    <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? new Date(tx.transactionDate).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy") : 'N/A'}</TableCell>
                     <TableCell className="text-[10px] sm:text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
                     <TableCell className="font-medium truncate max-w-[150px] sm:max-w-[200px]">
                       {tx.description}
-                      {tx.metadata?.recipientName && <p className="text-[9px] text-muted-foreground">To: {tx.metadata.recipientName}</p>}
+                      {tx.metadata?.recipientName && <p className="text-[9px] text-muted-foreground uppercase font-bold">To: {tx.metadata.recipientName}</p>}
                     </TableCell>
                     <TableCell><Badge variant="secondary" className="capitalize text-[9px] font-black tracking-tighter px-2">{tx.transactionType}</Badge></TableCell>
                     <TableCell>
                       <Badge variant={tx.status === 'completed' ? 'default' : 'outline'} className="text-[9px] font-black uppercase tracking-tighter px-2">{tx.status}</Badge>
                     </TableCell>
                     <TableCell className={`font-black whitespace-nowrap ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {tx.amount > 0 ? '+' : '-'}{formatCurrency(tx.amount, tx.currency || 'USD')}
+                      {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount, tx.currency || 'USD')}
                     </TableCell>
                     <TableCell className="text-right px-6">
                       <div className="flex justify-end gap-1">
@@ -311,14 +326,77 @@ export default function AdminTransactionsAuditPage() {
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
-          <div className="p-6 sm:p-8 bg-slate-50 border-b shrink-0">
+          <div className="p-6 sm:p-8 bg-primary text-white border-b shrink-0">
             <DialogHeader>
-              <DialogTitle className="text-xl sm:text-2xl font-black">Manual Ledger Entry</DialogTitle>
-              <DialogDescription>Inject a new transaction record into a client account with full metadata for regulatory auditing.</DialogDescription>
+              <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Manual Ledger Entry</DialogTitle>
+              <DialogDescription className="text-white/60 text-xs sm:text-sm">Inject a new transaction record into a client account with full metadata for regulatory auditing.</DialogDescription>
             </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
-            {/* Form Fields... */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase text-primary border-b pb-2 tracking-widest">Target Account</h4>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">Verified Client</Label>
+                  <Select value={newTx.userId} onValueChange={(v) => { setNewTx({...newTx, userId: v}); fetchAccountsForUser(v); }}>
+                    <SelectTrigger className="h-11"><SelectValue placeholder="Select verified client..." /></SelectTrigger>
+                    <SelectContent>
+                      {allUsers?.map(u => (
+                        <SelectItem key={u.id} value={u.id}>{u.firstName} {u.lastName} ({u.email})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">Asset Selection</Label>
+                  <Select value={newTx.accountId} onValueChange={(v) => setNewTx({...newTx, accountId: v})} disabled={!newTx.userId || loadingAccounts}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder={loadingAccounts ? "Syncing..." : "Select account..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userAccounts.map(acc => (
+                        <SelectItem key={acc.id} value={acc.id}>{acc.accountType} (...{acc.accountNumber?.slice(-4)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase text-primary border-b pb-2 tracking-widest">Movement Details</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Type</Label>
+                    <Select value={newTx.type} onValueChange={(v) => setNewTx({...newTx, type: v})}>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="deposit">Deposit (Credit)</SelectItem>
+                        <SelectItem value="withdrawal">Withdrawal (Debit)</SelectItem>
+                        <SelectItem value="transfer">Transfer (Internal)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Status</Label>
+                    <Select value={newTx.status} onValueChange={(v) => setNewTx({...newTx, status: v})}>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="pending">Pending Audit</SelectItem>
+                        <SelectItem value="failed">Failed / Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">Capital Amount (USD)</Label>
+                  <Input type="number" value={newTx.amount} onChange={(e) => setNewTx({...newTx, amount: e.target.value})} className="h-11 text-lg font-black" />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2 pt-4 border-t">
+              <Label className="text-[10px] font-bold uppercase text-slate-500">Institutional Memo / Description</Label>
+              <Input value={newTx.description} onChange={(e) => setNewTx({...newTx, description: e.target.value})} placeholder="Regulatory note for the ledger..." className="h-11" />
+            </div>
           </div>
           <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t shrink-0 flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="flex-1 h-12 rounded-xl px-8 order-2 sm:order-1">Cancel</Button>
@@ -329,14 +407,48 @@ export default function AdminTransactionsAuditPage() {
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
-          <div className="p-6 sm:p-8 bg-slate-50 border-b shrink-0">
+          <div className="p-6 sm:p-8 bg-accent text-white border-b shrink-0">
             <DialogHeader>
-              <DialogTitle className="text-xl sm:text-2xl font-black">Modify Transaction Record</DialogTitle>
-              <DialogDescription>Authorized correction for regulatory audit record ID: {editingTransaction?.id}</DialogDescription>
+              <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Transaction Record</DialogTitle>
+              <DialogDescription className="text-white/60 text-xs sm:text-sm">Authorized correction for regulatory audit record ID: {editingTransaction?.id}</DialogDescription>
             </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
-            {/* Edit Fields... */}
+            {editingTransaction && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Description</Label>
+                    <Input value={editingTransaction.description} onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})} className="h-11" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Amount</Label>
+                    <Input type="number" value={editingTransaction.amount} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} className="h-11 font-black" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Execution Status</Label>
+                    <Select value={editingTransaction.status} onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Counterparty Name</Label>
+                    <Input 
+                      value={editingTransaction.metadata?.recipientName || ""} 
+                      onChange={(e) => setEditingTransaction({...editingTransaction, metadata: {...(editingTransaction.metadata || {}), recipientName: e.target.value}})} 
+                      className="h-11"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t shrink-0 flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl px-8 order-2 sm:order-1">Cancel</Button>
@@ -364,7 +476,49 @@ export default function AdminTransactionsAuditPage() {
                   <Badge className="bg-[#002B5B] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shrink-0">{viewingTransaction?.status || 'Completed'}</Badge>
                 </div>
               </div>
-              {/* Audit Details... */}
+              
+              {viewingTransaction && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-300">
+                  <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                      <Receipt className="h-4 w-4" /> Settlement Breakdown
+                    </h4>
+                    <div className="space-y-3 text-slate-700 bg-white/50 p-4 rounded-xl">
+                      <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                        <span className="font-black text-[#002B5B]">Amount:</span>
+                        <span className={`font-black text-lg ${viewingTransaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(viewingTransaction.amount, viewingTransaction.currency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                        <span className="font-black text-[#002B5B]">Execution Date:</span>
+                        <span className="font-medium">{viewingTransaction.transactionDate ? format(new Date(viewingTransaction.transactionDate), "PPP p") : 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
+                        <span className="font-black text-[#002B5B]">Movement Type:</span>
+                        <Badge variant="outline" className="text-[9px] font-black uppercase">{viewingTransaction.transactionType}</Badge>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                      <Globe className="h-4 w-4" /> Counterparty Dossier
+                    </h4>
+                    <div className="space-y-3 text-slate-700 bg-white/50 p-4 rounded-xl">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Entity Identity</p>
+                        <p className="font-bold text-[#002B5B]">{viewingTransaction.metadata?.recipientName || 'Internal Ledger'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-slate-400 uppercase">Settlement Rail</p>
+                        <p className="font-bold text-[#002B5B]">{viewingTransaction.metadata?.paymentMethod || 'Online Transfer'}</p>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              )}
+
               <div className="pt-10 border-t border-slate-300">
                 <Button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
                   Close Audit Insight
