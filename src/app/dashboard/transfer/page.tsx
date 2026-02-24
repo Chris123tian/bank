@@ -16,6 +16,7 @@ import { collection, doc, serverTimestamp } from "firebase/firestore";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 export default function TransferPage() {
   const { toast } = useToast();
