@@ -40,7 +40,8 @@ import {
   Globe, 
   User as UserIcon,
   X,
-  Info
+  Info,
+  Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -186,11 +187,16 @@ export default function AdminTransactionsAuditPage() {
     const clientUid = editingTransaction.customerId || editingTransaction.userId;
     const docRef = doc(db, "users", clientUid, "accounts", editingTransaction.accountId, "transactions", editingTransaction.id);
     
+    // Ensure we store a full ISO string even if edited via datetime-local
+    const finalDate = editingTransaction.transactionDate && editingTransaction.transactionDate.length === 16 
+      ? new Date(editingTransaction.transactionDate).toISOString() 
+      : editingTransaction.transactionDate;
+
     updateDocumentNonBlocking(docRef, {
       description: editingTransaction.description ?? "",
       amount: Number(editingTransaction.amount) || 0,
       status: editingTransaction.status ?? "pending",
-      transactionDate: editingTransaction.transactionDate ?? new Date().toISOString(),
+      transactionDate: finalDate,
       transactionType: editingTransaction.transactionType ?? "withdrawal",
       currency: editingTransaction.currency ?? "USD",
       metadata: {
@@ -296,7 +302,7 @@ export default function AdminTransactionsAuditPage() {
                   <TableRow><TableCell colSpan={7} className="text-center py-24 text-muted-foreground italic">No transaction records found.</TableCell></TableRow>
                 ) : filteredTransactions?.map((tx) => (
                   <TableRow key={tx.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
-                    <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy") : 'N/A'}</TableCell>
+                    <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy HH:mm") : 'N/A'}</TableCell>
                     <TableCell className="text-[10px] sm:text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
                     <TableCell className="font-medium truncate max-w-[150px] sm:max-w-[200px]">
                       {tx.description}
@@ -312,7 +318,19 @@ export default function AdminTransactionsAuditPage() {
                     <TableCell className="text-right px-6">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-primary shrink-0" onClick={() => setViewingTransaction(tx)}><Eye className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 shrink-0" onClick={() => { setEditingTransaction({...tx}); setIsEditDialogOpen(true); }}><Edit3 className="h-4 w-4" /></Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 shrink-0" 
+                          onClick={() => { 
+                            // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+                            const dateStr = tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16);
+                            setEditingTransaction({...tx, transactionDate: dateStr}); 
+                            setIsEditDialogOpen(true); 
+                          }}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 shrink-0" onClick={() => handleDelete(tx)}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </TableCell>
@@ -388,6 +406,10 @@ export default function AdminTransactionsAuditPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">Date & Time</Label>
+                  <Input type="datetime-local" value={newTx.date} onChange={(e) => setNewTx({...newTx, date: e.target.value})} className="h-11" />
+                </div>
+                <div className="space-y-2">
                   <Label className="text-[10px] font-bold uppercase text-slate-500">Capital Amount (USD)</Label>
                   <Input type="number" value={newTx.amount} onChange={(e) => setNewTx({...newTx, amount: e.target.value})} className="h-11 text-lg font-black" />
                 </div>
@@ -409,8 +431,13 @@ export default function AdminTransactionsAuditPage() {
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
           <div className="p-6 sm:p-8 bg-accent text-white border-b shrink-0">
             <DialogHeader>
-              <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Transaction Record</DialogTitle>
-              <DialogDescription className="text-white/60 text-xs sm:text-sm">Authorized correction for regulatory audit record ID: {editingTransaction?.id}</DialogDescription>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-2xl"><Edit3 className="h-6 w-6" /></div>
+                <div>
+                  <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Transaction Record</DialogTitle>
+                  <DialogDescription className="text-white/60 text-xs sm:text-sm">Authorized correction for regulatory audit record ID: {editingTransaction?.id}</DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
           </div>
           <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
@@ -418,15 +445,27 @@ export default function AdminTransactionsAuditPage() {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-slate-500">Description</Label>
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Institutional Description</Label>
                     <Input value={editingTransaction.description} onChange={(e) => setEditingTransaction({...editingTransaction, description: e.target.value})} className="h-11" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-slate-500">Amount</Label>
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Asset Amount</Label>
                     <Input type="number" value={editingTransaction.amount} onChange={(e) => setEditingTransaction({...editingTransaction, amount: e.target.value})} className="h-11 font-black" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Execution Date & Time</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input 
+                        type="datetime-local" 
+                        value={editingTransaction.transactionDate} 
+                        onChange={(e) => setEditingTransaction({...editingTransaction, transactionDate: e.target.value})} 
+                        className="h-11 pl-10"
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Execution Status</Label>
                     <Select value={editingTransaction.status} onValueChange={(v) => setEditingTransaction({...editingTransaction, status: v})}>
@@ -438,6 +477,8 @@ export default function AdminTransactionsAuditPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Counterparty Name</Label>
                     <Input 
@@ -445,6 +486,18 @@ export default function AdminTransactionsAuditPage() {
                       onChange={(e) => setEditingTransaction({...editingTransaction, metadata: {...(editingTransaction.metadata || {}), recipientName: e.target.value}})} 
                       className="h-11"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Settlement Currency</Label>
+                    <Select value={editingTransaction.currency} onValueChange={(v) => setEditingTransaction({...editingTransaction, currency: v})}>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                        <SelectItem value="AUD">AUD</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
