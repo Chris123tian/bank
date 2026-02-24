@@ -42,13 +42,13 @@ export default function DashboardPage() {
     }
   };
 
-  const totalBalance = useMemo(() => {
-    return accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
-  }, [accounts]);
-
   // Dynamic currency sync: use the currency of the primary account for the consolidated total
   const baseCurrency = useMemo(() => {
     return accounts?.[0]?.currency || 'USD';
+  }, [accounts]);
+
+  const totalBalance = useMemo(() => {
+    return accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
   }, [accounts]);
 
   if (isUserLoading && !accounts) {
