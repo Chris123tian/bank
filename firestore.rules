@@ -24,8 +24,7 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Specifically authorized for broad institutional ledger audits.
-     * This resolves the "method: list" errors for aggregate queries.
+     * Authorized for broad institutional ledger audits and consolidated client history.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn();
@@ -50,7 +49,6 @@ service cloud.firestore {
 
       match /accounts/{accountId} {
         // REGULATORY LOCKDOWN: Balance changes blocked if status not Active.
-        // Also ensures clients cannot adjust their own balance above existing liquidity.
         allow update: if isAdmin() || (
           isOwner(userId) && 
           resource.data.status == 'Active' && 

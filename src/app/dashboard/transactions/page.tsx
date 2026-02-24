@@ -45,7 +45,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup } from "firebase/firestore";
+import { collectionGroup, query, where } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -63,14 +63,17 @@ function TransactionsContent() {
   }, [searchParams]);
 
   /**
-   * UNIFIED ADMIN-STYLE LEDGER:
-   * Utilizing a broad collection group query.
-   * Authorization is handled by prioritized security rules.
-   * Local useMemo filtering handles the ownership boundary.
+   * AUTHORIZED ADMIN-STYLE LEDGER:
+   * Constrained collection group query. 
+   * Adding the where filter for customerId allows the rules engine to optimize 
+   * and authorize the list operation more effectively.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return collectionGroup(db, "transactions");
+    const baseQuery = collectionGroup(db, "transactions");
+    // Only filter for non-master-admins if we want true scoping, 
+    // but typically adding the ownership filter resolves rule ambiguity.
+    return query(baseQuery, where("customerId", "==", user.uid));
   }, [db, user?.uid]);
 
   const { data: allTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
@@ -91,9 +94,6 @@ function TransactionsContent() {
     
     return allTransactions
       .filter(tx => {
-        // Enforce ownership boundary client-side for the aggregate view
-        if (tx.customerId !== user.uid && tx.userId !== user.uid) return false;
-        
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
         
         const matchesSearch = 
@@ -132,7 +132,7 @@ function TransactionsContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Global History (All Assets)</SelectItem>
-              {allTransactions && Array.from(new Set(allTransactions.filter(t => t.customerId === user?.uid).map(t => t.accountId))).map(accId => (
+              {allTransactions && Array.from(new Set(allTransactions.map(t => t.accountId))).map(accId => (
                 <SelectItem key={accId} value={accId}>
                   Asset Ref: ...{accId.slice(-6)}
                 </SelectItem>
