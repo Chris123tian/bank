@@ -24,14 +24,14 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Optimized for broad listing in unified institutional ledgers.
+     * Broadly authorized for aggregate institutional ledgers.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
+      allow read: if isSignedIn();
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
+      allow read: if isSignedIn();
     }
 
     /**

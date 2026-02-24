@@ -37,7 +37,6 @@ import {
   TrendingUp,
   X,
   User as UserIcon,
-  Globe,
   Briefcase,
   MapPin,
   FileSignature,
@@ -224,7 +223,7 @@ export default function AdminAccountsAuditPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
         <ShieldAlert className="h-12 w-12 text-red-500" />
-        <h2 className="text-2xl font-bold">Access Denied</h2>
+        <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
         <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p>
       </div>
     );

@@ -2,7 +2,6 @@
 "use client";
 
 import { Building2, Globe, ShieldCheck, MapPin } from "lucide-react";
-import Image from "next/image";
 import LinkNext from "next/link";
 import { useTranslation } from "@/components/language-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";

@@ -26,7 +26,6 @@ import {
   DialogFooter,
   DialogDescription
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   Trash2, 
   Edit3, 
@@ -36,11 +35,9 @@ import {
   Receipt, 
   PlusCircle, 
   Search, 
-  Clock, 
   Globe, 
   User as UserIcon,
   X,
-  Info,
   Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -187,7 +184,6 @@ export default function AdminTransactionsAuditPage() {
     const clientUid = editingTransaction.customerId || editingTransaction.userId;
     const docRef = doc(db, "users", clientUid, "accounts", editingTransaction.accountId, "transactions", editingTransaction.id);
     
-    // Ensure we store a full ISO string even if edited via datetime-local
     const finalDate = editingTransaction.transactionDate && editingTransaction.transactionDate.length === 16 
       ? new Date(editingTransaction.transactionDate).toISOString() 
       : editingTransaction.transactionDate;
@@ -238,7 +234,7 @@ export default function AdminTransactionsAuditPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <div className="text-xs font-black uppercase tracking-widest text-slate-400">Verifying Administrative Clearance...</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verifying Administrative Clearance...</div>
       </div>
     );
   }
@@ -323,7 +319,6 @@ export default function AdminTransactionsAuditPage() {
                           size="icon" 
                           className="h-8 w-8 text-slate-400 shrink-0" 
                           onClick={() => { 
-                            // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
                             const dateStr = tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16);
                             setEditingTransaction({...tx, transactionDate: dateStr}); 
                             setIsEditDialogOpen(true); 
@@ -549,7 +544,7 @@ export default function AdminTransactionsAuditPage() {
                       </div>
                       <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
                         <span className="font-black text-[#002B5B]">Movement Type:</span>
-                        <Badge variant="outline" className="text-[9px] font-black uppercase">{viewingTransaction.transactionType}</Badge>
+                        <div className="inline-flex"><Badge variant="outline" className="text-[9px] font-black uppercase">{viewingTransaction.transactionType}</Badge></div>
                       </div>
                     </div>
                   </section>

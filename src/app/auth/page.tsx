@@ -78,7 +78,7 @@ function AuthPageContent() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Verifying Security Session...</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verifying Security Session...</p>
         </div>
       </div>
     );
