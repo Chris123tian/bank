@@ -238,7 +238,7 @@ export default function AdminTransactionsAuditPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Verifying Administrative Clearance...</p>
+        <div className="text-xs font-black uppercase tracking-widest text-slate-400">Verifying Administrative Clearance...</div>
       </div>
     );
   }
@@ -248,7 +248,7 @@ export default function AdminTransactionsAuditPage() {
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
         <ShieldAlert className="h-12 w-12 text-red-500" />
         <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
-        <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p>
+        <div className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</div>
       </div>
     );
   }
@@ -297,7 +297,7 @@ export default function AdminTransactionsAuditPage() {
               </TableHeader>
               <TableBody>
                 {isTransactionsLoading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-24"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Network Ledger...</span></div></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-24"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><div className="text-[10px] font-black uppercase text-slate-400">Syncing Network Ledger...</div></div></TableCell></TableRow>
                 ) : filteredTransactions?.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-24 text-muted-foreground italic">No transaction records found.</TableCell></TableRow>
                 ) : filteredTransactions?.map((tx) => (
@@ -306,7 +306,7 @@ export default function AdminTransactionsAuditPage() {
                     <TableCell className="text-[10px] sm:text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
                     <TableCell className="font-medium truncate max-w-[150px] sm:max-w-[200px]">
                       {tx.description}
-                      {tx.metadata?.recipientName && <p className="text-[9px] text-muted-foreground uppercase font-bold">To: {tx.metadata.recipientName}</p>}
+                      {tx.metadata?.recipientName && <div className="text-[9px] text-muted-foreground uppercase font-bold">To: {tx.metadata.recipientName}</div>}
                     </TableCell>
                     <TableCell><Badge variant="secondary" className="capitalize text-[9px] font-black tracking-tighter px-2">{tx.transactionType}</Badge></TableCell>
                     <TableCell>
@@ -560,12 +560,12 @@ export default function AdminTransactionsAuditPage() {
                     </h4>
                     <div className="space-y-3 text-slate-700 bg-white/50 p-4 rounded-xl">
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-slate-400 uppercase">Entity Identity</p>
-                        <p className="font-bold text-[#002B5B]">{viewingTransaction.metadata?.recipientName || 'Internal Ledger'}</p>
+                        <div className="text-[9px] font-black text-slate-400 uppercase">Entity Identity</div>
+                        <div className="font-bold text-[#002B5B]">{viewingTransaction.metadata?.recipientName || 'Internal Ledger'}</div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black text-slate-400 uppercase">Settlement Rail</p>
-                        <p className="font-bold text-[#002B5B]">{viewingTransaction.metadata?.paymentMethod || 'Online Transfer'}</p>
+                        <div className="text-[9px] font-black text-slate-400 uppercase">Settlement Rail</div>
+                        <div className="font-bold text-[#002B5B]">{viewingTransaction.metadata?.paymentMethod || 'Online Transfer'}</div>
                       </div>
                     </div>
                   </section>

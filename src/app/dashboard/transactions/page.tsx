@@ -45,7 +45,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup } from "firebase/firestore";
+import { collectionGroup, query, where } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -64,12 +64,12 @@ function TransactionsContent() {
 
   /**
    * UNIFIED ADMIN-STYLE LEDGER:
-   * Utilizing a broad collection group query authorized by prioritized security rules.
-   * This architecture resolves permission denials by aggregating and then filtering locally.
+   * Utilizing a broad collection group query filtered by customerId to satisfy security rules.
+   * This architecture resolves permission denials by aligning with the high-performance 'list' rules.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
-    return collectionGroup(db, "transactions");
+    return query(collectionGroup(db, "transactions"), where("customerId", "==", user.uid));
   }, [db, user?.uid]);
 
   const { data: allTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
@@ -90,10 +90,6 @@ function TransactionsContent() {
     
     return allTransactions
       .filter(tx => {
-        // Institutional Ownership Filter (Local Enforcement)
-        const isOwned = tx.customerId === user.uid || tx.userId === user.uid;
-        if (!isOwned) return false;
-
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
         
         const matchesSearch = 
@@ -132,7 +128,7 @@ function TransactionsContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Global History (All Assets)</SelectItem>
-              {allTransactions && Array.from(new Set(allTransactions.filter(t => t.customerId === user?.uid).map(t => t.accountId))).map(accId => (
+              {allTransactions && Array.from(new Set(allTransactions.map(t => t.accountId))).map(accId => (
                 <SelectItem key={accId} value={accId}>
                   Asset Ref: ...{accId.slice(-6)}
                 </SelectItem>

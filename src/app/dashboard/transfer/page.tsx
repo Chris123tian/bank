@@ -336,7 +336,6 @@ export default function TransferPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { name: "Apex Logistics", bank: "Chase NY" },
                 { name: "Rental Mgmt", bank: "Wells Fargo" },
                 { name: "Family Trust", bank: "HSBC London" },
               ].map((rec) => (

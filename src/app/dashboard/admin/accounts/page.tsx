@@ -373,9 +373,9 @@ export default function AdminAccountsAuditPage() {
                       />
                     </div>
                     {editingAccount.status !== 'Active' && (
-                      <p className="text-[9px] text-red-500 font-bold uppercase flex items-center gap-1">
+                      <div className="text-[9px] text-red-500 font-bold uppercase flex items-center gap-1">
                         <AlertCircle className="h-2.5 w-2.5" /> Balance locked for non-active status.
-                      </p>
+                      </div>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -437,7 +437,7 @@ export default function AdminAccountsAuditPage() {
                 <div className="p-3 bg-white/10 rounded-2xl shrink-0"><PlusCircle className="h-6 w-6" /></div>
                 <div>
                   <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Open Institutional Account</DialogTitle>
-                  <DialogDescription className="text-white/60 text-xs">Provisioning a new financial asset for a verified client within the ledger.</DialogDescription>
+                  <DialogDescription className="text-white/60 text-xs sm:text-sm">Provisioning a new financial asset for a verified client within the ledger.</DialogDescription>
                 </div>
               </div>
             </DialogHeader>
@@ -581,11 +581,11 @@ export default function AdminAccountsAuditPage() {
                         <MapPin className="h-4 w-4" /> Residential Metadata
                       </h4>
                       <div className="p-4 bg-white/50 rounded-xl border border-slate-300 space-y-2 text-sm">
-                        <p className="font-bold text-[#002B5B]">{selectedClient?.addressLine1 || 'No address on file'}</p>
-                        <p className="text-slate-600">
+                        <div className="font-bold text-[#002B5B]">{selectedClient?.addressLine1 || 'No address on file'}</div>
+                        <div className="text-slate-600">
                           {selectedClient?.city ? `${selectedClient.city}, ${selectedClient.state} ${selectedClient.postalCode}` : 'N/A'}
-                        </p>
-                        <p className="text-slate-500 uppercase text-[10px] font-black">{selectedClient?.country || 'USA'}</p>
+                        </div>
+                        <div className="text-slate-500 uppercase text-[10px] font-black">{selectedClient?.country || 'USA'}</div>
                       </div>
                     </section>
 
@@ -625,14 +625,14 @@ export default function AdminAccountsAuditPage() {
                       </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Initialization Date</p>
-                          <p className="text-xs font-bold text-slate-600">
+                          <div className="text-[9px] font-black text-slate-400 uppercase">Initialization Date</div>
+                          <div className="text-xs font-bold text-slate-600">
                             {viewingClientPortfolio.createdAt ? format(new Date(viewingClientPortfolio.createdAt.seconds * 1000), "PPP p") : 'N/A'}
-                          </p>
+                          </div>
                         </div>
                         <div className="p-4 bg-white/50 rounded-xl border border-white space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
-                          <p className="text-xs font-bold text-slate-600">Settlement Layer 1</p>
+                          <div className="text-[9px] font-black text-slate-400 uppercase">System Rail</div>
+                          <div className="text-xs font-bold text-slate-600">Settlement Layer 1</div>
                         </div>
                       </div>
                     </section>
@@ -645,7 +645,7 @@ export default function AdminAccountsAuditPage() {
                         {selectedClient?.signature ? (
                           <img src={selectedClient.signature} alt="Client Signature" className="h-20 object-contain" />
                         ) : (
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">No signature record</span>
+                          <div className="text-[10px] text-slate-400 font-bold uppercase">No signature record</div>
                         )}
                       </div>
                     </section>

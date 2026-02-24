@@ -25,13 +25,14 @@ service cloud.firestore {
     /**
      * COLLECTION GROUP RULES (Highest Priority)
      * Optimized for broad listing in unified institutional ledgers.
+     * These rules allow for 'list' operations only when correctly filtered by customerId.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || isAdmin());
     }
 
     /**
