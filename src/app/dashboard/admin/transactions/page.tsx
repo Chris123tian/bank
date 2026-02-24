@@ -341,7 +341,7 @@ export default function AdminTransactionsAuditPage() {
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
           <div className="p-6 sm:p-8 bg-primary text-white border-b shrink-0">
             <DialogHeader>
-              <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Manual Ledger Entry</DialogTitle>
+              <DialogTitle>Manual Ledger Entry</DialogTitle>
               <DialogDescription className="text-white/60 text-xs sm:text-sm">Inject a new transaction record into a client account with full metadata for regulatory auditing.</DialogDescription>
             </DialogHeader>
           </div>
@@ -429,7 +429,7 @@ export default function AdminTransactionsAuditPage() {
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-white/10 rounded-2xl"><Edit3 className="h-6 w-6" /></div>
                 <div>
-                  <DialogTitle className="text-xl sm:text-2xl font-black uppercase tracking-tight">Modify Transaction Record</DialogTitle>
+                  <DialogTitle>Modify Transaction Record</DialogTitle>
                   <DialogDescription className="text-white/60 text-xs sm:text-sm">Authorized correction for regulatory audit record ID: {editingTransaction?.id}</DialogDescription>
                 </div>
               </div>
