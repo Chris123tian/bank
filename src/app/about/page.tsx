@@ -105,7 +105,7 @@ export default function AboutPage() {
       <footer className="bg-slate-950 py-16 border-t border-white/5 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center space-y-4">
           <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">{t('footer_address')}</p>
-          <p className="text-[8px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-widest">© 2024 City Bank Global. Member FDIC. Equal Housing Lender.</p>
+          <p className="text-[8px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-widest">© City Bank Global. Member FDIC. Equal Housing Lender.</p>
         </div>
       </footer>
     </div>

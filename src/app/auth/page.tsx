@@ -200,7 +200,7 @@ function AuthPageContent() {
           Global Security Standards • 256-bit Encryption
         </p>
         <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-          © 2024 City Bank Global. Member FDIC. Equal Housing Lender.
+          © City Bank Global. Member FDIC. Equal Housing Lender.
         </p>
       </div>
     </div>

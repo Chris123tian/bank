@@ -71,7 +71,7 @@ export default function SettingsPage() {
         city: profile.city || "",
         state: profile.state || "",
         postalCode: profile.postalCode || "",
-        country: profile.country || "United Kingdom",
+        country: profile.country || "United States",
         profilePictureUrl: profile.profilePictureUrl || "",
         signature: profile.signature || "",
       });
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                 <div className="text-center space-y-4 w-full">
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#002B5B] rounded-full text-white shadow-lg">
                     <Hash className="h-4 w-4 text-accent" />
-                    <span className="text-sm font-black tracking-widest uppercase">ID: {profile?.accountNumber || "NEXA-PENDING"}</span>
+                    <span className="text-sm font-black tracking-widest uppercase">ID: {profile?.accountNumber || "CITY-PENDING"}</span>
                   </div>
                   
                   <div className="space-y-4 pt-4">

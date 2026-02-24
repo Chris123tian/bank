@@ -556,6 +556,11 @@ export default function AdminUsersPage() {
                   <p className="text-xl font-bold text-slate-700">
                     <span className="font-black text-[#002B5B]">Email:</span> <span className="underline underline-offset-4 decoration-slate-400">{viewingUser?.email}</span>
                   </p>
+                  {viewingUser?.phoneNumber && (
+                    <p className="text-xl font-bold text-slate-700">
+                      <span className="font-black text-[#002B5B]">Phone:</span> {viewingUser.phoneNumber}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -568,17 +573,19 @@ export default function AdminUsersPage() {
                   <span className="font-black text-[#002B5B] min-w-[160px]">Address 1:</span>
                   <span>{viewingUser?.addressLine1 || "—"}</span>
                 </div>
-                <div className="flex gap-4">
-                  <span className="font-black text-[#002B5B] min-w-[160px]">Address 2:</span>
-                  <span>{viewingUser?.addressLine2 || "—"}</span>
-                </div>
+                {viewingUser?.addressLine2 && (
+                  <div className="flex gap-4">
+                    <span className="font-black text-[#002B5B] min-w-[160px]">Address 2:</span>
+                    <span>{viewingUser.addressLine2}</span>
+                  </div>
+                )}
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[160px]">City/State/Zip:</span>
                   <span>{viewingUser?.city}{viewingUser?.state ? `, ${viewingUser.state}` : ''}{viewingUser?.postalCode ? ` ${viewingUser.postalCode}` : ''}</span>
                 </div>
                 <div className="flex gap-4">
                   <span className="font-black text-[#002B5B] min-w-[160px]">Country:</span>
-                  <span>{viewingUser?.country || "United Kingdom"}</span>
+                  <span>{viewingUser?.country || "United States"}</span>
                 </div>
               </div>
 

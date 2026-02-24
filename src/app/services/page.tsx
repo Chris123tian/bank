@@ -22,7 +22,7 @@ export default function ServicesPage() {
       icon: Lock
     },
     {
-      title: "NexaSettlement",
+      title: "CitySettlement",
       desc: "Instant global settlements with zero latency, powered by our proprietary financial network.",
       icon: Zap
     },
@@ -92,7 +92,7 @@ export default function ServicesPage() {
 
       <footer className="bg-slate-950 py-16 border-t border-white/5 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">© 2024 City Bank Global. Institutional Grade Financial Infrastructure</p>
+          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">© City Bank Global. Institutional Grade Financial Infrastructure</p>
         </div>
       </footer>
     </div>
