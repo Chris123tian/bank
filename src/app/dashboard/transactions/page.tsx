@@ -70,9 +70,10 @@ function TransactionsContent() {
   const { data: accounts } = useCollection(accountsRef);
 
   /**
-   * SECURE COLLECTION GROUP FLOW:
+   * SECURE COLLECTION GROUP FLOW (Aligned with Admin Architecture):
    * We filter by customerId at the query level to satisfy hardened security rules.
-   * This prevents "Missing or insufficient permissions" while allowing portfolio-wide auditing.
+   * This architecture resolves "Missing or insufficient permissions" by providing
+   * the proof the security rules require for collection group 'list' operations.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;

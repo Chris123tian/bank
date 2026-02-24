@@ -24,21 +24,21 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Highest Priority)
-     * Proof-safe list operations for unified ledgers.
+     * Optimized for Proof-safe list operations in unified ledgers.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (
         isAdmin() || 
-        resource.data.get('customerId', '') == request.auth.uid || 
-        resource.data.get('userId', '') == request.auth.uid
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
       );
     }
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
         isAdmin() || 
-        resource.data.get('customerId', '') == request.auth.uid || 
-        resource.data.get('userId', '') == request.auth.uid
+        resource.data.customerId == request.auth.uid || 
+        resource.data.userId == request.auth.uid
       );
     }
 
@@ -82,7 +82,7 @@ service cloud.firestore {
     }
 
     match /roles_admin/{uid} {
-      // Security Hardening: Only admins or the owner can read role markers.
+      // Security Hardening: Users can only check their own admin status to prevent discovery.
       allow read: if isSignedIn() && (isAdmin() || request.auth.uid == uid);
       allow write: if isMasterAdmin(); 
     }
