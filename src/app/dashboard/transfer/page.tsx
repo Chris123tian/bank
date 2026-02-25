@@ -335,7 +335,6 @@ export default function TransferPage() {
         </div>
       </div>
 
-      {/* TWO-STAGE INSTITUTIONAL RECEIPT MODAL */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>
           <DialogHeader className="sr-only">

@@ -74,6 +74,7 @@ function TransactionsContent() {
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
    * Uses collectionGroup with forced customerId filter for owner-based authorization.
+   * Crucially waits for isAdminRoleLoading to prevent initial unauthorized query.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || isAdminRoleLoading) return null;

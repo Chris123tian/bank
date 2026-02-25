@@ -23,17 +23,10 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Aggregate Audits)
-     * Split into deterministic blocks to satisfy the Firestore query planner.
+     * Simplified to be queryable by Firestore query planner.
      */
     match /{path=**}/transactions/{transactionId} {
-      // Rule 1: Master Admin Global Access
-      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
-      
-      // Rule 2: Owner Access (Provably safe for collectionGroup + where customerId filter)
-      allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
-      
-      // Rule 3: Administrative Role Access (Valid for get/list filtered by audit terminal)
-      allow read: if isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      allow read: if isSignedIn() && (isMasterAdmin() || resource.data.customerId == request.auth.uid || isAdmin());
     }
 
     match /{path=**}/accounts/{accountId} {
