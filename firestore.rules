@@ -23,7 +23,7 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Aggregate Audits)
-     * Simplified to be queryable by Firestore query planner.
+     * Optimized for deterministic query evaluation.
      */
     match /{path=**}/transactions/{transactionId} {
       allow read: if isSignedIn() && (isMasterAdmin() || resource.data.customerId == request.auth.uid || isAdmin());

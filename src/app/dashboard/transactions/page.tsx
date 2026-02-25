@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -74,14 +74,14 @@ function TransactionsContent() {
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
    * Uses collectionGroup with forced customerId filter for owner-based authorization.
-   * Crucially waits for isAdminRoleLoading to prevent initial unauthorized query.
+   * Crucially waits for isAdminRoleLoading to prevent initial unauthorized broad query attempts.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || isAdminRoleLoading) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
-    // Regular users MUST filter by customerId to satisfy the security rule
+    // Non-Master admins MUST filter by customerId to satisfy the security rule at index level
     if (!isMasterAdmin) {
       baseQuery = query(baseQuery, where("customerId", "==", user.uid));
     }
