@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useState } from "react";
 import { useFirestore, useCollection, useUser, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, doc, serverTimestamp, collection } from "firebase/firestore";
+import { collectionGroup, doc, serverTimestamp, collection, query, where } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,10 +75,16 @@ export default function AdminAccountsAuditPage() {
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
+  /**
+   * REGULATORY AUDIT ACCESS:
+   * Only the Master Admin can perform a global collectionGroup audit.
+   * Other admins can manage specific users via the User Audit terminal.
+   */
   const accountsRef = useMemoFirebase(() => {
     if (!db || !isAdminReady) return null;
+    if (!isMasterAdmin) return null; // Standard admins must audit via user profiles
     return collectionGroup(db, "accounts");
-  }, [db, isAdminReady]);
+  }, [db, isAdminReady, isMasterAdmin]);
 
   const { data: accounts, isLoading: isAccountsLoading } = useCollection(accountsRef);
 
@@ -107,22 +112,6 @@ export default function AdminAccountsAuditPage() {
       return;
     }
 
-    if (newAccount.accountType === "Current Account") {
-      const hasCurrentAccount = accounts?.some(acc => 
-        (acc.customerId === newAccount.userId || acc.userId === newAccount.userId) && 
-        acc.accountType === "Current Account"
-      );
-      
-      if (hasCurrentAccount) {
-        toast({ 
-          variant: "destructive", 
-          title: "Regulatory Limit Reached", 
-          description: "This client already possesses an active Current Account. Multiple daily operations accounts are prohibited." 
-        });
-        return;
-      }
-    }
-
     const colRef = collection(db, "users", newAccount.userId, "accounts");
     const accountData = {
       accountNumber: `CITY-${Math.floor(10000000 + Math.random() * 90000000)}`,
@@ -145,24 +134,6 @@ export default function AdminAccountsAuditPage() {
   const handleUpdateAccount = () => {
     if (!editingAccount || !db) return;
     const clientUid = editingAccount.customerId || editingAccount.userId;
-
-    if (editingAccount.accountType === "Current Account") {
-      const otherCurrentAccount = accounts?.some(acc => 
-        acc.id !== editingAccount.id &&
-        (acc.customerId === clientUid || acc.userId === clientUid) && 
-        acc.accountType === "Current Account"
-      );
-      
-      if (otherCurrentAccount) {
-        toast({ 
-          variant: "destructive", 
-          title: "Regulatory Limit Reached", 
-          description: "This client already possesses an active Current Account." 
-        });
-        return;
-      }
-    }
-
     const docRef = doc(db, "users", clientUid, "accounts", editingAccount.id);
     
     updateDocumentNonBlocking(docRef, {
@@ -171,24 +142,6 @@ export default function AdminAccountsAuditPage() {
       currency: editingAccount.currency || "USD",
       status: editingAccount.status || "Active",
       updatedAt: serverTimestamp(),
-    });
-
-    const txRef = collection(db, "users", clientUid, "accounts", editingAccount.id, "transactions");
-    addDocumentNonBlocking(txRef, {
-      accountId: editingAccount.id,
-      customerId: clientUid,
-      userId: clientUid,
-      transactionType: "deposit",
-      amount: Number(editingAccount.balance),
-      currency: editingAccount.currency || "USD",
-      description: "Institutional Balance Correction / Adjustment",
-      status: "completed",
-      transactionDate: new Date().toISOString(),
-      metadata: {
-        method: "Administrative Override",
-        reason: "Capital Adjustment"
-      },
-      createdAt: serverTimestamp(),
     });
 
     toast({ title: "Ledger Corrected", description: `Financial records for ${editingAccount.accountNumber} updated.` });
@@ -257,90 +210,105 @@ export default function AdminAccountsAuditPage() {
         </div>
       </div>
 
-      <Card className="shadow-xl rounded-2xl overflow-hidden border-none bg-white">
-        <CardHeader className="bg-slate-50/50 border-b">
-          <CardTitle className="text-lg">Institutional Asset Ledger</CardTitle>
-          <CardDescription>Auditing all capital holdings within the City Bank Global ecosystem.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto w-full">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/80">
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Account #</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Client Identity</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Verified Balance</TableHead>
-                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
-                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isAccountsLoading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-20"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Assets...</span></div></TableCell></TableRow>
-                ) : filteredAccounts?.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">No accounts found.</TableCell></TableRow>
-                ) : filteredAccounts?.map((acc) => (
-                  <TableRow key={acc.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
-                    <TableCell className="font-mono text-[10px] sm:text-xs font-bold text-primary py-4 px-6">{acc.accountNumber}</TableCell>
-                    <TableCell className="text-xs">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-700 truncate max-w-[120px] sm:max-w-[150px]">{acc.customerId || acc.userId}</span>
-                        <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Client Record</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[9px] font-black border-primary/20 uppercase tracking-tighter px-2">{acc.accountType}</Badge>
-                    </TableCell>
-                    <TableCell className="font-black text-primary text-sm sm:text-base whitespace-nowrap">
-                      {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={acc.status === 'Suspended' ? 'bg-red-100 text-red-700 border-none text-[9px] font-black uppercase' : 'bg-green-100 text-green-700 border-none text-[9px] font-black uppercase'}>
-                        {acc.status || "Active"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right px-6">
-                      <div className="flex justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-9 w-9 text-primary hover:bg-primary/5 shrink-0"
-                          onClick={() => setViewingClientPortfolio(acc)}
-                          title="View Institutional Dossier"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-9 w-9 text-accent hover:bg-accent/5 shrink-0"
-                          onClick={() => {
-                            setEditingAccount({
-                              ...acc,
-                              balance: acc.balance ?? 0,
-                              currency: acc.currency ?? "USD",
-                              accountType: acc.accountType ?? "Current Account",
-                              status: acc.status ?? "Active"
-                            });
-                            setIsEditDialogOpen(true);
-                          }}
-                          title="Adjust Capital / Edit"
-                        >
-                          <TrendingUp className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:bg-red-50 shrink-0" onClick={() => handleDeleteAccount(acc)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      {!isMasterAdmin ? (
+        <Card className="p-12 text-center space-y-4 border-dashed border-2 bg-slate-50/50 rounded-3xl">
+          <ShieldAlert className="h-12 w-12 text-orange-400 mx-auto" />
+          <div className="space-y-2">
+            <h3 className="text-xl font-bold text-primary">Master Clearance Required</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Global collection group auditing is reserved for the Master Administrative terminal. Please use the User Audit terminal to manage specific client portfolios.
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          <Button variant="outline" asChild className="font-bold">
+            <a href="/dashboard/admin/users">Go to User Audit</a>
+          </Button>
+        </Card>
+      ) : (
+        <Card className="shadow-xl rounded-2xl overflow-hidden border-none bg-white">
+          <CardHeader className="bg-slate-50/50 border-b">
+            <CardTitle className="text-lg">Institutional Asset Ledger</CardTitle>
+            <CardDescription>Auditing all capital holdings within the City Bank Global ecosystem.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50/80">
+                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Account #</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Client Identity</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Verified Balance</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
+                    <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isAccountsLoading ? (
+                    <TableRow><TableCell colSpan={6} className="text-center py-20"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><span className="text-[10px] font-black uppercase text-slate-400">Syncing Assets...</span></div></TableCell></TableRow>
+                  ) : filteredAccounts?.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center py-20 text-muted-foreground italic">No accounts found.</TableCell></TableRow>
+                  ) : filteredAccounts?.map((acc) => (
+                    <TableRow key={acc.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
+                      <TableCell className="font-mono text-[10px] sm:text-xs font-bold text-primary py-4 px-6">{acc.accountNumber}</TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-700 truncate max-w-[120px] sm:max-w-[150px]">{acc.customerId || acc.userId}</span>
+                          <span className="text-[8px] text-muted-foreground uppercase font-black tracking-widest">Client Record</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[9px] font-black border-primary/20 uppercase tracking-tighter px-2">{acc.accountType}</Badge>
+                      </TableCell>
+                      <TableCell className="font-black text-primary text-sm sm:text-base whitespace-nowrap">
+                        {formatCurrency(acc.balance || 0, acc.currency || 'USD')}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={acc.status === 'Suspended' ? 'bg-red-100 text-red-700 border-none text-[9px] font-black uppercase' : 'bg-green-100 text-green-700 border-none text-[9px] font-black uppercase'}>
+                          {acc.status || "Active"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right px-6">
+                        <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 text-primary hover:bg-primary/5 shrink-0"
+                            onClick={() => setViewingClientPortfolio(acc)}
+                            title="View Institutional Dossier"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 text-accent hover:bg-accent/5 shrink-0"
+                            onClick={() => {
+                              setEditingAccount({
+                                ...acc,
+                                balance: acc.balance ?? 0,
+                                currency: acc.currency ?? "USD",
+                                accountType: acc.accountType ?? "Current Account",
+                                status: acc.status ?? "Active"
+                              });
+                              setIsEditDialogOpen(true);
+                            }}
+                            title="Adjust Capital / Edit"
+                          >
+                            <TrendingUp className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-9 w-9 text-red-400 hover:bg-red-50 shrink-0" onClick={() => handleDeleteAccount(acc)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-xl p-0 border-none rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col w-[95vw] sm:w-full">

@@ -23,20 +23,23 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Aggregate Audits)
-     * Split into deterministic blocks to satisfy Firestore query planner.
+     * Rule 1: Static token check for master admin (Audit everything)
+     * Rule 2: Resource-based check for owners (Queryable with where filter)
      */
     match /{path=**}/transactions/{transactionId} {
-      // Rule 1: Static token check for master admin (Queryable)
-      allow read: if isSignedIn() && isMasterAdmin();
-      // Rule 2: Resource-based check for owners (Queryable with where filter)
-      allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
-      // Rule 3: Dynamic check for other admins (GET/Individual doc safe)
-      allow read: if isAdmin();
+      allow read: if isSignedIn() && (
+        request.auth.token.email == 'citybank@gmail.com' || 
+        resource.data.customerId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && (isMasterAdmin() || resource.data.customerId == request.auth.uid);
-      allow read: if isAdmin();
+      allow read: if isSignedIn() && (
+        request.auth.token.email == 'citybank@gmail.com' || 
+        resource.data.customerId == request.auth.uid ||
+        isAdmin()
+      );
     }
 
     /**

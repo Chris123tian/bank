@@ -420,7 +420,7 @@ export default function TransferPage() {
             )}
             
             <p className="text-[8px] text-center text-slate-400 font-bold uppercase tracking-[0.2em] mt-4">
-              Authorized by City Bank Global Institutional Rails
+              © City Bank Global. Authorized by Institutional Rails
             </p>
           </div>
         </DialogContent>

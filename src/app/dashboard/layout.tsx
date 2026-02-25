@@ -36,12 +36,7 @@ export default function DashboardLayout({
     if (isAuthReady && !user) {
       router.replace("/auth");
     }
-    // Deactivation Protocol: If user is authenticated but no profile exists, they were likely deleted
-    if (isAuthReady && user && !isProfileLoading && !profile && user.email !== "citybank@gmail.com") {
-      initiateSignOut(auth);
-      router.replace("/auth");
-    }
-  }, [user, isAuthReady, router, isProfileLoading, profile, auth]);
+  }, [user, isAuthReady, router]);
 
   const displayName = useMemo(() => {
     if (profile?.firstName) {

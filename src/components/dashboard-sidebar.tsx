@@ -108,7 +108,6 @@ export function DashboardSidebar() {
       await initiateSignOut(auth);
       router.replace("/");
     } catch (e) {
-      console.error("Logout failed", e);
       router.replace("/");
     }
   };
