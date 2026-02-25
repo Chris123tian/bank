@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -74,15 +74,14 @@ function TransactionsContent() {
 
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
-   * Uses collectionGroup with owner-based filtering to satisfy security rules.
-   * If non-admin, we MUST filter by customerId to satisfy the Firestore engine.
+   * Uses collectionGroup with owner-based filtering to satisfy queryable rules.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || (isAdminRoleLoading && !isMasterAdmin)) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
-    // Provably safe query: Firestore engine requires this filter if non-admin
+    // Firestore engine requires this filter if non-admin to satisfy indexed rules
     if (!isAdmin) {
       baseQuery = query(baseQuery, where("customerId", "==", user.uid));
     }
@@ -108,10 +107,7 @@ function TransactionsContent() {
     
     return rawTransactions
       .filter(tx => {
-        // ACCOUNT FILTER
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
-        
-        // SEARCH FILTER
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
           tx.id?.toLowerCase().includes(search.toLowerCase()) ||
@@ -162,7 +158,7 @@ function TransactionsContent() {
       </div>
 
       <Card className="shadow-sm overflow-hidden rounded-2xl border-none">
-        <CardContent className="p-0">
+        <div className="p-0">
           <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader className="bg-slate-50/80">
@@ -234,7 +230,7 @@ function TransactionsContent() {
               </TableBody>
             </Table>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>

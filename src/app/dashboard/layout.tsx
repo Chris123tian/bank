@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useUser, useFirestore, useDoc, useAuth } from "@/firebase";
+import { useUser, useFirestore, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
@@ -19,7 +19,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isUserLoading, isAuthReady } = useUser();
+  const { user, isAuthReady } = useUser();
   const router = useRouter();
   const db = useFirestore();
 

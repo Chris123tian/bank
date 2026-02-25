@@ -14,7 +14,7 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
-    // Optimized Admin check to avoid recursion in rules
+    // Optimized Admin check
     function isAdmin() {
       return isMasterAdmin() || exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
@@ -25,10 +25,17 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Aggregate Audits)
-     * Split rules to satisfy Firestore's strict query planner for collectionGroup.
+     * Rules are split to ensure queryability for collectionGroup.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && (isMasterAdmin() || resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid || isAdmin());
+      // Rule 1: Master Admin Global Access (Queryable)
+      allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
+      
+      // Rule 2: Owner Access (Queryable - required for collectionGroup + where filter)
+      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
+      
+      // Rule 3: Administrative Role Access (Valid for individual get, non-queryable list)
+      allow read: if isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     match /{path=**}/accounts/{accountId} {
@@ -49,7 +56,6 @@ service cloud.firestore {
       allow read, write: if isAdmin() || isOwner(userId);
 
       match /accounts/{accountId} {
-        // REGULATORY LOCKDOWN: Balance changes blocked if status not Active.
         allow update: if isAdmin() || (
           isOwner(userId) && 
           resource.data.status == 'Active' && 
@@ -75,7 +81,6 @@ service cloud.firestore {
     }
 
     match /roles_admin/{uid} {
-      // Deterministic read to avoid infinite recursion with isAdmin()
       allow read: if isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || request.auth.uid == uid);
       allow write: if isMasterAdmin(); 
     }
