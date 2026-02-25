@@ -31,7 +31,7 @@ export function useCollection<T = any>(
 ): UseCollectionResult<T> {
   const { isAuthReady, user } = useFirebase();
   const [data, setData] = useState<WithId<T>[] | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(!!memoizedTargetRefOrQuery);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {

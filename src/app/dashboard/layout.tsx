@@ -39,7 +39,8 @@ export default function DashboardLayout({
     }
 
     // Deactivation Protocol: Kick out users whose profiles have been deleted
-    if (isAuthReady && user && !isProfileLoading && !profile && user.email !== "citybank@gmail.com") {
+    // ONLY execute after auth is ready, user exists, and profile loading has finished definitively as null.
+    if (isAuthReady && user && !isProfileLoading && profile === null && user.email !== "citybank@gmail.com") {
       initiateSignOut(auth).then(() => {
         router.replace("/auth");
       });

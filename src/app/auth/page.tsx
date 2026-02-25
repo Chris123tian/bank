@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Building2, ArrowRight, Loader2, ShieldCheck, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useTranslation } from "@/components/language-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -28,43 +28,22 @@ function AuthPageContent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Deactivation Protocol and Master Admin Redirect
+  // Redirect Protocol
   useEffect(() => {
     if (isAuthReady && user) {
       if (user.email === "citybank@gmail.com") {
+        // Ensure master admin marker exists
         const adminRef = doc(db, "roles_admin", user.uid);
         setDoc(adminRef, { 
           email: user.email, 
           assignedAt: serverTimestamp(),
           role: "super_admin"
         }, { merge: true }).catch(() => {});
-        router.replace("/dashboard");
-      } else {
-        // Institutional account existence check
-        const checkProfile = async () => {
-          try {
-            const userRef = doc(db, "users", user.uid);
-            const userSnap = await getDoc(userRef);
-            if (userSnap.exists()) {
-              router.replace("/dashboard");
-            } else {
-              await initiateSignOut(auth);
-              toast({
-                variant: "destructive",
-                title: "Access Denied",
-                description: "This institutional profile has been deactivated. Please contact administration.",
-              });
-              setLoading(false);
-            }
-          } catch (e) {
-            // Fallback: if rules prevent read, let dashboard layout handle the kickout
-            router.replace("/dashboard");
-          }
-        };
-        checkProfile();
       }
+      // Redirect to dashboard; DashboardLayout will handle profile verification/kicking
+      router.replace("/dashboard");
     }
-  }, [user, isAuthReady, router, db, auth, toast]);
+  }, [user, isAuthReady, router, db]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
