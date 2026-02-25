@@ -339,10 +339,10 @@ export default function TransferPage() {
       {/* TWO-STAGE INSTITUTIONAL RECEIPT MODAL */}
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>
-          <div className="sr-only">
+          <DialogHeader className="sr-only">
             <DialogTitle>Transfer Confirmation</DialogTitle>
             <DialogDescription>Summary of authorized capital movement.</DialogDescription>
-          </div>
+          </DialogHeader>
           <div className="bg-white p-8 space-y-8">
             {!showFullReceipt ? (
               <div className="flex flex-col items-center text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">

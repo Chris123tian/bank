@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, useUser, useFirestore } from "@/firebase";
-import { initiateEmailSignIn, initiateGoogleSignIn, initiateSignOut } from "@/firebase/non-blocking-login";
+import { initiateEmailSignIn, initiateGoogleSignIn } from "@/firebase/non-blocking-login";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ function AuthPageContent() {
           role: "super_admin"
         }, { merge: true }).catch(() => {});
       }
-      // Redirect to dashboard; DashboardLayout will handle profile verification/kicking
+      // Redirect to dashboard; DashboardLayout will handle profile verification
       router.replace("/dashboard");
     }
   }, [user, isAuthReady, router, db]);

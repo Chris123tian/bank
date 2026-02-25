@@ -28,7 +28,7 @@ service cloud.firestore {
      */
     match /{path=**}/transactions/{transactionId} {
       // MASTER ADMIN & ROLE ADMINS: Broad access for aggregate audits
-      allow read: if isSignedIn() && (isMasterAdmin() || exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)));
+      allow read: if isSignedIn() && isAdmin();
       
       // OWNERS: Access to their own data (Requires equality filters in query)
       allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
