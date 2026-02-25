@@ -26,12 +26,14 @@ service cloud.firestore {
      * Aggregate queries require deterministic authorization to be queryable at the index level.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && isMasterAdmin();
+      // Priority Rule 1: Master Administrative Global Audit
+      allow read: if isMasterAdmin();
+      // Priority Rule 2: Individual Client Ledger Ownership
       allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && isMasterAdmin();
+      allow read: if isMasterAdmin();
       allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
     }
 
