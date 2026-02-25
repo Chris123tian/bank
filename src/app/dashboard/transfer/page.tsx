@@ -197,16 +197,6 @@ export default function TransferPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                
-                {isAccountRestricted && (
-                  <div className="flex items-center gap-3 mt-3 p-4 bg-red-50 border border-red-100 rounded-xl animate-in fade-in zoom-in-95 duration-300">
-                    <ShieldAlert className="h-5 w-5 text-red-600 shrink-0" />
-                    <div>
-                      <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Regulatory Lockdown Active</p>
-                      <p className="text-xs text-red-500 font-medium">This account has been placed on an administrative hold, contact customer support for assistance.</p>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
