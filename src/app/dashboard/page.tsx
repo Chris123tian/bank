@@ -22,7 +22,6 @@ export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
 
-  // Fetch Accounts using stable direct path
   const accountsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return collection(db, "users", user.uid, "accounts");
@@ -41,7 +40,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Dynamic currency sync: use the currency of the primary account for the consolidated total
   const baseCurrency = useMemo(() => {
     return accounts?.[0]?.currency || 'USD';
   }, [accounts]);

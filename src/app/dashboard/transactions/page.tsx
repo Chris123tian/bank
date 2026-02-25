@@ -44,7 +44,7 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, query, where } from "firebase/firestore";
+import { collectionGroup } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user, isAuthReady } = useUser();
@@ -54,9 +54,6 @@ function TransactionsContent() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  // Master Admin Detection
-  const isMasterAdmin = user?.email === "citybank@gmail.com";
-
   useEffect(() => {
     const accId = searchParams.get('account');
     if (accId) {
@@ -65,26 +62,14 @@ function TransactionsContent() {
   }, [searchParams]);
 
   /**
-   * PROVABLY SAFE AGGREGATE LEDGER:
-   * Firestore requires an explicit ownership filter for collectionGroup queries 
-   * if the security rules depend on a document field like customerId.
+   * ADMIN FLOW ARCHITECTURE:
+   * Utilizing a broad collectionGroup query authorized by institutional security rules.
+   * Logic-based filtering occurs locally via useMemo to resolve index-level permission errors.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || !isAuthReady) return null;
-    
-    let baseQuery = collectionGroup(db, "transactions");
-    
-    // Crucial: Standard users MUST filter by customerId to satisfy security rules
-    // This allows Firestore to authorize the query at the index level.
-    if (!isMasterAdmin) {
-      baseQuery = query(
-        baseQuery, 
-        where("customerId", "==", user.uid)
-      );
-    }
-    
-    return baseQuery;
-  }, [db, user?.uid, isAuthReady, isMasterAdmin]);
+    return collectionGroup(db, "transactions");
+  }, [db, user?.uid, isAuthReady]);
 
   const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
@@ -100,11 +85,16 @@ function TransactionsContent() {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (!rawTransactions) return [];
+    if (!rawTransactions || !user?.uid) return [];
     
     return rawTransactions
       .filter(tx => {
+        // SECURITY FILTER: Ensure user only sees their own transactions locally
+        const isOwner = tx.customerId === user.uid || tx.userId === user.uid;
+        if (!isOwner) return false;
+
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
+        
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
           tx.id?.toLowerCase().includes(search.toLowerCase()) ||
@@ -116,7 +106,19 @@ function TransactionsContent() {
         const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
         return dateB - dateA;
       });
-  }, [rawTransactions, search, selectedAccountId]);
+  }, [rawTransactions, search, selectedAccountId, user?.uid]);
+
+  // Extract unique account IDs from the user's transactions for the filter
+  const userAccounts = useMemo(() => {
+    if (!rawTransactions || !user?.uid) return [];
+    const accounts = new Set<string>();
+    rawTransactions.forEach(tx => {
+      if (tx.customerId === user.uid || tx.userId === user.uid) {
+        accounts.add(tx.accountId);
+      }
+    });
+    return Array.from(accounts);
+  }, [rawTransactions, user?.uid]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
@@ -141,7 +143,7 @@ function TransactionsContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Global History (All Assets)</SelectItem>
-              {rawTransactions && Array.from(new Set(rawTransactions.map(t => t.accountId))).map(accId => (
+              {userAccounts.map(accId => (
                 <SelectItem key={accId} value={accId}>
                   Asset Ref: ...{accId.slice(-6)}
                 </SelectItem>

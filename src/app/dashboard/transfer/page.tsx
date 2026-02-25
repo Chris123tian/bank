@@ -23,7 +23,7 @@ export default function TransferPage() {
   const db = useFirestore();
   const [loading, setLoading] = useState(false);
   
-  // Receipt State
+  // Receipt State (Two-Stage Confirmation)
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [showFullReceipt, setShowFullReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
@@ -50,7 +50,6 @@ export default function TransferPage() {
   const selectedAccount = accounts?.find(a => a.id === fromAccountId);
   const isAccountRestricted = selectedAccount && selectedAccount.status !== 'Active';
 
-  // Sync currency with selected account
   useEffect(() => {
     if (selectedAccount?.currency) {
       setCurrency(selectedAccount.currency);
@@ -113,10 +112,8 @@ export default function TransferPage() {
       createdAt: serverTimestamp(),
     };
 
-    // 1. Log Transaction
     addDocumentNonBlocking(transactionsRef, transactionData);
 
-    // 2. Adjust Balance
     const accountRef = doc(db, "users", user.uid, "accounts", fromAccountId);
     updateDocumentNonBlocking(accountRef, {
       balance: selectedAccount.balance - Number(amount),
@@ -141,7 +138,6 @@ export default function TransferPage() {
       setShowFullReceipt(false);
       setIsReceiptOpen(true);
       
-      // Reset Form
       setRecipientName("");
       setRecipientAccount("");
       setRoutingOrIban("");
@@ -337,13 +333,13 @@ export default function TransferPage() {
 
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>
-          <DialogHeader className="sr-only">
-            <DialogTitle>Transfer Confirmation</DialogTitle>
-            <DialogDescription>Summary of authorized capital movement.</DialogDescription>
-          </DialogHeader>
           <div className="bg-white p-8 space-y-8">
             {!showFullReceipt ? (
               <div className="flex flex-col items-center text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>Transfer Successful</DialogTitle>
+                  <DialogDescription>Your institutional transfer has been authorized.</DialogDescription>
+                </DialogHeader>
                 <div className="h-24 w-24 bg-green-50 rounded-full flex items-center justify-center border-4 border-green-100">
                   <CheckCircle2 className="h-14 w-14 text-green-500" />
                 </div>
@@ -363,13 +359,13 @@ export default function TransferPage() {
               </div>
             ) : (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-black text-primary uppercase tracking-tight">Institutional Receipt</h2>
-                    <p className="text-[10px] font-mono text-slate-400 mt-1">TXID: {receiptData?.id}</p>
+                <DialogHeader className="flex justify-between items-start">
+                  <div className="flex flex-col gap-1">
+                    <DialogTitle className="text-2xl font-black text-primary uppercase tracking-tight">Institutional Receipt</DialogTitle>
+                    <DialogDescription className="text-[10px] font-mono text-slate-400 break-all uppercase">TXID: {receiptData?.id}</DialogDescription>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setShowFullReceipt(false)} className="h-8 w-8 rounded-full"><X className="h-4 w-4" /></Button>
-                </div>
+                  <Button variant="ghost" size="icon" onClick={() => setShowFullReceipt(false)} className="h-8 w-8 rounded-full absolute top-6 right-6"><X className="h-4 w-4" /></Button>
+                </DialogHeader>
 
                 <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 text-center space-y-1">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount Dispatched</p>
