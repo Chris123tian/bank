@@ -75,6 +75,7 @@ function TransactionsContent() {
     let baseQuery = collectionGroup(db, "transactions");
     
     // Crucial: Standard users MUST filter by customerId to satisfy security rules
+    // This allows Firestore to authorize the query at the index level.
     if (!isMasterAdmin) {
       baseQuery = query(baseQuery, where("customerId", "==", user.uid));
     }

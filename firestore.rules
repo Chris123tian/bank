@@ -23,20 +23,19 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Query Stability)
-     * These rules must be deterministic for Firestore to authorize aggregate queries.
+     * Aggregate queries require deterministic authorization to be queryable.
      */
     match /{path=**}/transactions/{transactionId} {
-      // Authorization for Master Admin (Broad Audit) or Owners (Safe Query)
       allow read: if isSignedIn() && (
-        request.auth.token.email == 'citybank@gmail.com' || 
-        resource.data.customerId == request.auth.uid
+        isMasterAdmin() || 
+        (resource != null && resource.data.customerId == request.auth.uid)
       );
     }
 
     match /{path=**}/accounts/{accountId} {
       allow read: if isSignedIn() && (
-        request.auth.token.email == 'citybank@gmail.com' || 
-        resource.data.customerId == request.auth.uid
+        isMasterAdmin() || 
+        (resource != null && resource.data.customerId == request.auth.uid)
       );
     }
 

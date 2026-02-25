@@ -32,6 +32,15 @@ export default function DashboardLayout({
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef);
 
+  // DEACTIVATION PROTOCOL: Kick out users whose profiles have been purged by administration
+  useEffect(() => {
+    if (isAuthReady && user && !isProfileLoading && !profile && user.email !== "citybank@gmail.com") {
+      initiateSignOut(auth).then(() => {
+        router.replace("/auth");
+      });
+    }
+  }, [user, profile, isProfileLoading, isAuthReady, auth, router]);
+
   useEffect(() => {
     if (isAuthReady && !user) {
       router.replace("/auth");

@@ -90,7 +90,7 @@ export default function BillsPage() {
               <TrendingUp className="h-12 w-12 text-slate-300" />
               <p className="font-black text-primary uppercase tracking-[0.2em] text-[10px]">Awaiting historical data</p>
             </CardContent>
-          </div>
+          </Card>
         </div>
       </div>
     </div>
