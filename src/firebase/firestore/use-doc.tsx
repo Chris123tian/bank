@@ -26,6 +26,7 @@ export function useDoc<T = any>(
 ): UseDocResult<T> {
   const { isAuthReady, user } = useFirebase();
   const [data, setData] = useState<WithId<T> | null>(null);
+  // Initialize isLoading to true if a ref is provided to prevent deactivation race conditions
   const [isLoading, setIsLoading] = useState<boolean>(!!memoizedDocRef);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 

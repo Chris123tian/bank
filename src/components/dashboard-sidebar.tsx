@@ -87,7 +87,10 @@ export function DashboardSidebar() {
   const isAdmin = isMasterAdmin || !!adminRole;
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
-  const baseCurrency = useMemo(() => accounts?.[0]?.currency || 'USD', [accounts]);
+  // Dynamic currency sync: use the currency of the primary account for the consolidated total
+  const baseCurrency = useMemo(() => {
+    return accounts?.[0]?.currency || 'USD';
+  }, [accounts]);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {

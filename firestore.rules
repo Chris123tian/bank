@@ -14,6 +14,7 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
     }
 
+    // Optimized Admin check to avoid recursion in rules
     function isAdmin() {
       return isMasterAdmin() || exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
@@ -24,18 +25,14 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Aggregate Audits)
-     * Optimized for Firestore query planner to allow broad admin reads and filtered owner reads.
+     * Split rules to satisfy Firestore's strict query planner for collectionGroup.
      */
     match /{path=**}/transactions/{transactionId} {
-      // MASTER ADMIN & ROLE ADMINS: Broad access for aggregate audits
-      allow read: if isSignedIn() && isAdmin();
-      
-      // OWNERS: Access to their own data (Requires equality filters in query)
-      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
+      allow read: if isSignedIn() && (isMasterAdmin() || resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && (isAdmin() || resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
+      allow read: if isSignedIn() && (isMasterAdmin() || resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid || isAdmin());
     }
 
     /**
@@ -78,7 +75,8 @@ service cloud.firestore {
     }
 
     match /roles_admin/{uid} {
-      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == uid);
+      // Deterministic read to avoid infinite recursion with isAdmin()
+      allow read: if isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || request.auth.uid == uid);
       allow write: if isMasterAdmin(); 
     }
   }
