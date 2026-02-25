@@ -63,8 +63,8 @@ function TransactionsContent() {
 
   /**
    * ADMIN FLOW ARCHITECTURE:
-   * Utilizing a broad collectionGroup query authorized by institutional security rules.
-   * Logic-based filtering occurs locally via useMemo to resolve index-level permission errors.
+   * Utilizing a broad collectionGroup query identical to the administrative suite.
+   * Secure local filtering occurs via useMemo to avoid aggregate query permission errors.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || !isAuthReady) return null;
@@ -108,7 +108,6 @@ function TransactionsContent() {
       });
   }, [rawTransactions, search, selectedAccountId, user?.uid]);
 
-  // Extract unique account IDs from the user's transactions for the filter
   const userAccounts = useMemo(() => {
     if (!rawTransactions || !user?.uid) return [];
     const accounts = new Set<string>();
