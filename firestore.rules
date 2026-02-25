@@ -23,20 +23,17 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Query Stability)
-     * Aggregate queries require deterministic authorization to be queryable.
+     * Aggregate queries require deterministic authorization to be queryable at the index level.
+     * Splitting rules ensures Firestore can satisfy query filters against indexed data.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && (
-        isMasterAdmin() || 
-        (resource != null && resource.data.customerId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && isMasterAdmin();
+      allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && (
-        isMasterAdmin() || 
-        (resource != null && resource.data.customerId == request.auth.uid)
-      );
+      allow read: if isSignedIn() && isMasterAdmin();
+      allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
     }
 
     /**

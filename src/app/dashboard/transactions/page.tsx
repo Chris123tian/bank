@@ -44,10 +44,10 @@ import {
 import { format } from "date-fns";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, query, where } from "firebase/firestore";
+import { collectionGroup, query, where, orderBy } from "firebase/firestore";
 
 function TransactionsContent() {
-  const { user } = useUser();
+  const { user, isAuthReady } = useUser();
   const db = useFirestore();
   const searchParams = useSearchParams();
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
@@ -70,18 +70,21 @@ function TransactionsContent() {
    * if the security rules depend on a document field like customerId.
    */
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
+    if (!db || !user?.uid || !isAuthReady) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
     // Crucial: Standard users MUST filter by customerId to satisfy security rules
     // This allows Firestore to authorize the query at the index level.
     if (!isMasterAdmin) {
-      baseQuery = query(baseQuery, where("customerId", "==", user.uid));
+      baseQuery = query(
+        baseQuery, 
+        where("customerId", "==", user.uid)
+      );
     }
     
     return baseQuery;
-  }, [db, user?.uid, isMasterAdmin]);
+  }, [db, user?.uid, isAuthReady, isMasterAdmin]);
 
   const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
@@ -227,7 +230,7 @@ function TransactionsContent() {
         </div>
       </Card>
 
-      <Dialog open={!!viewingTransaction} onOpenChange={() => setViewingTransaction(null)}>
+      <Dialog open={!!viewingTransaction} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
             <button onClick={() => setViewingTransaction(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
