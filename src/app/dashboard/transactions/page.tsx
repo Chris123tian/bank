@@ -60,7 +60,8 @@ function TransactionsContent() {
     if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
   }, [db, user?.uid]);
-  const { data: adminRole } = useDoc(adminRoleRef);
+  
+  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   const isMasterAdmin = user?.email === "citybank@gmail.com";
   const isAdmin = isMasterAdmin || !!adminRole;
 
@@ -77,7 +78,7 @@ function TransactionsContent() {
    * If non-admin, we MUST filter by customerId to satisfy the Firestore engine.
    */
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
+    if (!db || !user?.uid || (isAdminRoleLoading && !isMasterAdmin)) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
@@ -87,7 +88,7 @@ function TransactionsContent() {
     }
     
     return baseQuery;
-  }, [db, user?.uid, isAdmin]);
+  }, [db, user?.uid, isAdmin, isAdminRoleLoading, isMasterAdmin]);
 
   const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
@@ -174,7 +175,7 @@ function TransactionsContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactionsLoading ? (
+                {transactionsLoading || isAdminRoleLoading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-3">
