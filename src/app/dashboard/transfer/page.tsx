@@ -23,9 +23,10 @@ export default function TransferPage() {
   const db = useFirestore();
   const [loading, setLoading] = useState(false);
   
-  // Receipt State (Two-Stage Confirmation)
+  // Dialog States
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [showFullReceipt, setShowFullReceipt] = useState(false);
+  const [isSuspendedDialogOpen, setIsSuspendedDialogOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
   // Form State
@@ -69,11 +70,7 @@ export default function TransferPage() {
     if (!selectedAccount) return;
 
     if (isAccountRestricted) {
-      toast({
-        variant: "destructive",
-        title: "Regulatory Lockdown Active",
-        description: "This account has been placed on an administrative hold, contact customer support for assistance.",
-      });
+      setIsSuspendedDialogOpen(true);
       return;
     }
 
@@ -217,15 +214,15 @@ export default function TransferPage() {
                   <h4 className="text-xs font-black text-primary uppercase tracking-widest border-b pb-2">Recipient Information</h4>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Account Holder Name</Label>
-                    <Input placeholder="Full legal name or business entity" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} disabled={isAccountRestricted} />
+                    <Input placeholder="Full legal name or business entity" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Account Number</Label>
-                    <Input placeholder="Account number" value={recipientAccount} onChange={(e) => setRecipientAccount(e.target.value)} disabled={isAccountRestricted} />
+                    <Input placeholder="Account number" value={recipientAccount} onChange={(e) => setRecipientAccount(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Routing Number / IBAN</Label>
-                    <Input placeholder="SWIFT/BIC, Routing, or IBAN" value={routingOrIban} onChange={(e) => setRoutingOrIban(e.target.value)} disabled={isAccountRestricted} />
+                    <Input placeholder="SWIFT/BIC, Routing, or IBAN" value={routingOrIban} onChange={(e) => setRoutingOrIban(e.target.value)} />
                   </div>
                 </div>
 
@@ -233,15 +230,15 @@ export default function TransferPage() {
                   <h4 className="text-xs font-black text-primary uppercase tracking-widest border-b pb-2">Receiving Bank Information</h4>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Bank Name</Label>
-                    <Input placeholder="Financial institution name" value={bankName} onChange={(e) => setBankName(e.target.value)} disabled={isAccountRestricted} />
+                    <Input placeholder="Financial institution name" value={bankName} onChange={(e) => setBankName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Bank Address</Label>
-                    <Input placeholder="Branch location or head office" value={bankAddress} onChange={(e) => setBankAddress(e.target.value)} disabled={isAccountRestricted} />
+                    <Input placeholder="Branch location or head office" value={bankAddress} onChange={(e) => setBankAddress(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Payment Method</Label>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod} disabled={isAccountRestricted}>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Online Transfer">Online Global Transfer</SelectItem>
@@ -258,7 +255,7 @@ export default function TransferPage() {
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Transfer Amount</Label>
                   <div className="flex gap-2">
-                    <Select value={currency} onValueChange={setCurrency} disabled={isAccountRestricted}>
+                    <Select value={currency} onValueChange={setCurrency}>
                       <SelectTrigger className="w-[100px] h-12 font-black text-primary border-primary/20 bg-primary/5">
                         <SelectValue />
                       </SelectTrigger>
@@ -269,24 +266,24 @@ export default function TransferPage() {
                         <SelectItem value="AUD">AUD</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input type="number" placeholder="0.00" className="flex-1 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" value={amount} onChange={(e) => setAmount(e.target.value)} disabled={isAccountRestricted} />
+                    <Input type="number" placeholder="0.00" className="flex-1 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" value={amount} onChange={(e) => setAmount(e.target.value)} />
                   </div>
                   <p className="text-[9px] text-muted-foreground">Exchange rates and fees may apply to international wires.</p>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Reference / Note (Optional)</Label>
-                  <Textarea placeholder="Reference for recipient's ledger" className="min-h-[70px] resize-none" value={note} onChange={(e) => setNote(e.target.value)} disabled={isAccountRestricted} />
+                  <Textarea placeholder="Reference for recipient's ledger" className="min-h-[70px] resize-none" value={note} onChange={(e) => setNote(e.target.value)} />
                 </div>
               </div>
             </CardContent>
             <CardFooter className="bg-slate-50 border-t p-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
               <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                <ShieldCheck className={`h-3 w-3 ${isAccountRestricted ? 'text-slate-300' : 'text-green-500'}`} />
+                <ShieldCheck className={`h-3 w-3 ${isAccountRestricted ? 'text-red-500' : 'text-green-500'}`} />
                 AES-256 Multi-Sig Authorization Active
               </div>
               <div className="flex gap-3 w-full sm:w-auto">
                 <Button variant="outline" className="flex-1 sm:flex-none" disabled={loading}>Cancel</Button>
-                <Button onClick={handleTransfer} disabled={loading || accountsLoading || isAccountRestricted || !fromAccountId} className={`flex-1 sm:flex-none min-w-[180px] h-11 ${isAccountRestricted ? 'bg-slate-200 text-slate-400' : 'bg-accent hover:bg-accent/90'}`}>
+                <Button onClick={handleTransfer} disabled={loading || accountsLoading || !fromAccountId} className="flex-1 sm:flex-none min-w-[180px] h-11 bg-accent hover:bg-accent/90">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <><Send className="mr-2 h-4 w-4" /> Authorize Transfer</>}
                 </Button>
               </div>
@@ -318,12 +315,12 @@ export default function TransferPage() {
                 { name: "Rental Mgmt", bank: "Wells Fargo" },
                 { name: "Family Trust", bank: "HSBC London" },
               ].map((rec) => (
-                <button key={rec.name} onClick={() => { setRecipientName(rec.name); setBankName(rec.bank); }} className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors text-left group" disabled={isAccountRestricted}>
+                <button key={rec.name} onClick={() => { setRecipientName(rec.name); setBankName(rec.bank); }} className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors text-left group">
                   <div>
-                    <p className={`text-sm font-bold transition-colors ${isAccountRestricted ? 'text-slate-300' : 'text-primary group-hover:text-accent'}`}>{rec.name}</p>
+                    <p className="text-sm font-bold transition-colors text-primary group-hover:text-accent">{rec.name}</p>
                     <p className="text-[10px] text-muted-foreground">{rec.bank}</p>
                   </div>
-                  <ArrowRight className={`h-3 w-3 transition-all ${isAccountRestricted ? 'opacity-0' : 'opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0'}`} />
+                  <ArrowRight className="h-3 w-3 transition-all opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0" />
                 </button>
               ))}
             </CardContent>
@@ -419,6 +416,24 @@ export default function TransferPage() {
               © City Bank Global. Authorized by Institutional Rails
             </p>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSuspendedDialogOpen} onOpenChange={setIsSuspendedDialogOpen}>
+        <DialogContent className="max-w-xs p-8 rounded-[2rem] border-none shadow-2xl flex flex-col items-center text-center space-y-6">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Account Suspended</DialogTitle>
+            <DialogDescription>Your account has been suspended, contact support.</DialogDescription>
+          </DialogHeader>
+          <div className="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center border-4 border-red-100">
+            <CheckCircle2 className="h-10 w-10 text-red-500" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-lg font-black text-primary uppercase tracking-tight leading-tight">Your Account has been suspended, contact support</h2>
+          </div>
+          <Button className="w-full h-12 bg-primary font-bold rounded-xl" onClick={() => setIsSuspendedDialogOpen(false)}>
+            Done
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
