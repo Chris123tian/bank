@@ -74,6 +74,7 @@ function TransactionsContent() {
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
    * Uses collectionGroup with owner-based filtering to satisfy security rules.
+   * If non-admin, we MUST filter by customerId to satisfy the Firestore engine.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
@@ -257,100 +258,102 @@ function TransactionsContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-                <div className="space-y-8">
-                  <section className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                      <Receipt className="h-4 w-4" /> Settlement Overview
-                    </h4>
-                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
-                        <span className="text-[10px] font-black uppercase text-slate-500">Amount</span>
-                        <span className={`text-2xl sm:text-3xl font-black break-all ${viewingTransaction?.amount > 0 ? 'text-green-600' : 'text-[#002B5B]'}`}>
-                          {viewingTransaction?.amount > 0 ? '+' : '-'}{formatCurrency(viewingTransaction?.amount || 0, viewingTransaction?.currency)}
-                        </span>
-                      </div>
-                      <div className="h-px bg-slate-200" />
-                      <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Execution Date</p>
-                          <p className="font-bold text-slate-700">{viewingTransaction?.transactionDate ? format(new Date(viewingTransaction.transactionDate), "PPpp") : 'N/A'}</p>
+              {viewingTransaction && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                  <div className="space-y-8">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                        <Receipt className="h-4 w-4" /> Settlement Overview
+                      </h4>
+                      <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
+                          <span className="text-[10px] font-black uppercase text-slate-500">Amount</span>
+                          <span className={`text-2xl sm:text-3xl font-black break-all ${viewingTransaction.amount > 0 ? 'text-green-600' : 'text-[#002B5B]'}`}>
+                            {viewingTransaction.amount > 0 ? '+' : '-'}{formatCurrency(viewingTransaction.amount, viewingTransaction.currency)}
+                          </span>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Type</p>
-                          <p className="font-bold text-slate-700 capitalize">{viewingTransaction?.transactionType}</p>
+                        <div className="h-px bg-slate-200" />
+                        <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Execution Date</p>
+                            <p className="font-bold text-slate-700">{viewingTransaction.transactionDate ? format(new Date(viewingTransaction.transactionDate), "PPpp") : 'N/A'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Type</p>
+                            <p className="font-bold text-slate-700 capitalize">{viewingTransaction.transactionType}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </section>
+                    </section>
 
-                  <section className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                      <UserIcon className="h-4 w-4" /> Source Credentials
-                    </h4>
-                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-3 text-xs sm:text-sm">
-                      <div className="flex flex-col sm:flex-row justify-between gap-1">
-                        <span className="text-slate-500 font-bold shrink-0">Client ID:</span>
-                        <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction?.customerId || viewingTransaction?.userId}</span>
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                        <UserIcon className="h-4 w-4" /> Source Credentials
+                      </h4>
+                      <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-3 text-xs sm:text-sm">
+                        <div className="flex flex-col sm:flex-row justify-between gap-1">
+                          <span className="text-slate-500 font-bold shrink-0">Client ID:</span>
+                          <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction.customerId || viewingTransaction.userId}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row justify-between gap-1">
+                          <span className="text-slate-500 font-bold shrink-0">Source Asset:</span>
+                          <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction.accountId}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row justify-between gap-1">
-                        <span className="text-slate-500 font-bold shrink-0">Source Asset:</span>
-                        <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction?.accountId}</span>
+                    </section>
+                  </div>
+
+                  <div className="space-y-8">
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                        <Globe className="h-4 w-4" /> Counterparty Details
+                      </h4>
+                      <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">{viewingTransaction.amount > 0 ? 'Sender Identification' : 'Recipient Identity'}</p>
+                          <p className="font-bold text-slate-700 break-words">{viewingTransaction.metadata?.recipientName || 'Institutional Internal'}</p>
+                          <p className="text-[10px] sm:text-xs text-slate-500 font-mono break-all">{viewingTransaction.metadata?.recipientAccount || '—'}</p>
+                        </div>
+                        <div className="h-px bg-slate-200" />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Bank / Institution</p>
+                            <p className="font-bold text-slate-700 break-words">{viewingTransaction.metadata?.bankName || 'City Bank Global'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
+                            <p className="font-bold text-slate-700">{viewingTransaction.metadata?.paymentMethod || 'Internal Transfer'}</p>
+                          </div>
+                        </div>
+                        {viewingTransaction.metadata?.routingOrIban && (
+                          <div className="space-y-1 pt-2 border-t border-slate-200/50">
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Routing / IBAN</p>
+                            <p className="font-mono text-[10px] sm:text-xs font-bold text-slate-700 break-all">{viewingTransaction.metadata.routingOrIban}</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </section>
+                    </section>
+
+                    <section className="space-y-4">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
+                        <Info className="h-4 w-4" /> Regulatory Memos
+                      </h4>
+                      <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-slate-400 uppercase">Public Description</p>
+                          <p className="italic text-slate-600 break-words">"{viewingTransaction.description}"</p>
+                        </div>
+                        {viewingTransaction.metadata?.note && (
+                          <div className="space-y-1 pt-2 border-t border-slate-200">
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Personal Note</p>
+                            <p className="text-slate-600 break-words">{viewingTransaction.metadata.note}</p>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  </div>
                 </div>
-
-                <div className="space-y-8">
-                  <section className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                      <Globe className="h-4 w-4" /> Counterparty Details
-                    </h4>
-                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
-                      <div className="space-y-1">
-                        <p className="text-[9px] font-black text-slate-400 uppercase">{viewingTransaction?.amount > 0 ? 'Sender Identification' : 'Recipient Identity'}</p>
-                        <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.recipientName || 'Institutional Internal'}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-500 font-mono break-all">{viewingTransaction?.metadata?.recipientAccount || '—'}</p>
-                      </div>
-                      <div className="h-px bg-slate-200" />
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Bank / Institution</p>
-                          <p className="font-bold text-slate-700 break-words">{viewingTransaction?.metadata?.bankName || 'City Bank Global'}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
-                          <p className="font-bold text-slate-700">{viewingTransaction?.metadata?.paymentMethod || 'Internal Transfer'}</p>
-                        </div>
-                      </div>
-                      {viewingTransaction?.metadata?.routingOrIban && (
-                        <div className="space-y-1 pt-2 border-t border-slate-200/50">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Routing / IBAN</p>
-                          <p className="font-mono text-[10px] sm:text-xs font-bold text-slate-700 break-all">{viewingTransaction.metadata.routingOrIban}</p>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-
-                  <section className="space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                      <Info className="h-4 w-4" /> Regulatory Memos
-                    </h4>
-                    <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
-                      <div className="space-y-1">
-                        <p className="text-[9px] font-black text-slate-400 uppercase">Public Description</p>
-                        <p className="italic text-slate-600 break-words">"{viewingTransaction?.description}"</p>
-                      </div>
-                      {viewingTransaction?.metadata?.note && (
-                        <div className="space-y-1 pt-2 border-t border-slate-200">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">Personal Note</p>
-                          <p className="text-slate-600 break-words">{viewingTransaction.metadata.note}</p>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                </div>
-              </div>
+              )}
 
               <div className="pt-10 border-t border-slate-300">
                 <Button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-white text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">

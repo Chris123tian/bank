@@ -24,10 +24,17 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Aggregate Audits)
-     * Authorized for broad institutional ledger audits and consolidated client history.
+     * Optimized for Firestore query planner to allow broad admin reads and filtered owner reads.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && (isAdmin() || resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
+      // MASTER ADMIN: Broad access for aggregate audits
+      allow read: if isSignedIn() && isMasterAdmin();
+      
+      // OWNERS: Access to their own data (Requires equality filters in query)
+      allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
+      
+      // ROLE-BASED ADMINS: Access verified via roles_admin collection
+      allow read: if isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     match /{path=**}/accounts/{accountId} {
