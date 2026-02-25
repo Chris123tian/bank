@@ -163,7 +163,7 @@ export default function DashboardPage() {
       <div className="pt-10 flex justify-center border-t border-slate-200">
         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
           <ShieldCheck className="h-3 w-3 text-green-500" />
-          Authorized Access Only • 2048-bit RSA Verification
+          Authorized Access Only • AES-256 Protocol Verification
         </p>
       </div>
     </div>

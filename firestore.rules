@@ -29,6 +29,7 @@ service cloud.firestore {
       // Priority Rule 1: Master Administrative Global Audit
       allow read: if isMasterAdmin();
       // Priority Rule 2: Individual Client Ledger Ownership
+      // Note: Query MUST include .where('customerId', '==', auth.uid)
       allow read: if isSignedIn() && resource.data.customerId == request.auth.uid;
     }
 
