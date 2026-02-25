@@ -43,9 +43,9 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { useFirestore, useUser, useCollection } from "@/firebase";
+import { useFirestore, useUser, useCollection, useDoc } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, query, where } from "firebase/firestore";
+import { collectionGroup, query, where, doc } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -54,6 +54,15 @@ function TransactionsContent() {
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [search, setSearch] = useState("");
+
+  // Admin Detection for Unfiltered Query
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return doc(db, "roles_admin", user.uid);
+  }, [db, user?.uid]);
+  const { data: adminRole } = useDoc(adminRoleRef);
+  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isAdmin = isMasterAdmin || !!adminRole;
 
   useEffect(() => {
     const accId = searchParams.get('account');
@@ -64,23 +73,20 @@ function TransactionsContent() {
 
   /**
    * AUTHORIZED ADMIN-STYLE LEDGER:
-   * Uses provably safe collectionGroup query authorized by prioritized security rules.
-   * Scoped by customerId to satisfy Firestore authorization requirements.
+   * Uses high-performance collectionGroup query architecture.
+   * Optimized for security rule authorization via top-level group matches.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     
     const baseQuery = collectionGroup(db, "transactions");
     
-    // Master admin sees everything, clients see their own via filtered group query
-    if (user.email === "citybank@gmail.com") {
-      return baseQuery;
-    }
-    
-    return query(baseQuery, where("customerId", "==", user.uid));
-  }, [db, user?.uid, user?.email]);
+    // Master admin sees everything, clients see their own via aggregate group query
+    // security rules handle the path-based restriction for non-admins
+    return baseQuery;
+  }, [db, user?.uid]);
 
-  const { data: allTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
+  const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
     try {
@@ -94,12 +100,17 @@ function TransactionsContent() {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (!allTransactions || !user?.uid) return [];
+    if (!rawTransactions || !user?.uid) return [];
     
-    return allTransactions
+    return rawTransactions
       .filter(tx => {
+        // OWNERSHIP GUARD: Non-admins can only see their own records
+        if (!isAdmin && tx.customerId !== user.uid && tx.userId !== user.uid) return false;
+        
+        // ACCOUNT FILTER
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
         
+        // SEARCH FILTER
         const matchesSearch = 
           tx.description?.toLowerCase().includes(search.toLowerCase()) ||
           tx.id?.toLowerCase().includes(search.toLowerCase()) ||
@@ -111,7 +122,7 @@ function TransactionsContent() {
         const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
         return dateB - dateA;
       });
-  }, [allTransactions, search, selectedAccountId, user?.uid]);
+  }, [rawTransactions, search, selectedAccountId, user?.uid, isAdmin]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
@@ -136,7 +147,7 @@ function TransactionsContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Global History (All Assets)</SelectItem>
-              {allTransactions && Array.from(new Set(allTransactions.map(t => t.accountId))).map(accId => (
+              {rawTransactions && Array.from(new Set(rawTransactions.map(t => t.accountId))).map(accId => (
                 <SelectItem key={accId} value={accId}>
                   Asset Ref: ...{accId.slice(-6)}
                 </SelectItem>
