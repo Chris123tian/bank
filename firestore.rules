@@ -28,13 +28,13 @@ service cloud.firestore {
      * Rules are split to ensure queryability for collectionGroup.
      */
     match /{path=**}/transactions/{transactionId} {
-      // Rule 1: Master Admin Global Access (Queryable)
+      // Master Admin Global Access (Queryable)
       allow read: if isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
       
-      // Rule 2: Owner Access (Queryable - required for collectionGroup + where filter)
+      // Owner Access (Queryable - required for collectionGroup + where customerId filter)
       allow read: if isSignedIn() && (resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
       
-      // Rule 3: Administrative Role Access (Valid for individual get, non-queryable list)
+      // Administrative Role Access (Valid for individual get or list filtered by audit)
       allow read: if isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 

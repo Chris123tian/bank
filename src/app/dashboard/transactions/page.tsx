@@ -75,9 +75,10 @@ function TransactionsContent() {
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
    * Uses collectionGroup with owner-based filtering to satisfy queryable rules.
+   * CRITICAL: We wait for isAdminRoleLoading to finish before building the query.
    */
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !user?.uid || (isAdminRoleLoading && !isMasterAdmin)) return null;
+    if (!db || !user?.uid || isAdminRoleLoading) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
@@ -87,7 +88,7 @@ function TransactionsContent() {
     }
     
     return baseQuery;
-  }, [db, user?.uid, isAdmin, isAdminRoleLoading, isMasterAdmin]);
+  }, [db, user?.uid, isAdmin, isAdminRoleLoading]);
 
   const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
