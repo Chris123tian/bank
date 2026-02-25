@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect, Suspense } from "react";
@@ -74,21 +73,20 @@ function TransactionsContent() {
 
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
-   * Uses collectionGroup with owner-based filtering to satisfy queryable rules.
-   * CRITICAL: We wait for isAdminRoleLoading to finish before building the query.
+   * Uses collectionGroup with forced customerId filter for owner-based authorization.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || isAdminRoleLoading) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
-    // Firestore engine requires this filter if non-admin to satisfy indexed rules
-    if (!isAdmin) {
+    // Regular users MUST filter by customerId to satisfy the security rule
+    if (!isMasterAdmin) {
       baseQuery = query(baseQuery, where("customerId", "==", user.uid));
     }
     
     return baseQuery;
-  }, [db, user?.uid, isAdmin, isAdminRoleLoading]);
+  }, [db, user?.uid, isMasterAdmin, isAdminRoleLoading]);
 
   const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
@@ -354,9 +352,9 @@ function TransactionsContent() {
               )}
 
               <div className="pt-10 border-t border-slate-300">
-                <Button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-white text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
+                <button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-white text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
                   Dismiss Audit Insight
-                </Button>
+                </button>
               </div>
             </div>
           </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { 
@@ -87,6 +86,7 @@ export function DashboardSidebar() {
   const isAdmin = isMasterAdmin || !!adminRole;
 
   const totalBalance = accounts?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
+  
   // Dynamic currency sync: use the currency of the primary account for the consolidated total
   const baseCurrency = useMemo(() => {
     return accounts?.[0]?.currency || 'USD';
