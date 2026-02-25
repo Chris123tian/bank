@@ -27,11 +27,11 @@ service cloud.firestore {
      * Authorized for broad institutional ledger audits and consolidated client history.
      */
     match /{path=**}/transactions/{transactionId} {
-      allow read: if isSignedIn() && (isAdmin() || resource.data.customerId == request.auth.uid);
+      allow read: if isSignedIn() && (isAdmin() || resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
     }
 
     match /{path=**}/accounts/{accountId} {
-      allow read: if isSignedIn() && (isAdmin() || resource.data.customerId == request.auth.uid);
+      allow read: if isSignedIn() && (isAdmin() || resource.data.customerId == request.auth.uid || resource.data.userId == request.auth.uid);
     }
 
     /**

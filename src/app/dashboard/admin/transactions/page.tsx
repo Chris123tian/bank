@@ -301,8 +301,10 @@ export default function AdminTransactionsAuditPage() {
                     <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy HH:mm") : 'N/A'}</TableCell>
                     <TableCell className="text-[10px] sm:text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
                     <TableCell className="font-medium truncate max-w-[150px] sm:max-w-[200px]">
-                      {tx.description}
-                      {tx.metadata?.recipientName && <div className="text-[9px] text-muted-foreground uppercase font-bold">To: {tx.metadata.recipientName}</div>}
+                      <div className="flex flex-col gap-0.5">
+                        <span className="truncate">{tx.description}</span>
+                        {tx.metadata?.recipientName && <span className="text-[9px] text-muted-foreground uppercase font-bold">To: {tx.metadata.recipientName}</span>}
+                      </div>
                     </TableCell>
                     <TableCell><Badge variant="secondary" className="capitalize text-[9px] font-black tracking-tighter px-2">{tx.transactionType}</Badge></TableCell>
                     <TableCell>

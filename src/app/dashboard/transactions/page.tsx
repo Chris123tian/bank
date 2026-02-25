@@ -55,7 +55,7 @@ function TransactionsContent() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  // Admin Detection for Unfiltered Query
+  // Admin Detection
   const adminRoleRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     return doc(db, "roles_admin", user.uid);
@@ -72,19 +72,21 @@ function TransactionsContent() {
   }, [searchParams]);
 
   /**
-   * AUTHORIZED ADMIN-STYLE LEDGER:
-   * Uses high-performance collectionGroup query architecture.
-   * Optimized for security rule authorization via top-level group matches.
+   * PROVABLY SAFE AGGREGATE LEDGER:
+   * Uses collectionGroup with owner-based filtering to satisfy security rules.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     
-    const baseQuery = collectionGroup(db, "transactions");
+    let baseQuery = collectionGroup(db, "transactions");
     
-    // Master admin sees everything, clients see their own via aggregate group query
-    // security rules handle the path-based restriction for non-admins
+    // Provably safe query: Firestore engine requires this filter if non-admin
+    if (!isAdmin) {
+      baseQuery = query(baseQuery, where("customerId", "==", user.uid));
+    }
+    
     return baseQuery;
-  }, [db, user?.uid]);
+  }, [db, user?.uid, isAdmin]);
 
   const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
@@ -100,13 +102,10 @@ function TransactionsContent() {
   };
 
   const filteredTransactions = useMemo(() => {
-    if (!rawTransactions || !user?.uid) return [];
+    if (!rawTransactions) return [];
     
     return rawTransactions
       .filter(tx => {
-        // OWNERSHIP GUARD: Non-admins can only see their own records
-        if (!isAdmin && tx.customerId !== user.uid && tx.userId !== user.uid) return false;
-        
         // ACCOUNT FILTER
         if (selectedAccountId !== "all" && tx.accountId !== selectedAccountId) return false;
         
@@ -122,7 +121,7 @@ function TransactionsContent() {
         const dateB = b.transactionDate ? new Date(b.transactionDate).getTime() : 0;
         return dateB - dateA;
       });
-  }, [rawTransactions, search, selectedAccountId, user?.uid, isAdmin]);
+  }, [rawTransactions, search, selectedAccountId]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
