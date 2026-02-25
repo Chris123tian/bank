@@ -74,24 +74,33 @@ export default function AdminTransactionsAuditPage() {
   const [userAccounts, setUserAccounts] = useState<any[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
 
+  const adminRoleRef = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return doc(db, "roles_admin", user.uid);
+  }, [db, user?.uid]);
+
+  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   const isMasterAdmin = user?.email === "info@citybankglobal.com";
+  const isAdminConfirmed = isMasterAdmin || !!adminRole;
 
   /**
-   * REGULATORY AUDIT ACCESS:
-   * Only the Master Admin can perform a global collectionGroup audit.
-   * Standard admins manage via user paths to satisfy indexed security rules.
+   * ADMIN FLOW ARCHITECTURE:
+   * Utilizing broad collectionGroup query for all verified administrators.
+   * This resolves index-level permission conflicts.
    */
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !isMasterAdmin) return null;
+    if (!db || !isAdminConfirmed) return null;
     return collectionGroup(db, "transactions");
-  }, [db, isMasterAdmin]);
+  }, [db, isAdminConfirmed]);
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
 
-  const { data: allUsers } = useCollection(useMemoFirebase(() => {
-    if (!db) return null;
+  const usersRef = useMemoFirebase(() => {
+    if (!db || !isAdminConfirmed) return null;
     return collection(db, "users");
-  }, [db]));
+  }, [db, isAdminConfirmed]);
+
+  const { data: allUsers } = useCollection(usersRef);
 
   const fetchAccountsForUser = async (userId: string) => {
     if (!db || !userId) return;
@@ -224,17 +233,21 @@ export default function AdminTransactionsAuditPage() {
     return dateB - dateA;
   });
 
-  if (!isMasterAdmin) {
+  if (isAdminRoleLoading && !isMasterAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verifying Clearance...</p>
+      </div>
+    );
+  }
+
+  if (!isAdminConfirmed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
-        <ShieldAlert className="h-12 w-12 text-orange-500" />
-        <h2 className="text-2xl font-bold text-primary">Master Clearance Required</h2>
-        <p className="text-muted-foreground text-sm max-w-md">
-          Global aggregate auditing is reserved for Master Administrative sessions. Please manage specific client transactions via the User Audit terminal.
-        </p>
-        <Button variant="outline" asChild className="font-bold">
-          <a href="/dashboard/admin/users">Go to User Audit</a>
-        </Button>
+        <ShieldAlert className="h-12 w-12 text-red-500" />
+        <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
+        <p className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</p>
       </div>
     );
   }

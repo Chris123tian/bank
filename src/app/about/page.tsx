@@ -1,7 +1,6 @@
-
 "use client";
 
-import { Building2, Globe, ShieldCheck, MapPin } from "lucide-react";
+import { Building2, Globe, ShieldCheck, MapPin, Mail } from "lucide-react";
 import LinkNext from "next/link";
 import { useTranslation } from "@/components/language-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -104,7 +103,11 @@ export default function AboutPage() {
       <footer className="bg-slate-950 py-16 border-t border-white/5 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center space-y-4">
           <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">{t('footer_address')}</p>
-          <p className="text-[8px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-widest">© City Bank Global. Member FDIC. Equal Housing Lender.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6">
+            <p className="text-[8px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-widest italic">info@citybankglobal.com</p>
+            <p className="hidden sm:block text-slate-800 text-[8px]">•</p>
+            <p className="text-[8px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-widest">© City Bank Global. Member FDIC.</p>
+          </div>
         </div>
       </footer>
     </div>

@@ -1,7 +1,6 @@
-
 "use client";
 
-import { Building2, Zap, BarChart3, Lock, ShieldCheck, PieChart } from "lucide-react";
+import { Building2, Zap, BarChart3, Lock, ShieldCheck, PieChart, Mail } from "lucide-react";
 import LinkNext from "next/link";
 import { useTranslation } from "@/components/language-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
@@ -91,8 +90,11 @@ export default function ServicesPage() {
       </main>
 
       <footer className="bg-slate-950 py-16 border-t border-white/5 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">© City Bank Global. Institutional Grade Financial Infrastructure</p>
+        <div className="max-w-7xl mx-auto text-center space-y-4">
+          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Institutional Grade Financial Infrastructure</p>
+          <p className="text-[8px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+            <Mail className="h-3 w-3" /> info@citybankglobal.com | © City Bank Global
+          </p>
         </div>
       </footer>
     </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,8 @@ import {
   BarChart3,
   MousePointerClick,
   Smartphone,
-  ChevronRight
+  ChevronRight,
+  Mail
 } from "lucide-react";
 import LinkNext from "next/link";
 import Image from "next/image";
@@ -69,7 +69,7 @@ export default function LandingPage() {
       </nav>
 
       <main className="flex-1">
-        {/* Cinematic Hero - Performance Optimized */}
+        {/* Cinematic Hero */}
         <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center pt-16 pb-24 sm:pb-32 overflow-hidden">
           <div className="absolute inset-0 z-0">
              <Image 
@@ -77,7 +77,6 @@ export default function LandingPage() {
                 alt="Institutional Banking"
                 fill
                 priority={true}
-                loading="eager"
                 className="object-cover opacity-30 sm:opacity-40 transition-opacity duration-1000"
                 data-ai-hint="modern banking"
              />
@@ -237,6 +236,9 @@ export default function LandingPage() {
                 <div className="pt-4 space-y-2 text-xs text-slate-500 font-bold uppercase tracking-widest">
                   <p>{t('footer_address')}</p>
                   <p>{t('footer_branches')}</p>
+                  <p className="flex items-center gap-2 justify-center md:justify-start lowercase text-slate-400 mt-2">
+                    <Mail className="h-3 w-3" /> info@citybankglobal.com
+                  </p>
                 </div>
              </div>
              <div className="space-y-4 text-center md:text-left">
