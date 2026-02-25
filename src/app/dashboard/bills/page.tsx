@@ -86,16 +86,9 @@ export default function BillsPage() {
             <CardHeader>
               <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Spending Trends</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-white text-slate-400 rounded-lg border">
-                  <TrendingUp className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold">Awaiting Data</p>
-                  <p className="text-xs text-muted-foreground leading-tight">Historical analysis will appear after your first settlement.</p>
-                </div>
-              </div>
+            <CardContent className="py-12 flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+              <TrendingUp className="h-12 w-12 text-slate-300" />
+              <p className="font-black text-primary uppercase tracking-[0.2em] text-[10px]">Awaiting historical data</p>
             </CardContent>
           </Card>
         </div>

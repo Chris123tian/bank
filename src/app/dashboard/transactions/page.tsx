@@ -62,7 +62,6 @@ function TransactionsContent() {
   
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   const isMasterAdmin = user?.email === "citybank@gmail.com";
-  const isAdmin = isMasterAdmin || !!adminRole;
 
   useEffect(() => {
     const accId = searchParams.get('account');
