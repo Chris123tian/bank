@@ -13,7 +13,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initiateSignOut } from "@/firebase/non-blocking-login";
 
 export default function DashboardLayout({
   children,
@@ -23,7 +22,6 @@ export default function DashboardLayout({
   const { user, isUserLoading, isAuthReady } = useUser();
   const router = useRouter();
   const db = useFirestore();
-  const auth = useAuth();
 
   // Fetch real-time Firestore profile
   const profileRef = useMemoFirebase(() => {
@@ -37,15 +35,7 @@ export default function DashboardLayout({
     if (isAuthReady && !user) {
       router.replace("/auth");
     }
-
-    // Deactivation Protocol: Kick out users whose profiles have been deleted
-    // ONLY execute after auth is ready, user exists, and profile loading has finished definitively as null.
-    if (isAuthReady && user && !isProfileLoading && profile === null && user.email !== "citybank@gmail.com") {
-      initiateSignOut(auth).then(() => {
-        router.replace("/auth");
-      });
-    }
-  }, [user, isAuthReady, router, isProfileLoading, profile, auth]);
+  }, [user, isAuthReady, router]);
 
   const displayName = useMemo(() => {
     if (profile?.firstName) {
