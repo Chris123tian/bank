@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -85,7 +84,7 @@ export default function AdminUsersPage() {
 
   const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
   
-  const isMasterAdmin = currentUser?.email === "citybank@gmail.com";
+  const isMasterAdmin = currentUser?.email === "info@citybankglobal.com";
   const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
   const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 

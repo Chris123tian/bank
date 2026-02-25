@@ -65,7 +65,7 @@ export default function AdminAccountsAuditPage() {
     currency: "USD"
   });
 
-  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isMasterAdmin = user?.email === "info@citybankglobal.com";
 
   /**
    * REGULATORY AUDIT ACCESS:

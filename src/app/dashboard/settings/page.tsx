@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -40,7 +39,7 @@ export default function SettingsPage() {
     return doc(db, "roles_admin", user.uid);
   }, [db, user?.uid]);
   const { data: adminRole } = useDoc(adminRoleRef);
-  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isMasterAdmin = user?.email === "info@citybankglobal.com";
   const isAdmin = isMasterAdmin || !!adminRole;
 
   // Profile data fetch

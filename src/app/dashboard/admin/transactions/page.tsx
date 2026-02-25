@@ -49,7 +49,7 @@ export default function AdminTransactionsAuditPage() {
   const { user } = useUser();
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [viewingTransaction, setViewingTransaction] = useState<any>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -74,7 +74,7 @@ export default function AdminTransactionsAuditPage() {
   const [userAccounts, setUserAccounts] = useState<any[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
 
-  const isMasterAdmin = user?.email === "citybank@gmail.com";
+  const isMasterAdmin = user?.email === "info@citybankglobal.com";
 
   /**
    * REGULATORY AUDIT ACCESS:
@@ -204,7 +204,6 @@ export default function AdminTransactionsAuditPage() {
     
     toast({ title: "Transaction Updated", description: "Audit trail record and metadata have been modified." });
     setEditingTransaction(null);
-    setIsEditDialogOpen(false);
   };
 
   const handleDelete = (tx: any) => {
@@ -314,7 +313,6 @@ export default function AdminTransactionsAuditPage() {
                           onClick={() => { 
                             const dateStr = tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16);
                             setEditingTransaction({...tx, transactionDate: dateStr}); 
-                            setIsEditDialogOpen(true); 
                           }}
                         >
                           <Edit3 className="h-4 w-4" />
@@ -415,7 +413,7 @@ export default function AdminTransactionsAuditPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">
           <div className="p-6 sm:p-8 bg-accent text-white border-b shrink-0">
             <DialogHeader>
@@ -492,7 +490,7 @@ export default function AdminTransactionsAuditPage() {
             )}
           </div>
           <DialogFooter className="p-6 sm:p-8 bg-slate-50 border-t shrink-0 flex flex-col sm:flex-row gap-3">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1 h-12 rounded-xl px-8 order-2 sm:order-1">Cancel</Button>
+            <Button variant="outline" onClick={() => setEditingTransaction(null)} className="flex-1 h-12 rounded-xl px-8 order-2 sm:order-1">Cancel</Button>
             <Button onClick={handleUpdateTransaction} className="bg-accent h-12 rounded-xl px-10 font-black uppercase tracking-widest order-1 sm:order-2 shadow-lg">Commit Correction</Button>
           </DialogFooter>
         </DialogContent>

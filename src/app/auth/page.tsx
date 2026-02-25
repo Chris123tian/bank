@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -31,7 +30,7 @@ function AuthPageContent() {
   // Redirect Protocol
   useEffect(() => {
     if (isAuthReady && user) {
-      if (user.email === "citybank@gmail.com") {
+      if (user.email === "info@citybankglobal.com") {
         // Ensure master admin marker exists
         const adminRef = doc(db, "roles_admin", user.uid);
         setDoc(adminRef, { 
@@ -135,7 +134,7 @@ function AuthPageContent() {
                 className="h-10 sm:h-11"
               />
             </div>
-            {email === "citybank@gmail.com" && (
+            {email === "info@citybankglobal.com" && (
               <div className="flex items-center gap-2 p-2 sm:p-3 bg-accent/10 border border-accent/20 rounded-lg text-[10px] sm:text-xs font-bold text-accent animate-pulse">
                 <ShieldCheck className="h-3 w-3 sm:h-4 sm:w-4" />
                 Administrator Login Detected

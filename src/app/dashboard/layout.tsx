@@ -33,7 +33,7 @@ export default function DashboardLayout({
 
   // REDIRECT PROTOCOL: Redirect users with missing profiles to onboarding unless they are the master admin
   useEffect(() => {
-    if (isAuthReady && user && !isProfileLoading && !profile && user.email !== "citybank@gmail.com") {
+    if (isAuthReady && user && !isProfileLoading && !profile && user.email !== "info@citybankglobal.com") {
       // Only redirect if not already on the onboarding page
       if (pathname !== "/dashboard/accounts/new") {
         router.replace("/dashboard/accounts/new");

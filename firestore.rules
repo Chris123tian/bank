@@ -10,7 +10,7 @@ service cloud.firestore {
     }
 
     function isMasterAdmin() {
-      return isSignedIn() && request.auth.token.email == 'citybank@gmail.com';
+      return isSignedIn() && request.auth.token.email == 'info@citybankglobal.com';
     }
 
     function isAdmin() {
@@ -72,7 +72,7 @@ service cloud.firestore {
     }
 
     match /roles_admin/{uid} {
-      allow read: if isSignedIn() && (request.auth.token.email == 'citybank@gmail.com' || request.auth.uid == uid);
+      allow read: if isSignedIn() && (request.auth.token.email == 'info@citybankglobal.com' || request.auth.uid == uid);
       allow write: if isMasterAdmin(); 
     }
   }
