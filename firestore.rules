@@ -23,9 +23,10 @@ service cloud.firestore {
 
     /**
      * COLLECTION GROUP RULES (Hardened for Query Stability)
-     * Rules must be deterministic for Firestore to authorize aggregate queries.
+     * These rules must be deterministic for Firestore to authorize aggregate queries.
      */
     match /{path=**}/transactions/{transactionId} {
+      // Authorization for Master Admin (Broad Audit) or Owners (Safe Query)
       allow read: if isSignedIn() && (
         request.auth.token.email == 'citybank@gmail.com' || 
         resource.data.customerId == request.auth.uid

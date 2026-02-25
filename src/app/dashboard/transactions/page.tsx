@@ -42,9 +42,9 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { useFirestore, useUser, useCollection, useDoc } from "@/firebase";
+import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
-import { collectionGroup, query, where, doc } from "firebase/firestore";
+import { collectionGroup, query, where } from "firebase/firestore";
 
 function TransactionsContent() {
   const { user } = useUser();
@@ -66,13 +66,15 @@ function TransactionsContent() {
 
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
-   * Non-Master admins MUST filter by customerId to satisfy the security rule at index level.
+   * Firestore requires an explicit ownership filter for collectionGroup queries 
+   * if the security rules depend on a document field like customerId.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
+    // Crucial: Standard users MUST filter by customerId to satisfy security rules
     if (!isMasterAdmin) {
       baseQuery = query(baseQuery, where("customerId", "==", user.uid));
     }
