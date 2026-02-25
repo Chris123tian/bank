@@ -74,34 +74,24 @@ export default function AdminTransactionsAuditPage() {
   const [userAccounts, setUserAccounts] = useState<any[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
 
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
-    return doc(db, "roles_admin", user.uid);
-  }, [db, user?.uid]);
-
-  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
-  
   const isMasterAdmin = user?.email === "citybank@gmail.com";
-  const isAdminConfirmed = isMasterAdmin || (!!adminRole && !isAdminRoleLoading);
-  const isAdminReady = isMasterAdmin || (!isAdminRoleLoading && isAdminConfirmed);
 
   /**
    * REGULATORY AUDIT ACCESS:
    * Only the Master Admin can perform a global collectionGroup audit.
-   * Other admins should audit via specific user profiles to satisfy query safety rules.
+   * Standard admins manage via user paths to satisfy indexed security rules.
    */
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !isAdminReady) return null;
-    if (!isMasterAdmin) return null; // Standard admins must audit via user profiles
+    if (!db || !isMasterAdmin) return null;
     return collectionGroup(db, "transactions");
-  }, [db, isAdminReady, isMasterAdmin]);
+  }, [db, isMasterAdmin]);
 
   const { data: transactions, isLoading: isTransactionsLoading } = useCollection(transactionsRef);
 
   const { data: allUsers } = useCollection(useMemoFirebase(() => {
-    if (!db || !isAdminReady) return null;
+    if (!db) return null;
     return collection(db, "users");
-  }, [db, isAdminReady]));
+  }, [db]));
 
   const fetchAccountsForUser = async (userId: string) => {
     if (!db || !userId) return;
@@ -235,21 +225,17 @@ export default function AdminTransactionsAuditPage() {
     return dateB - dateA;
   });
 
-  if (isAdminRoleLoading && !isMasterAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verifying Administrative Clearance...</div>
-      </div>
-    );
-  }
-
-  if (!isAdminConfirmed) {
+  if (!isMasterAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 px-6">
-        <ShieldAlert className="h-12 w-12 text-red-500" />
-        <h2 className="text-2xl font-bold text-primary">Access Denied</h2>
-        <div className="text-muted-foreground text-sm max-w-xs">Institutional administrative credentials are required to access this terminal.</div>
+        <ShieldAlert className="h-12 w-12 text-orange-500" />
+        <h2 className="text-2xl font-bold text-primary">Master Clearance Required</h2>
+        <p className="text-muted-foreground text-sm max-w-md">
+          Global aggregate auditing is reserved for Master Administrative sessions. Please manage specific client transactions via the User Audit terminal.
+        </p>
+        <Button variant="outline" asChild className="font-bold">
+          <a href="/dashboard/admin/users">Go to User Audit</a>
+        </Button>
       </div>
     );
   }
@@ -277,87 +263,72 @@ export default function AdminTransactionsAuditPage() {
         </div>
       </div>
 
-      {!isMasterAdmin ? (
-        <Card className="p-12 text-center space-y-4 border-dashed border-2 bg-slate-50/50 rounded-3xl">
-          <ShieldAlert className="h-12 w-12 text-orange-400 mx-auto" />
-          <div className="space-y-2">
-            <h3 className="text-xl font-bold text-primary">Master Clearance Required</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Global collection group auditing is reserved for the Master Administrative terminal. Please use the User Audit terminal to manage specific client portfolios and transaction logs.
-            </p>
-          </div>
-          <Button variant="outline" asChild className="font-bold">
-            <a href="/dashboard/admin/users">Go to User Audit</a>
-          </Button>
-        </Card>
-      ) : (
-        <Card className="shadow-xl rounded-2xl border-none overflow-hidden bg-white">
-          <CardHeader className="border-b bg-slate-50/50">
-            <CardTitle className="text-lg">Institutional Settlement Ledger</CardTitle>
-            <CardDescription>Auditing all financial movements across the City Bank Global network.</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto w-full">
-              <Table>
-                <TableHeader className="bg-slate-50/80">
-                  <TableRow>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Date</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Client ID</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Description</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Amount</TableHead>
-                    <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Actions</TableHead>
+      <Card className="shadow-xl rounded-2xl border-none overflow-hidden bg-white">
+        <CardHeader className="border-b bg-slate-50/50">
+          <CardTitle className="text-lg">Institutional Settlement Ledger</CardTitle>
+          <CardDescription>Auditing all financial movements across the City Bank Global network.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <Table>
+              <TableHeader className="bg-slate-50/80">
+                <TableRow>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Date</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Client ID</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Description</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Amount</TableHead>
+                  <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isTransactionsLoading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-24"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><div className="text-[10px] font-black uppercase text-slate-400">Syncing Network Ledger...</div></div></TableCell></TableRow>
+                ) : filteredTransactions?.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-24 text-muted-foreground italic">No transaction records found.</TableCell></TableRow>
+                ) : filteredTransactions?.map((tx) => (
+                  <TableRow key={tx.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
+                    <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy HH:mm") : 'N/A'}</TableCell>
+                    <TableCell className="text-[10px] sm:text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
+                    <TableCell className="font-medium truncate max-w-[150px] sm:max-w-[200px]">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="truncate">{tx.description}</span>
+                        {tx.metadata?.recipientName && <span className="text-[9px] text-muted-foreground uppercase font-bold">To: {tx.metadata.recipientName}</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell><Badge variant="secondary" className="capitalize text-[9px] font-black tracking-tighter px-2">{tx.transactionType}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant={tx.status === 'completed' ? 'default' : 'outline'} className="text-[9px] font-black uppercase tracking-tighter px-2">{tx.status}</Badge>
+                    </TableCell>
+                    <TableCell className={`font-black whitespace-nowrap ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount, tx.currency || 'USD')}
+                    </TableCell>
+                    <TableCell className="text-right px-6">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary shrink-0" onClick={() => setViewingTransaction(tx)}><Eye className="h-4 w-4" /></Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 shrink-0" 
+                          onClick={() => { 
+                            const dateStr = tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16);
+                            setEditingTransaction({...tx, transactionDate: dateStr}); 
+                            setIsEditDialogOpen(true); 
+                          }}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 shrink-0" onClick={() => handleDelete(tx)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isTransactionsLoading ? (
-                    <TableRow><TableCell colSpan={7} className="text-center py-24"><div className="flex flex-col items-center gap-2"><Loader2 className="h-8 w-8 animate-spin text-slate-300" /><div className="text-[10px] font-black uppercase text-slate-400">Syncing Network Ledger...</div></div></TableCell></TableRow>
-                  ) : filteredTransactions?.length === 0 ? (
-                    <TableRow><TableCell colSpan={7} className="text-center py-24 text-muted-foreground italic">No transaction records found.</TableCell></TableRow>
-                  ) : filteredTransactions?.map((tx) => (
-                    <TableRow key={tx.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100 last:border-none">
-                      <TableCell className="text-[10px] sm:text-xs font-mono py-4 px-6 whitespace-nowrap">{tx.transactionDate ? format(new Date(tx.transactionDate), "MMM dd, yyyy HH:mm") : 'N/A'}</TableCell>
-                      <TableCell className="text-[10px] sm:text-xs font-mono truncate max-w-[100px]">{tx.customerId || tx.userId}</TableCell>
-                      <TableCell className="font-medium truncate max-w-[150px] sm:max-w-[200px]">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="truncate">{tx.description}</span>
-                          {tx.metadata?.recipientName && <span className="text-[9px] text-muted-foreground uppercase font-bold">To: {tx.metadata.recipientName}</span>}
-                        </div>
-                      </TableCell>
-                      <TableCell><Badge variant="secondary" className="capitalize text-[9px] font-black tracking-tighter px-2">{tx.transactionType}</Badge></TableCell>
-                      <TableCell>
-                        <Badge variant={tx.status === 'completed' ? 'default' : 'outline'} className="text-[9px] font-black uppercase tracking-tighter px-2">{tx.status}</Badge>
-                      </TableCell>
-                      <TableCell className={`font-black whitespace-nowrap ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount, tx.currency || 'USD')}
-                      </TableCell>
-                      <TableCell className="text-right px-6">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary shrink-0" onClick={() => setViewingTransaction(tx)}><Eye className="h-4 w-4" /></Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-slate-400 shrink-0" 
-                            onClick={() => { 
-                              const dateStr = tx.transactionDate ? new Date(tx.transactionDate).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16);
-                              setEditingTransaction({...tx, transactionDate: dateStr}); 
-                              setIsEditDialogOpen(true); 
-                            }}
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 shrink-0" onClick={() => handleDelete(tx)}><Trash2 className="h-4 w-4" /></Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl p-0 border-none shadow-2xl w-[95vw] sm:w-full flex flex-col">

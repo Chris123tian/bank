@@ -54,13 +54,7 @@ function TransactionsContent() {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  // Admin Detection
-  const adminRoleRef = useMemoFirebase(() => {
-    if (!db || !user?.uid) return null;
-    return doc(db, "roles_admin", user.uid);
-  }, [db, user?.uid]);
-  
-  const { data: adminRole, isLoading: isAdminRoleLoading } = useDoc(adminRoleRef);
+  // Master Admin Detection
   const isMasterAdmin = user?.email === "citybank@gmail.com";
 
   useEffect(() => {
@@ -72,21 +66,19 @@ function TransactionsContent() {
 
   /**
    * PROVABLY SAFE AGGREGATE LEDGER:
-   * Uses collectionGroup with forced customerId filter for owner-based authorization.
-   * Crucially waits for isAdminRoleLoading to prevent initial unauthorized broad query attempts.
+   * Non-Master admins MUST filter by customerId to satisfy the security rule at index level.
    */
   const transactionsRef = useMemoFirebase(() => {
-    if (!db || !user?.uid || isAdminRoleLoading) return null;
+    if (!db || !user?.uid) return null;
     
     let baseQuery = collectionGroup(db, "transactions");
     
-    // Non-Master admins MUST filter by customerId to satisfy the security rule at index level
     if (!isMasterAdmin) {
       baseQuery = query(baseQuery, where("customerId", "==", user.uid));
     }
     
     return baseQuery;
-  }, [db, user?.uid, isMasterAdmin, isAdminRoleLoading]);
+  }, [db, user?.uid, isMasterAdmin]);
 
   const { data: rawTransactions, isLoading: transactionsLoading } = useCollection(transactionsRef);
 
@@ -170,7 +162,7 @@ function TransactionsContent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactionsLoading || isAdminRoleLoading ? (
+                {transactionsLoading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-3">
