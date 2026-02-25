@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useUser, useFirestore, useDoc, useAuth } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
@@ -12,7 +12,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initiateSignOut } from "@/firebase/non-blocking-login";
 
 export default function DashboardLayout({
   children,
@@ -20,8 +19,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, isAuthReady } = useUser();
-  const auth = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const db = useFirestore();
 
   // Fetch real-time Firestore profile
@@ -32,14 +31,15 @@ export default function DashboardLayout({
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef);
 
-  // DEACTIVATION PROTOCOL: Kick out users whose profiles have been purged by administration
+  // REDIRECT PROTOCOL: Redirect users with missing profiles to onboarding unless they are the master admin
   useEffect(() => {
     if (isAuthReady && user && !isProfileLoading && !profile && user.email !== "citybank@gmail.com") {
-      initiateSignOut(auth).then(() => {
-        router.replace("/auth");
-      });
+      // Only redirect if not already on the onboarding page
+      if (pathname !== "/dashboard/accounts/new") {
+        router.replace("/dashboard/accounts/new");
+      }
     }
-  }, [user, profile, isProfileLoading, isAuthReady, auth, router]);
+  }, [user, profile, isProfileLoading, isAuthReady, router, pathname]);
 
   useEffect(() => {
     if (isAuthReady && !user) {
