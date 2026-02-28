@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download, FileText, Key } from "lucide-react";
+import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download, FileText, Key, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -18,6 +18,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
+type AuthStep = "idle" | "cot" | "ant" | "tax" | "imf" | "success";
+
 export default function TransferPage() {
   const { toast } = useToast();
   const { user } = useUser();
@@ -25,6 +27,8 @@ export default function TransferPage() {
   const [loading, setLoading] = useState(false);
   
   // Dialog States
+  const [authStep, setAuthStep] = useState<AuthStep>("idle");
+  const [enteredCode, setEnteredCode] = useState("");
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [showFullReceipt, setShowFullReceipt] = useState(false);
   const [isSuspendedDialogOpen, setIsSuspendedDialogOpen] = useState(false);
@@ -59,7 +63,7 @@ export default function TransferPage() {
     }
   }, [selectedAccount]);
 
-  const handleTransfer = () => {
+  const handleInitialAuthorization = () => {
     if (!fromAccountId || !amount || !recipientName || !recipientAccount || !authCode || !user || !db) {
       toast({
         variant: "destructive",
@@ -95,6 +99,49 @@ export default function TransferPage() {
       return;
     }
 
+    // Start Sequential Authorization
+    setAuthStep("cot");
+  };
+
+  const handleStepProceed = () => {
+    if (!selectedAccount) return;
+
+    let isValid = false;
+    let nextStep: AuthStep = "idle";
+
+    if (authStep === "cot") {
+      isValid = enteredCode === selectedAccount.cotCode;
+      nextStep = "ant";
+    } else if (authStep === "ant") {
+      isValid = enteredCode === selectedAccount.antCode;
+      nextStep = "tax";
+    } else if (authStep === "tax") {
+      isValid = enteredCode === selectedAccount.taxCode;
+      nextStep = "imf";
+    } else if (authStep === "imf") {
+      isValid = enteredCode === selectedAccount.imfCode;
+      nextStep = "success";
+    }
+
+    if (!isValid) {
+      toast({
+        variant: "destructive",
+        title: "Protocol Interrupted",
+        description: `Invalid ${authStep.toUpperCase()} code provided. Transfer halted for security.`,
+      });
+      return;
+    }
+
+    setEnteredCode("");
+    if (nextStep === "success") {
+      finalizeTransfer();
+    } else {
+      setAuthStep(nextStep);
+    }
+  };
+
+  const finalizeTransfer = () => {
+    if (!selectedAccount || !user || !db) return;
     setLoading(true);
 
     const txId = `CITY-TX-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
@@ -116,7 +163,7 @@ export default function TransferPage() {
         bankAddress,
         paymentMethod,
         note,
-        authCodeUsed: "****" // Regulatory masking
+        authCodeUsed: "****"
       },
       status: "completed",
       createdAt: serverTimestamp(),
@@ -145,6 +192,7 @@ export default function TransferPage() {
         senderAccount: selectedAccount.accountNumber,
         newBalance: selectedAccount.balance - Number(amount)
       });
+      setAuthStep("idle");
       setShowFullReceipt(false);
       setIsReceiptOpen(true);
       
@@ -171,6 +219,8 @@ export default function TransferPage() {
     if (!acc) return "••••";
     return `•••• ${acc.slice(-4)}`;
   };
+
+  const currentCodeLabel = authStep === 'cot' ? 'C.O.T' : authStep === 'ant' ? 'A.N.T' : authStep === 'tax' ? 'T.A.X' : 'I.M.F';
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -302,7 +352,7 @@ export default function TransferPage() {
               </div>
               <div className="flex gap-3 w-full sm:w-auto">
                 <Button variant="outline" className="flex-1 sm:flex-none" disabled={loading}>Cancel</Button>
-                <Button onClick={handleTransfer} disabled={loading || accountsLoading || !fromAccountId} className="flex-1 sm:flex-none min-w-[180px] h-11 bg-accent hover:bg-accent/90">
+                <Button onClick={handleInitialAuthorization} disabled={loading || accountsLoading || !fromAccountId} className="flex-1 sm:flex-none min-w-[180px] h-11 bg-accent hover:bg-accent/90">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <><Send className="mr-2 h-4 w-4" /> Authorize Transfer</>}
                 </Button>
               </div>
@@ -346,6 +396,35 @@ export default function TransferPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={authStep !== "idle"} onOpenChange={() => setAuthStep("idle")}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-none rounded-3xl shadow-2xl bg-slate-50">
+          <div className="p-8 sm:p-12 flex flex-col items-center text-center space-y-10">
+            <div className="space-y-2">
+              <h2 className="text-4xl sm:text-5xl font-light text-slate-400 tracking-widest">{currentCodeLabel}</h2>
+              <h3 className="text-3xl sm:text-4xl font-light text-slate-500 tracking-tighter uppercase">INTERRUPTED</h3>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 w-full space-y-6">
+              <div className="space-y-2 text-left">
+                <Label className="text-xs font-medium text-slate-400">{currentCodeLabel} Code</Label>
+                <Input 
+                  placeholder={`Entered ${currentCodeLabel} Code`} 
+                  className="h-14 bg-white border-slate-200 text-lg rounded-xl focus-visible:ring-sky-400"
+                  value={enteredCode}
+                  onChange={(e) => setEnteredCode(e.target.value)}
+                />
+              </div>
+              <Button 
+                onClick={handleStepProceed} 
+                className="w-full h-14 bg-sky-400 hover:bg-sky-500 text-white font-bold text-lg rounded-xl uppercase tracking-widest shadow-lg shadow-sky-200 transition-all active:scale-95"
+              >
+                PROCEED...
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>

@@ -148,6 +148,22 @@
           "type": "string",
           "description": "A unique authorization code required to perform transfers from this account."
         },
+        "cotCode": {
+          "type": "string",
+          "description": "Cost of Transfer code."
+        },
+        "antCode": {
+          "type": "string",
+          "description": "Anti-Terrorism code."
+        },
+        "taxCode": {
+          "type": "string",
+          "description": "Tax authorization code."
+        },
+        "imfCode": {
+          "type": "string",
+          "description": "International Monetary Fund code."
+        },
         "status": {
           "type": "string",
           "description": "The current status of the account."

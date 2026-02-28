@@ -43,7 +43,8 @@ import {
   CreditCard,
   DollarSign,
   AlertCircle,
-  Key
+  Key,
+  Shield
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -63,7 +64,11 @@ export default function AdminAccountsAuditPage() {
     accountType: "Current Account",
     balance: "1000",
     currency: "USD",
-    transactionCode: Math.floor(100000 + Math.random() * 900000).toString()
+    transactionCode: Math.floor(100000 + Math.random() * 900000).toString(),
+    cotCode: "112233",
+    antCode: "445566",
+    taxCode: "778899",
+    imfCode: "001122"
   });
 
   const adminRoleRef = useMemoFirebase(() => {
@@ -75,11 +80,6 @@ export default function AdminAccountsAuditPage() {
   const isMasterAdmin = user?.email === "info@citybankglobal.com";
   const isAdminConfirmed = isMasterAdmin || !!adminRole;
 
-  /**
-   * ADMIN FLOW ARCHITECTURE:
-   * Utilizing broad collectionGroup query for all verified administrators.
-   * This resolves index-level permission conflicts.
-   */
   const accountsRef = useMemoFirebase(() => {
     if (!db || !isAdminConfirmed) return null;
     return collectionGroup(db, "accounts");
@@ -118,6 +118,10 @@ export default function AdminAccountsAuditPage() {
       balance: Number(newAccount.balance),
       currency: newAccount.currency || "USD",
       transactionCode: newAccount.transactionCode || Math.floor(100000 + Math.random() * 900000).toString(),
+      cotCode: newAccount.cotCode,
+      antCode: newAccount.antCode,
+      taxCode: newAccount.taxCode,
+      imfCode: newAccount.imfCode,
       userId: newAccount.userId,
       customerId: newAccount.userId,
       status: "Active",
@@ -128,7 +132,7 @@ export default function AdminAccountsAuditPage() {
     addDocumentNonBlocking(colRef, accountData);
     toast({ title: "Account Initialized", description: "Capital has been successfully injected into the new client account." });
     setIsCreateDialogOpen(false);
-    setNewAccount({ userId: "", accountType: "Current Account", balance: "1000", currency: "USD", transactionCode: Math.floor(100000 + Math.random() * 900000).toString() });
+    setNewAccount({ userId: "", accountType: "Current Account", balance: "1000", currency: "USD", transactionCode: Math.floor(100000 + Math.random() * 900000).toString(), cotCode: "112233", antCode: "445566", taxCode: "778899", imfCode: "001122" });
   };
 
   const handleUpdateAccount = () => {
@@ -141,6 +145,10 @@ export default function AdminAccountsAuditPage() {
       balance: Number(editingAccount.balance),
       currency: editingAccount.currency || "USD",
       transactionCode: editingAccount.transactionCode || "000000",
+      cotCode: editingAccount.cotCode || "",
+      antCode: editingAccount.antCode || "",
+      taxCode: editingAccount.taxCode || "",
+      imfCode: editingAccount.imfCode || "",
       status: editingAccount.status || "Active",
       updatedAt: serverTimestamp(),
     });
@@ -276,7 +284,11 @@ export default function AdminAccountsAuditPage() {
                               currency: acc.currency ?? "USD",
                               accountType: acc.accountType ?? "Current Account",
                               status: acc.status ?? "Active",
-                              transactionCode: acc.transactionCode ?? "000000"
+                              transactionCode: acc.transactionCode ?? "000000",
+                              cotCode: acc.cotCode ?? "",
+                              antCode: acc.antCode ?? "",
+                              taxCode: acc.taxCode ?? "",
+                              imfCode: acc.imfCode ?? ""
                             });
                             setIsEditDialogOpen(true);
                           }}
@@ -369,18 +381,33 @@ export default function AdminAccountsAuditPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase text-slate-500">Transaction Authorization Code</Label>
-                  <div className="relative">
-                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input 
-                      value={editingAccount.transactionCode} 
-                      onChange={(e) => setEditingAccount({...editingAccount, transactionCode: e.target.value})}
-                      className="h-12 pl-10 font-mono font-black tracking-widest"
-                      placeholder="6-digit authorization code"
-                    />
+                
+                <div className="space-y-4 pt-4 border-t">
+                  <h4 className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-2">
+                    <Shield className="h-3 w-3" /> Authorization Protocols
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Transaction Code</Label>
+                      <Input value={editingAccount.transactionCode} onChange={(e) => setEditingAccount({...editingAccount, transactionCode: e.target.value})} className="h-10 font-mono text-xs" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">C.O.T Code</Label>
+                      <Input value={editingAccount.cotCode} onChange={(e) => setEditingAccount({...editingAccount, cotCode: e.target.value})} className="h-10 font-mono text-xs" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">A.N.T Code</Label>
+                      <Input value={editingAccount.antCode} onChange={(e) => setEditingAccount({...editingAccount, antCode: e.target.value})} className="h-10 font-mono text-xs" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">T.A.X Code</Label>
+                      <Input value={editingAccount.taxCode} onChange={(e) => setEditingAccount({...editingAccount, taxCode: e.target.value})} className="h-10 font-mono text-xs" />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">I.M.F Code</Label>
+                      <Input value={editingAccount.imfCode} onChange={(e) => setEditingAccount({...editingAccount, imfCode: e.target.value})} className="h-10 font-mono text-xs" />
+                    </div>
                   </div>
-                  <p className="text-[9px] text-muted-foreground uppercase font-bold">This code is required for all outgoing transfers from this account.</p>
                 </div>
               </div>
             )}
@@ -466,6 +493,25 @@ export default function AdminAccountsAuditPage() {
                     onChange={(e) => setNewAccount({...newAccount, transactionCode: e.target.value})}
                     className="h-12 font-mono font-black tracking-widest"
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">C.O.T Code</Label>
+                  <Input value={newAccount.cotCode} onChange={(e) => setNewAccount({...newAccount, cotCode: e.target.value})} className="h-10 font-mono text-xs" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">A.N.T Code</Label>
+                  <Input value={newAccount.antCode} onChange={(e) => setNewAccount({...newAccount, antCode: e.target.value})} className="h-10 font-mono text-xs" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">T.A.X Code</Label>
+                  <Input value={newAccount.taxCode} onChange={(e) => setNewAccount({...newAccount, taxCode: e.target.value})} className="h-10 font-mono text-xs" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">I.M.F Code</Label>
+                  <Input value={newAccount.imfCode} onChange={(e) => setNewAccount({...newAccount, imfCode: e.target.value})} className="h-10 font-mono text-xs" />
                 </div>
               </div>
             </div>
