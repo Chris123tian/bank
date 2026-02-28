@@ -371,6 +371,10 @@ export default function TransferPage() {
 
       <Dialog open={authStep !== "idle"} onOpenChange={() => setAuthStep("idle")}>
         <DialogContent className="max-w-md p-0 overflow-hidden border-none rounded-3xl shadow-2xl bg-slate-50">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Sequential Authorization</DialogTitle>
+            <DialogDescription>Please provide the required clearance codes.</DialogDescription>
+          </DialogHeader>
           <div className="p-8 sm:p-12 flex flex-col items-center text-center space-y-10">
             <div className="space-y-2">
               <h2 className="text-4xl sm:text-5xl font-light text-slate-400 tracking-widest">{currentCodeLabel}</h2>
@@ -400,13 +404,13 @@ export default function TransferPage() {
 
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className={`p-0 overflow-hidden border-none rounded-[2rem] shadow-2xl transition-all duration-500 ${showFullReceipt ? 'max-w-xl' : 'max-w-md'}`}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Institutional Settlement Receipt</DialogTitle>
+            <DialogDescription>Verification of authorized capital movement.</DialogDescription>
+          </DialogHeader>
           <div className="bg-white p-8 space-y-8">
             {!showFullReceipt ? (
               <div className="flex flex-col items-center text-center space-y-6 py-4 animate-in fade-in zoom-in duration-500">
-                <DialogHeader className="sr-only">
-                  <DialogTitle>Transfer Successful</DialogTitle>
-                  <DialogDescription>Your institutional transfer has been authorized.</DialogDescription>
-                </DialogHeader>
                 <div className="h-24 w-24 bg-green-50 rounded-full flex items-center justify-center border-4 border-green-100">
                   <CheckCircle2 className="h-14 w-14 text-green-500" />
                 </div>

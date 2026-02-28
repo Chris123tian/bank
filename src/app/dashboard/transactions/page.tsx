@@ -233,6 +233,10 @@ function TransactionsContent() {
 
       <Dialog open={!!viewingTransaction} onOpenChange={(open) => !open && setViewingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Audit Insight</DialogTitle>
+            <DialogDescription>Comprehensive movement dossier for institutional transaction record.</DialogDescription>
+          </DialogHeader>
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
             <button onClick={() => setViewingTransaction(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
               <X className="h-6 w-6" />
