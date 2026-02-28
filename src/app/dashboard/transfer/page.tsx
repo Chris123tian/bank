@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -44,7 +43,6 @@ export default function TransferPage() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [note, setNote] = useState("");
-  const [authCode, setAuthCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Online Transfer");
 
   const accountsRef = useMemoFirebase(() => {
@@ -64,11 +62,11 @@ export default function TransferPage() {
   }, [selectedAccount]);
 
   const handleInitialAuthorization = () => {
-    if (!fromAccountId || !amount || !recipientName || !recipientAccount || !authCode || !user || !db) {
+    if (!fromAccountId || !amount || !recipientName || !recipientAccount || !user || !db) {
       toast({
         variant: "destructive",
         title: "Validation Error",
-        description: "Please complete all required fields including the Transaction Authorization Code.",
+        description: "Please complete all required fields to proceed with authorization.",
       });
       return;
     }
@@ -77,16 +75,6 @@ export default function TransferPage() {
 
     if (isAccountRestricted) {
       setIsSuspendedDialogOpen(true);
-      return;
-    }
-
-    // TRANSACTION CODE VALIDATION
-    if (selectedAccount.transactionCode && authCode !== selectedAccount.transactionCode) {
-      toast({
-        variant: "destructive",
-        title: "Authorization Failed",
-        description: "The provided Transaction Authorization Code is incorrect. Please verify your records.",
-      });
       return;
     }
 
@@ -99,7 +87,7 @@ export default function TransferPage() {
       return;
     }
 
-    // Start Sequential Authorization
+    // Start Sequential Authorization Popups
     setAuthStep("cot");
   };
 
@@ -163,7 +151,6 @@ export default function TransferPage() {
         bankAddress,
         paymentMethod,
         note,
-        authCodeUsed: "****"
       },
       status: "completed",
       createdAt: serverTimestamp(),
@@ -203,7 +190,6 @@ export default function TransferPage() {
       setBankAddress("");
       setAmount("");
       setNote("");
-      setAuthCode("");
     }, 1200);
   };
 
@@ -323,20 +309,6 @@ export default function TransferPage() {
                       </Select>
                       <Input type="number" placeholder="0.00" className="flex-1 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" value={amount} onChange={(e) => setAmount(e.target.value)} />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-accent flex items-center gap-2">
-                      <Key className="h-3 w-3" /> Authorization Code
-                    </Label>
-                    <Input 
-                      type="password" 
-                      placeholder="Enter 6-digit code" 
-                      className="h-12 font-mono text-center text-lg font-black tracking-[0.5em] border-accent/20 bg-accent/5 focus-visible:ring-accent" 
-                      value={authCode} 
-                      onChange={(e) => setAuthCode(e.target.value)} 
-                      maxLength={10}
-                    />
-                    <p className="text-[8px] text-muted-foreground uppercase font-bold text-center">Required to authorize institutional movement.</p>
                   </div>
                 </div>
                 <div className="space-y-2">
