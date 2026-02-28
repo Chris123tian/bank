@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -38,15 +39,14 @@ import {
   User as UserIcon,
   Briefcase,
   MapPin,
-  FileSignature,
   ShieldCheck,
   CreditCard,
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  Key
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { format } from "date-fns";
 
 export default function AdminAccountsAuditPage() {
   const { toast } = useToast();
@@ -62,7 +62,8 @@ export default function AdminAccountsAuditPage() {
     userId: "",
     accountType: "Current Account",
     balance: "1000",
-    currency: "USD"
+    currency: "USD",
+    transactionCode: Math.floor(100000 + Math.random() * 900000).toString()
   });
 
   const adminRoleRef = useMemoFirebase(() => {
@@ -116,6 +117,7 @@ export default function AdminAccountsAuditPage() {
       accountType: newAccount.accountType,
       balance: Number(newAccount.balance),
       currency: newAccount.currency || "USD",
+      transactionCode: newAccount.transactionCode || Math.floor(100000 + Math.random() * 900000).toString(),
       userId: newAccount.userId,
       customerId: newAccount.userId,
       status: "Active",
@@ -126,7 +128,7 @@ export default function AdminAccountsAuditPage() {
     addDocumentNonBlocking(colRef, accountData);
     toast({ title: "Account Initialized", description: "Capital has been successfully injected into the new client account." });
     setIsCreateDialogOpen(false);
-    setNewAccount({ userId: "", accountType: "Current Account", balance: "1000", currency: "USD" });
+    setNewAccount({ userId: "", accountType: "Current Account", balance: "1000", currency: "USD", transactionCode: Math.floor(100000 + Math.random() * 900000).toString() });
   };
 
   const handleUpdateAccount = () => {
@@ -138,6 +140,7 @@ export default function AdminAccountsAuditPage() {
       accountType: editingAccount.accountType,
       balance: Number(editingAccount.balance),
       currency: editingAccount.currency || "USD",
+      transactionCode: editingAccount.transactionCode || "000000",
       status: editingAccount.status || "Active",
       updatedAt: serverTimestamp(),
     });
@@ -272,7 +275,8 @@ export default function AdminAccountsAuditPage() {
                               balance: acc.balance ?? 0,
                               currency: acc.currency ?? "USD",
                               accountType: acc.accountType ?? "Current Account",
-                              status: acc.status ?? "Active"
+                              status: acc.status ?? "Active",
+                              transactionCode: acc.transactionCode ?? "000000"
                             });
                             setIsEditDialogOpen(true);
                           }}
@@ -318,15 +322,9 @@ export default function AdminAccountsAuditPage() {
                         type="number" 
                         value={editingAccount.balance} 
                         onChange={(e) => setEditingAccount({...editingAccount, balance: e.target.value})}
-                        disabled={editingAccount.status !== 'Active'}
                         className="h-12 pl-10 text-lg font-black"
                       />
                     </div>
-                    {editingAccount.status !== 'Active' && (
-                      <div className="text-[9px] text-red-500 font-bold uppercase flex items-center gap-1">
-                        <AlertCircle className="h-2.5 w-2.5" /> Balance locked for non-active status.
-                      </div>
-                    )}
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase text-slate-500">Asset Currency</Label>
@@ -343,31 +341,46 @@ export default function AdminAccountsAuditPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Account Type</Label>
-                  <Select value={editingAccount.accountType} onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Current Account">Current Account</SelectItem>
-                      <SelectItem value="Savings Account">Savings Account</SelectItem>
-                      <SelectItem value="Business Account">Business Account</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Account Type</Label>
+                    <Select value={editingAccount.accountType} onValueChange={(v) => setEditingAccount({...editingAccount, accountType: v})}>
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Current Account">Current Account</SelectItem>
+                        <SelectItem value="Savings Account">Savings Account</SelectItem>
+                        <SelectItem value="Business Account">Business Account</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-slate-500">Operational Status</Label>
+                    <Select value={editingAccount.status} onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}>
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Suspended">Suspended</SelectItem>
+                        <SelectItem value="Locked">Hold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Account Status</Label>
-                  <Select value={editingAccount.status} onValueChange={(v) => setEditingAccount({...editingAccount, status: v})}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Suspended">Suspended</SelectItem>
-                      <SelectItem value="Locked">Hold</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label className="text-[10px] font-bold uppercase text-slate-500">Transaction Authorization Code</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      value={editingAccount.transactionCode} 
+                      onChange={(e) => setEditingAccount({...editingAccount, transactionCode: e.target.value})}
+                      className="h-12 pl-10 font-mono font-black tracking-widest"
+                      placeholder="6-digit authorization code"
+                    />
+                  </div>
+                  <p className="text-[9px] text-muted-foreground uppercase font-bold">This code is required for all outgoing transfers from this account.</p>
                 </div>
               </div>
             )}
@@ -436,14 +449,24 @@ export default function AdminAccountsAuditPage() {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Initial Deposit</Label>
-                <Input 
-                  type="number" 
-                  value={newAccount.balance} 
-                  onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})}
-                  className="h-12 text-lg font-black"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Initial Deposit</Label>
+                  <Input 
+                    type="number" 
+                    value={newAccount.balance} 
+                    onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})}
+                    className="h-12 text-lg font-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Auth Code</Label>
+                  <Input 
+                    value={newAccount.transactionCode} 
+                    onChange={(e) => setNewAccount({...newAccount, transactionCode: e.target.value})}
+                    className="h-12 font-mono font-black tracking-widest"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -544,12 +567,8 @@ export default function AdminAccountsAuditPage() {
                           <span className="font-black text-primary text-lg">{formatCurrency(viewingClientPortfolio.balance, viewingClientPortfolio.currency)}</span>
                         </div>
                         <div className="flex justify-between items-center text-sm border-b border-slate-200 pb-1">
-                          <span className="font-black text-[#002B5B]">Operational Status:</span>
-                          <div className="inline-flex">
-                            <Badge className={viewingClientPortfolio.status === 'Suspended' ? 'bg-red-100 text-red-700 text-[9px] font-black' : 'bg-green-100 text-green-700 text-[9px] font-black'}>
-                              {viewingClientPortfolio.status || 'Active'}
-                            </Badge>
-                          </div>
+                          <span className="font-black text-[#002B5B]">Authorization Code:</span>
+                          <span className="font-mono font-black text-accent">{viewingClientPortfolio.transactionCode || 'NOT SET'}</span>
                         </div>
                       </div>
                     </section>

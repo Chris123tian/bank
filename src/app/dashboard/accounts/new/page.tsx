@@ -21,7 +21,8 @@ import {
   ShieldCheck, 
   FileText,
   Upload,
-  ArrowLeft
+  ArrowLeft,
+  Key
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -61,6 +62,7 @@ export default function NewAccountPage() {
     accountType: "Current Account",
     initialDeposit: "100",
     signature: "",
+    transactionCode: Math.floor(100000 + Math.random() * 900000).toString()
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +130,7 @@ export default function NewAccountPage() {
       accountType: formData.accountType,
       balance: Number(formData.initialDeposit),
       currency: "USD",
+      transactionCode: formData.transactionCode,
       customerId: user.uid,
       userId: user.uid,
       status: "Active",
@@ -274,14 +277,26 @@ export default function NewAccountPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="initialDeposit">Initial Capital Injection (Deposit)</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-primary">$</span>
-                    <Input id="initialDeposit" type="number" className="pl-8 h-12 text-lg font-black" value={formData.initialDeposit} onChange={handleInputChange} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="initialDeposit">Initial Capital Injection (USD)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-primary">$</span>
+                      <Input id="initialDeposit" type="number" className="pl-8 h-12 text-lg font-black" value={formData.initialDeposit} onChange={handleInputChange} />
+                    </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-1">Minimum Deposit: $100.00</p>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Key className="h-3 w-3" /> Transaction Code</Label>
+                    <Input 
+                      id="transactionCode" 
+                      value={formData.transactionCode} 
+                      onChange={handleInputChange} 
+                      className="h-12 font-mono text-center text-lg font-black tracking-widest bg-slate-50"
+                      placeholder="6-digit code"
+                    />
+                  </div>
                 </div>
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-1">Minimum Deposit: $100.00 • Save your code for authorizing transfers.</p>
               </div>
             </div>
           )}

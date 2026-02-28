@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download, FileText } from "lucide-react";
+import { Send, ArrowRight, Loader2, ShieldCheck, Landmark, History, ShieldAlert, CheckCircle2, X, Download, FileText, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useCollection } from "@/firebase";
 import { useMemoFirebase } from "@/firebase/provider";
@@ -39,6 +40,7 @@ export default function TransferPage() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [note, setNote] = useState("");
+  const [authCode, setAuthCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Online Transfer");
 
   const accountsRef = useMemoFirebase(() => {
@@ -58,11 +60,11 @@ export default function TransferPage() {
   }, [selectedAccount]);
 
   const handleTransfer = () => {
-    if (!fromAccountId || !amount || !recipientName || !recipientAccount || !user || !db) {
+    if (!fromAccountId || !amount || !recipientName || !recipientAccount || !authCode || !user || !db) {
       toast({
         variant: "destructive",
         title: "Validation Error",
-        description: "Please complete all required fields (Source, Recipient, and Amount).",
+        description: "Please complete all required fields including the Transaction Authorization Code.",
       });
       return;
     }
@@ -71,6 +73,16 @@ export default function TransferPage() {
 
     if (isAccountRestricted) {
       setIsSuspendedDialogOpen(true);
+      return;
+    }
+
+    // TRANSACTION CODE VALIDATION
+    if (selectedAccount.transactionCode && authCode !== selectedAccount.transactionCode) {
+      toast({
+        variant: "destructive",
+        title: "Authorization Failed",
+        description: "The provided Transaction Authorization Code is incorrect. Please verify your records.",
+      });
       return;
     }
 
@@ -103,7 +115,8 @@ export default function TransferPage() {
         bankName,
         bankAddress,
         paymentMethod,
-        note
+        note,
+        authCodeUsed: "****" // Regulatory masking
       },
       status: "completed",
       createdAt: serverTimestamp(),
@@ -142,6 +155,7 @@ export default function TransferPage() {
       setBankAddress("");
       setAmount("");
       setNote("");
+      setAuthCode("");
     }, 1200);
   };
 
@@ -242,27 +256,42 @@ export default function TransferPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Transfer Amount</Label>
-                  <div className="flex gap-2">
-                    <Select value={currency} onValueChange={setCurrency}>
-                      <SelectTrigger className="w-[100px] h-12 font-black text-primary border-primary/20 bg-primary/5">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                        <SelectItem value="AUD">AUD</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input type="number" placeholder="0.00" className="flex-1 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Transfer Amount</Label>
+                    <div className="flex gap-2">
+                      <Select value={currency} onValueChange={setCurrency}>
+                        <SelectTrigger className="w-[100px] h-12 font-black text-primary border-primary/20 bg-primary/5">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                          <SelectItem value="AUD">AUD</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input type="number" placeholder="0.00" className="flex-1 h-12 text-xl font-black text-primary border-primary/20 bg-primary/5 focus-visible:ring-primary" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                    </div>
                   </div>
-                  <p className="text-[9px] text-muted-foreground">Exchange rates and fees may apply to international wires.</p>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-accent flex items-center gap-2">
+                      <Key className="h-3 w-3" /> Authorization Code
+                    </Label>
+                    <Input 
+                      type="password" 
+                      placeholder="Enter 6-digit code" 
+                      className="h-12 font-mono text-center text-lg font-black tracking-[0.5em] border-accent/20 bg-accent/5 focus-visible:ring-accent" 
+                      value={authCode} 
+                      onChange={(e) => setAuthCode(e.target.value)} 
+                      maxLength={10}
+                    />
+                    <p className="text-[8px] text-muted-foreground uppercase font-bold text-center">Required to authorize institutional movement.</p>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Reference / Note (Optional)</Label>
-                  <Textarea placeholder="Reference for recipient's ledger" className="min-h-[70px] resize-none" value={note} onChange={(e) => setNote(e.target.value)} />
+                  <Textarea placeholder="Reference for recipient's ledger" className="min-h-[120px] resize-none" value={note} onChange={(e) => setNote(e.target.value)} />
                 </div>
               </div>
             </CardContent>
@@ -416,7 +445,7 @@ export default function TransferPage() {
             <DialogDescription>Your account has been suspended, contact support.</DialogDescription>
           </DialogHeader>
           <div className="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center border-4 border-red-100">
-            <CheckCircle2 className="h-10 w-10 text-red-500" />
+            <X className="h-10 w-10 text-red-500" />
           </div>
           <div className="space-y-2">
             <h2 className="text-lg font-black text-primary uppercase tracking-tight leading-tight">Your Account has been suspended, contact support</h2>
