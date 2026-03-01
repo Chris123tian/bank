@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Skeleton } from "@/components/ui/skeleton";
+import { initiateSignOut } from "@/firebase/non-blocking-login";
 
 export default function DashboardLayout({
   children,
@@ -22,6 +23,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const db = useFirestore();
+  const auth = useAuth();
 
   // Fetch real-time Firestore profile
   const profileRef = useMemoFirebase(() => {
@@ -31,12 +33,25 @@ export default function DashboardLayout({
 
   const { data: profile, isLoading: isProfileLoading } = useDoc(profileRef);
 
-  // REDIRECT PROTOCOL: Ensure user is authenticated
+  // AUTH REDIRECT: Ensure user is authenticated
   useEffect(() => {
     if (isAuthReady && !user) {
       router.replace("/auth");
     }
   }, [user, isAuthReady, router]);
+
+  // TERMINATION PROTOCOL: If profile is missing (deleted by admin), force logout
+  // This satisfies the requirement that deleting a profile revokes all access.
+  useEffect(() => {
+    if (isAuthReady && user && !isProfileLoading && !profile) {
+      // info@citybankglobal.com is the master admin and may not have a profile doc in /users
+      if (user.email !== "info@citybankglobal.com") {
+        initiateSignOut(auth).then(() => {
+          router.replace("/auth?reason=terminated");
+        });
+      }
+    }
+  }, [user, isAuthReady, isProfileLoading, profile, auth, router]);
 
   const displayName = useMemo(() => {
     if (profile?.firstName) {
@@ -45,7 +60,7 @@ export default function DashboardLayout({
     return user?.displayName || user?.email?.split('@')[0] || "Institutional Client";
   }, [profile, user]);
 
-  if (!isAuthReady) {
+  if (!isAuthReady || (user && isProfileLoading)) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -56,7 +71,8 @@ export default function DashboardLayout({
     );
   }
 
-  if (!user) return null;
+  // Prevent rendering if user is missing or profile was deleted (caught by useEffect above)
+  if (!user || (!profile && user.email !== "info@citybankglobal.com")) return null;
 
   return (
     <SidebarProvider defaultOpen={true}>

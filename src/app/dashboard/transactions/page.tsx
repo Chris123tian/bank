@@ -64,7 +64,8 @@ function TransactionsContent() {
   /**
    * ADMIN FLOW ARCHITECTURE:
    * Utilizing a broad collectionGroup query identical to the administrative suite.
-   * Secure local filtering occurs via useMemo to avoid aggregate query permission errors.
+   * This resolves permission errors by aligning with deterministic security rules.
+   * Secure local filtering occurs via useMemo.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || !isAuthReady) return null;
