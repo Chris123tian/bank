@@ -41,7 +41,6 @@ export default function DashboardLayout({
   }, [user, isAuthReady, router]);
 
   // TERMINATION PROTOCOL: If profile is missing (deleted by admin), force logout
-  // This satisfies the requirement that deleting a profile revokes all access.
   useEffect(() => {
     if (isAuthReady && user && !isProfileLoading && !profile) {
       // info@citybankglobal.com is the master admin and may not have a profile doc in /users
@@ -52,6 +51,37 @@ export default function DashboardLayout({
       }
     }
   }, [user, isAuthReady, isProfileLoading, profile, auth, router]);
+
+  // INACTIVITY PROTOCOL: Auto-logout after 35 minutes of inactivity
+  useEffect(() => {
+    if (!user || !isAuthReady) return;
+
+    const INACTIVITY_TIMEOUT = 35 * 60 * 1000; // 35 minutes
+    let timeoutId: NodeJS.Timeout;
+
+    const handleAutoLogout = async () => {
+      await initiateSignOut(auth);
+      router.replace("/auth?reason=inactive");
+    };
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleAutoLogout, INACTIVITY_TIMEOUT);
+    };
+
+    // Activity listeners for institutional engagement
+    const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
+    
+    // Initialize timer
+    resetTimer();
+
+    events.forEach((name) => window.addEventListener(name, resetTimer));
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach((name) => window.removeEventListener(name, resetTimer));
+    };
+  }, [user, isAuthReady, auth, router]);
 
   const displayName = useMemo(() => {
     if (profile?.firstName) {
@@ -71,7 +101,7 @@ export default function DashboardLayout({
     );
   }
 
-  // Prevent rendering if user is missing or profile was deleted (caught by useEffect above)
+  // Prevent rendering if user is missing or profile was deleted
   if (!user || (!profile && user.email !== "info@citybankglobal.com")) return null;
 
   return (
