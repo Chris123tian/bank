@@ -69,7 +69,7 @@ export default function DashboardLayout({
       timeoutId = setTimeout(handleAutoLogout, INACTIVITY_TIMEOUT);
     };
 
-    // Activity listeners for institutional engagement
+    // Activity listeners for user engagement
     const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart"];
     
     // Initialize timer
@@ -87,7 +87,7 @@ export default function DashboardLayout({
     if (profile?.firstName) {
       return `${profile.firstName} ${profile.lastName || ''}`.trim();
     }
-    return user?.displayName || user?.email?.split('@')[0] || "Institutional Client";
+    return user?.displayName || user?.email?.split('@')[0] || "Authorized User";
   }, [profile, user]);
 
   if (!isAuthReady || (user && isProfileLoading)) {
@@ -95,7 +95,7 @@ export default function DashboardLayout({
       <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Initializing Institutional Core...</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Initializing Secure Session...</p>
         </div>
       </div>
     );

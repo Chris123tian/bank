@@ -62,10 +62,9 @@ function TransactionsContent() {
   }, [searchParams]);
 
   /**
-   * ADMIN FLOW ARCHITECTURE:
-   * Utilizing a broad collectionGroup query identical to the administrative suite.
-   * This resolves permission errors by aligning with deterministic security rules.
-   * Secure local filtering occurs via useMemo.
+   * DATA ACCESS ARCHITECTURE:
+   * Utilizing a broad collectionGroup query to synchronize with administrative auditing.
+   * Secure local filtering occurs via useMemo to ensure data privacy.
    */
   const transactionsRef = useMemoFirebase(() => {
     if (!db || !user?.uid || !isAuthReady) return null;
@@ -90,7 +89,6 @@ function TransactionsContent() {
     
     return rawTransactions
       .filter(tx => {
-        // SECURITY FILTER: Ensure user only sees their own transactions locally
         const isOwner = tx.customerId === user.uid || tx.userId === user.uid;
         if (!isOwner) return false;
 
@@ -124,14 +122,14 @@ function TransactionsContent() {
     <div className="space-y-6 max-w-7xl mx-auto px-1 pb-20">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Institutional Ledger</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive audit trail for global capital movements.</p>
+          <h1 className="text-2xl sm:text-3xl font-headline font-bold text-primary uppercase tracking-tight">Transaction History</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">View and manage your detailed financial activity across all accounts.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Filter ledger..." 
+              placeholder="Search transactions..." 
               className="pl-10 h-11 border-slate-200" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -139,19 +137,19 @@ function TransactionsContent() {
           </div>
           <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
             <SelectTrigger className="h-11 w-full sm:w-64 border-slate-200">
-              <SelectValue placeholder="All Assets" />
+              <SelectValue placeholder="All Accounts" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Global History (All Assets)</SelectItem>
+              <SelectItem value="all">Global Activity (All Accounts)</SelectItem>
               {userAccounts.map(accId => (
                 <SelectItem key={accId} value={accId}>
-                  Asset Ref: ...{accId.slice(-6)}
+                  Account ID: ...{accId.slice(-6)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Button variant="outline" className="h-11 font-bold border-slate-200 shadow-sm shrink-0">
-            <Download className="mr-2 h-4 w-4" /> Export
+            <Download className="mr-2 h-4 w-4" /> Export Statements
           </Button>
         </div>
       </div>
@@ -164,7 +162,7 @@ function TransactionsContent() {
                 <TableRow>
                   <TableHead className="w-[110px] sm:w-[140px] font-black text-[10px] uppercase tracking-widest text-slate-500 py-4 px-6">Date</TableHead>
                   <TableHead className="font-black text-[10px] uppercase tracking-widest text-slate-500">Description</TableHead>
-                  <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Type</TableHead>
+                  <TableHead className="hidden sm:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Category</TableHead>
                   <TableHead className="hidden md:table-cell font-black text-[10px] uppercase tracking-widest text-slate-500">Status</TableHead>
                   <TableHead className="text-right font-black text-[10px] uppercase tracking-widest text-slate-500 px-6">Amount</TableHead>
                 </TableRow>
@@ -175,7 +173,7 @@ function TransactionsContent() {
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-3">
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Ledger...</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing History...</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -196,13 +194,13 @@ function TransactionsContent() {
                           </div>
                           <div className="flex flex-col max-w-[140px] sm:max-w-none">
                             <span className="font-black text-primary text-xs sm:text-sm truncate uppercase tracking-tighter">{tx.description}</span>
-                            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">REF: {tx.id?.slice(0, 12)}...</span>
+                            <span className="text-[8px] sm:text-[9px] text-muted-foreground font-mono truncate uppercase">TXN: {tx.id?.slice(0, 12)}...</span>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <Badge variant="outline" className={`font-black capitalize text-[9px] px-2 ${tx.amount > 0 ? 'border-green-200 text-green-700 bg-green-50' : 'border-slate-200'}`}>
-                          {tx.transactionType || "Other"}
+                          {tx.transactionType || "Payment"}
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
@@ -221,7 +219,7 @@ function TransactionsContent() {
                     <TableCell colSpan={5} className="text-center py-24">
                       <div className="flex flex-col items-center gap-4 opacity-30">
                         <History className="h-12 w-12 text-slate-400" />
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No financial movements found</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em]">No transaction records detected</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -235,8 +233,8 @@ function TransactionsContent() {
       <Dialog open={!!viewingTransaction} onOpenChange={(open) => !open && setViewingTransaction(null)}>
         <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none w-[95vw] sm:w-full">
           <DialogHeader className="sr-only">
-            <DialogTitle>Audit Insight</DialogTitle>
-            <DialogDescription>Comprehensive movement dossier for institutional transaction record.</DialogDescription>
+            <DialogTitle>Transaction Details</DialogTitle>
+            <DialogDescription>Detailed summary of the selected financial activity.</DialogDescription>
           </DialogHeader>
           <div className="bg-[#E5E7EB] rounded-3xl p-6 sm:p-12 shadow-2xl border border-slate-300 relative">
             <button onClick={() => setViewingTransaction(null)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 transition-colors text-slate-500 z-10">
@@ -246,9 +244,9 @@ function TransactionsContent() {
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div className="relative inline-block">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Audit Insight</DialogTitle>
+                    <DialogTitle className="text-2xl sm:text-3xl font-black text-[#002B5B] tracking-tight uppercase">Transaction Review</DialogTitle>
                     <DialogDescription className="text-[10px] font-mono text-slate-500 mt-2 break-all">
-                      Comprehensive breakdown of institutional movement for transaction ID: {viewingTransaction?.id}
+                      Transaction Reference: {viewingTransaction?.id}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="absolute -bottom-2 left-0 h-1.5 w-24 bg-[#2563EB]" />
@@ -267,7 +265,7 @@ function TransactionsContent() {
                       </h4>
                       <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
-                          <span className="text-[10px] font-black uppercase text-slate-500">Amount</span>
+                          <span className="text-[10px] font-black uppercase text-slate-500">Dispatched Amount</span>
                           <span className={`text-2xl sm:text-3xl font-black break-all ${viewingTransaction.amount > 0 ? 'text-green-600' : 'text-[#002B5B]'}`}>
                             {viewingTransaction.amount > 0 ? '+' : '-'}{formatCurrency(viewingTransaction.amount, viewingTransaction.currency)}
                           </span>
@@ -279,7 +277,7 @@ function TransactionsContent() {
                             <p className="font-bold text-slate-700">{viewingTransaction.transactionDate ? format(new Date(viewingTransaction.transactionDate), "PPpp") : 'N/A'}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-[9px] font-black text-slate-400 uppercase">Type</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Movement Type</p>
                             <p className="font-bold text-slate-700 capitalize">{viewingTransaction.transactionType}</p>
                           </div>
                         </div>
@@ -288,11 +286,11 @@ function TransactionsContent() {
 
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                        <UserIcon className="h-4 w-4" /> Source Credentials
+                        <UserIcon className="h-4 w-4" /> Origin Details
                       </h4>
                       <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-3 text-xs sm:text-sm">
                         <div className="flex flex-col sm:flex-row justify-between gap-1">
-                          <span className="text-slate-500 font-bold shrink-0">Client ID:</span>
+                          <span className="text-slate-500 font-bold shrink-0">Member ID:</span>
                           <span className="font-mono text-[10px] sm:text-xs break-all">{viewingTransaction.customerId || viewingTransaction.userId}</span>
                         </div>
                         <div className="flex flex-col sm:flex-row justify-between gap-1">
@@ -306,23 +304,23 @@ function TransactionsContent() {
                   <div className="space-y-8">
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                        <Globe className="h-4 w-4" /> Counterparty Details
+                        <Globe className="h-4 w-4" /> Beneficiary Details
                       </h4>
                       <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
                         <div className="space-y-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase">{viewingTransaction.amount > 0 ? 'Sender Identification' : 'Recipient Identity'}</p>
-                          <p className="font-bold text-slate-700 break-words">{viewingTransaction.metadata?.recipientName || 'Institutional Internal'}</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase">{viewingTransaction.amount > 0 ? 'Sender Identity' : 'Recipient Identity'}</p>
+                          <p className="font-bold text-slate-700 break-words">{viewingTransaction.metadata?.recipientName || 'Internal Transfer'}</p>
                           <p className="text-[10px] sm:text-xs text-slate-500 font-mono break-all">{viewingTransaction.metadata?.recipientAccount || '—'}</p>
                         </div>
                         <div className="h-px bg-slate-200" />
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <p className="text-[9px] font-black text-slate-400 uppercase">Bank / Institution</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Receiving Institution</p>
                             <p className="font-bold text-slate-700 break-words">{viewingTransaction.metadata?.bankName || 'City Bank Global'}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-[9px] font-black text-slate-400 uppercase">System Rail</p>
-                            <p className="font-bold text-slate-700">{viewingTransaction.metadata?.paymentMethod || 'Internal Transfer'}</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Settlement Rail</p>
+                            <p className="font-bold text-slate-700">{viewingTransaction.metadata?.paymentMethod || 'Internal Rails'}</p>
                           </div>
                         </div>
                         {viewingTransaction.metadata?.routingOrIban && (
@@ -336,7 +334,7 @@ function TransactionsContent() {
 
                     <section className="space-y-4">
                       <h4 className="text-[10px] font-black uppercase tracking-widest text-[#2563EB] flex items-center gap-2">
-                        <Info className="h-4 w-4" /> Regulatory Memos
+                        <Info className="h-4 w-4" /> Memo & Activity Notes
                       </h4>
                       <div className="bg-white/50 rounded-2xl p-6 border border-white/80 space-y-4 text-xs sm:text-sm">
                         <div className="space-y-1">
@@ -345,7 +343,7 @@ function TransactionsContent() {
                         </div>
                         {viewingTransaction.metadata?.note && (
                           <div className="space-y-1 pt-2 border-t border-slate-200">
-                            <p className="text-[9px] font-black text-slate-400 uppercase">Personal Note</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase">Private Note</p>
                             <p className="text-slate-600 break-words">{viewingTransaction.metadata.note}</p>
                           </div>
                         )}
@@ -357,7 +355,7 @@ function TransactionsContent() {
 
               <div className="pt-10 border-t border-slate-300">
                 <button onClick={() => setViewingTransaction(null)} className="w-full h-14 rounded-2xl font-black bg-[#002B5B] hover:bg-[#003B7B] shadow-xl text-white text-base sm:text-lg uppercase tracking-widest transition-all hover:scale-[1.01]">
-                  Dismiss Audit Insight
+                  Close Details
                 </button>
               </div>
             </div>
