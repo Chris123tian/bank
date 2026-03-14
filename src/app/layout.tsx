@@ -1,4 +1,3 @@
-
 import type {Metadata} from 'next';
 import './globals.css';
 
@@ -9,7 +8,7 @@ export const metadata: Metadata = {
 
 /**
  * Site Access Restriction Protocol
- * This layout replaces the entire application UI with a neutral troubleshooting notice,
+ * This layout replaces the entire application UI with a specific troubleshooting notice,
  * preventing access to any sub-routes or dashboard features.
  */
 export default function RootLayout() {
@@ -21,7 +20,7 @@ export default function RootLayout() {
           
           <div className="space-y-6 text-[16px] leading-relaxed">
             <p className="font-medium">
-              www.citybankglobal.com is currently unavailable.
+              www.citybankglobal.com might be under Federal Trade Commission investigation.
             </p>
             
             <ul className="list-disc pl-8 space-y-4 text-slate-700">
