@@ -1,4 +1,5 @@
 import type {Metadata} from 'next';
+import { Info } from 'lucide-react';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -16,7 +17,10 @@ export default function RootLayout() {
     <html lang="en">
       <body className="bg-white text-[#1a1a1a] p-10 sm:p-24 font-sans antialiased selection:bg-blue-50">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-normal mb-8 text-slate-900">Server not found</h1>
+          <div className="flex items-center gap-4 mb-6 border-b border-slate-200 pb-6">
+            <Info className="h-10 w-10 text-slate-400 stroke-[1.5]" />
+            <h1 className="text-3xl font-normal text-slate-900">Server not found</h1>
+          </div>
           
           <div className="space-y-6 text-[16px] leading-relaxed">
             <p className="font-medium">
