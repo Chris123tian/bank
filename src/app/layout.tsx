@@ -24,12 +24,13 @@ export default function RootLayout() {
           
           <div className="space-y-6 text-[16px] leading-relaxed">
             <p className="font-medium">
-              www.citybankglobal.com might be under Federal Trade Commission investigation.
+              www.citybankglobal.com is currently unavailable.
             </p>
             
             <ul className="list-disc pl-8 space-y-4 text-slate-700">
               <li>Check the address for typing errors such as ww.example.com instead of www.example.com</li>
               <li>If you are unable to load any pages, check your computer's network connection.</li>
+              <li>Your webite might also be under federal investigation.</li>
               <li>If your computer or network is protected by a firewall or proxy, make sure that your browser is permitted to access the web.</li>
             </ul>
 
